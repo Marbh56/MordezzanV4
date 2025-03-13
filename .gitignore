@@ -42,8 +42,5 @@ go.work
 /dist/
 
 #Add To RepoLater
-README.md
 repomix-output.txt
-sqlc.yaml
-/docs/
 /test_logs/
