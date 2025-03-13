@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Armor Details</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .armor-details {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .armor-details h1 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .armor-section {
+            margin-bottom: 20px;
+        }
+
+        .armor-section h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+
+        .armor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .armor-item {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .armor-item-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .armor-item-value {
+            color: #000;
+        }
+
+        .armor-type-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .armor-type-light {
+            background-color: #d1f7c4;
+            color: #2e7d32;
+        }
+
+        .armor-type-medium {
+            background-color: #ffe0b2;
+            color: #e65100;
+        }
+
+        .armor-type-heavy {
+            background-color: #ffcdd2;
+            color: #b71c1c;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="armor-details">
+        <h1>
+            {{.Name}}
+            <span class="armor-type-badge armor-type-{{if eq .WeightClass " Light"}}light{{else if eq
+                .WeightClass "Medium" }}medium{{else}}heavy{{end}}">
+                {{.WeightClass}}
+            </span>
+        </h1>
+
+        <div class="armor-section">
+            <h2>Armor Stats</h2>
+            <div class="armor-grid">
+                <div class="armor-item">
+                    <div class="armor-item-label">Type</div>
+                    <div class="armor-item-value">{{.ArmorType}}</div>
+                </div>
+                <div class="armor-item">
+                    <div class="armor-item-label">Armor Class</div>
+                    <div class="armor-item-value">{{.AC}}</div>
+                </div>
+                <div class="armor-item">
+                    <div class="armor-item-label">Cost</div>
+                    <div class="armor-item-value">{{.Cost}} gp</div>
+                </div>
+                <div class="armor-item">
+                    <div class="armor-item-label">Damage Reduction</div>
+                    <div class="armor-item-value">{{.DamageReduction}}</div>
+                </div>
+                <div class="armor-item">
+                    <div class="armor-item-label">Weight</div>
+                    <div class="armor-item-value">{{.Weight}} lb</div>
+                </div>
+                <div class="armor-item">
+                    <div class="armor-item-label">Movement Rate</div>
+                    <div class="armor-item-value">{{.MovementRate}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="armor-section">
+            <a href="/armors">Back to Armor List</a>
+        </div>
+    </div>
+    <script src="/static/js/main.js"></script>
+</body>
+
+</html>

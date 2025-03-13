@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>User Profile</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+
+<body>
+    <div class="user-profile">
+        <h1>User Profile</h1>
+        <div class="profile-info">
+            <div class="info-item">
+                <span class="label">Username:</span>
+                <span class="value">{{.Username}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Email:</span>
+                <span class="value">{{.Email}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Joined:</span>
+                <span class="value">{{.CreatedAt.Format "January 2, 2006"}}</span>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/main.js"></script>
+</body>
+
+</html>

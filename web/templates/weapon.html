@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Weapon Details</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .weapon-details {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .weapon-details h1 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .weapon-section {
+            margin-bottom: 20px;
+        }
+
+        .weapon-section h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+
+        .weapon-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .weapon-item {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .weapon-item-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .weapon-item-value {
+            color: #000;
+        }
+
+        .weapon-category-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 10px;
+            background-color: #e3f2fd;
+            color: #0d47a1;
+        }
+
+        .weapon-weight-class {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            background-color: #ffe0b2;
+            color: #e65100;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="weapon-details">
+        <h1>
+            {{.Name}}
+            <span class="weapon-category-badge">{{.Category}}</span>
+            <span class="weapon-weight-class">WC: {{.WeaponClass}}</span>
+        </h1>
+        <div class="weapon-section">
+            <h2>Weapon Stats</h2>
+            <div class="weapon-grid">
+                <div class="weapon-item">
+                    <div class="weapon-item-label">Cost</div>
+                    <div class="weapon-item-value">{{.Cost}} gp</div>
+                </div>
+                <div class="weapon-item">
+                    <div class="weapon-item-label">Weight</div>
+                    <div class="weapon-item-value">{{.Weight}} lb</div>
+                </div>
+                <div class="weapon-item">
+                    <div class="weapon-item-label">Damage</div>
+                    <div class="weapon-item-value">{{.Damage}}</div>
+                </div>
+                {{if .DamageTwoHanded}}
+                <div class="weapon-item">
+                    <div class="weapon-item-label">Two-Handed Damage</div>
+                    <div class="weapon-item-value">{{.DamageTwoHanded}}</div>
+                </div>
+                {{end}}
+                {{if .RateOfFire}}
+                <div class="weapon-item">
+                    <div class="weapon-item-label">Rate of Fire</div>
+                    <div class="weapon-item-value">{{.RateOfFire}}</div>
+                </div>
+                {{end}}
+                {{if .RangeShort}}
+                <div class="weapon-item">
+                    <div class="weapon-item-label">Range</div>
+                    <div class="weapon-item-value">
+                        {{.RangeShort}}/{{.RangeMedium}}/{{.RangeLong}} ft
+                    </div>
+                </div>
+                {{end}}
+                {{if .Properties}}
+                <div class="weapon-item">
+                    <div class="weapon-item-label">Properties</div>
+                    <div class="weapon-item-value">{{.Properties}}</div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        <div class="weapon-section">
+            <a href="/weapons">Back to Weapons List</a>
+        </div>
+    </div>
+    <script src="/static/js/main.js"></script>
+</body>
+
+</html>
