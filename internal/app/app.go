@@ -15,25 +15,34 @@ import (
 )
 
 type App struct {
-	DB                  *sql.DB
-	UserRepository      repositories.UserRepository
-	CharacterRepository repositories.CharacterRepository
-	SpellRepository     repositories.SpellRepository
-	ArmorRepository     repositories.ArmorRepository
-	WeaponRepository    repositories.WeaponRepository
-	EquipmentRepository repositories.EquipmentRepository
-	ShieldRepository    repositories.ShieldRepository
-	PotionRepository    repositories.PotionRepository
-	MagicItemRepository repositories.MagicItemRepository
-	UserController      *controllers.UserController
-	CharacterController *controllers.CharacterController
-	SpellController     *controllers.SpellController
-	ArmorController     *controllers.ArmorController
-	WeaponController    *controllers.WeaponController
-	EquipmentController *controllers.EquipmentController
-	ShieldController    *controllers.ShieldController
-	PotionController    *controllers.PotionController
-	MagicItemController *controllers.MagicItemController
+	DB                    *sql.DB
+	UserRepository        repositories.UserRepository
+	CharacterRepository   repositories.CharacterRepository
+	SpellRepository       repositories.SpellRepository
+	ArmorRepository       repositories.ArmorRepository
+	WeaponRepository      repositories.WeaponRepository
+	EquipmentRepository   repositories.EquipmentRepository
+	ShieldRepository      repositories.ShieldRepository
+	PotionRepository      repositories.PotionRepository
+	MagicItemRepository   repositories.MagicItemRepository
+	RingRepository        repositories.RingRepository
+	AmmoRepository        repositories.AmmoRepository
+	SpellScrollRepository repositories.SpellScrollRepository
+	ContainerRepository   repositories.ContainerRepository
+
+	UserController        *controllers.UserController
+	CharacterController   *controllers.CharacterController
+	SpellController       *controllers.SpellController
+	ArmorController       *controllers.ArmorController
+	WeaponController      *controllers.WeaponController
+	EquipmentController   *controllers.EquipmentController
+	ShieldController      *controllers.ShieldController
+	PotionController      *controllers.PotionController
+	MagicItemController   *controllers.MagicItemController
+	RingController        *controllers.RingController
+	AmmoController        *controllers.AmmoController
+	SpellScrollController *controllers.SpellScrollController
+	ContainerController   *controllers.ContainerController
 
 	Templates *template.Template
 }
@@ -45,7 +54,6 @@ func NewApp(dbPath string) (*App, error) {
 		logger.Error("Failed to open database: %v", err)
 		return nil, err
 	}
-
 	if err := db.Ping(); err != nil {
 		logger.Error("Failed to ping database: %v", err)
 		return nil, err
@@ -61,6 +69,7 @@ func NewApp(dbPath string) (*App, error) {
 	}
 	logger.Debug("Templates loaded successfully")
 
+	// Initialize repositories
 	userRepo := repositories.NewSQLCUserRepository(db)
 	characterRepo := repositories.NewSQLCCharacterRepository(db)
 	spellRepo := repositories.NewSQLCSpellRepository(db)
@@ -70,7 +79,12 @@ func NewApp(dbPath string) (*App, error) {
 	shieldRepo := repositories.NewSQLCShieldRepository(db)
 	potionRepo := repositories.NewSQLCPotionRepository(db)
 	magicItemRepo := repositories.NewSQLCMagicItemRepository(db)
+	ringRepo := repositories.NewSQLCRingRepository(db)
+	ammoRepo := repositories.NewSQLCAmmoRepository(db)
+	spellScrollRepo := repositories.NewSQLCSpellScrollRepository(db)
+	containerRepo := repositories.NewSQLCContainerRepository(db)
 
+	// Initialize controllers
 	userController := controllers.NewUserController(userRepo, tmpl)
 	characterController := controllers.NewCharacterController(characterRepo, userRepo, tmpl)
 	spellController := controllers.NewSpellController(spellRepo, characterRepo, tmpl)
@@ -80,30 +94,43 @@ func NewApp(dbPath string) (*App, error) {
 	shieldController := controllers.NewShieldController(shieldRepo, tmpl)
 	potionController := controllers.NewPotionController(potionRepo, tmpl)
 	magicItemController := controllers.NewMagicItemController(magicItemRepo, tmpl)
+	ringController := controllers.NewRingController(ringRepo, tmpl)
+	ammoController := controllers.NewAmmoController(ammoRepo, tmpl)
+	spellScrollController := controllers.NewSpellScrollController(spellScrollRepo, spellRepo, tmpl)
+	containerController := controllers.NewContainerController(containerRepo, tmpl)
 
 	logger.Info("Application initialized successfully")
-
 	return &App{
-		DB:                  db,
-		UserRepository:      userRepo,
-		CharacterRepository: characterRepo,
-		SpellRepository:     spellRepo,
-		ArmorRepository:     armorRepo,
-		WeaponRepository:    weaponRepo,
-		EquipmentRepository: equipmentRepo,
-		ShieldRepository:    shieldRepo,
-		PotionRepository:    potionRepo,
-		MagicItemRepository: magicItemRepo,
-		UserController:      userController,
-		CharacterController: characterController,
-		SpellController:     spellController,
-		ArmorController:     armorController,
-		WeaponController:    weaponController,
-		EquipmentController: equipmentController,
-		ShieldController:    shieldController,
-		PotionController:    potionController,
-		MagicItemController: magicItemController,
-		Templates:           tmpl,
+		DB:                    db,
+		UserRepository:        userRepo,
+		CharacterRepository:   characterRepo,
+		SpellRepository:       spellRepo,
+		ArmorRepository:       armorRepo,
+		WeaponRepository:      weaponRepo,
+		EquipmentRepository:   equipmentRepo,
+		ShieldRepository:      shieldRepo,
+		PotionRepository:      potionRepo,
+		MagicItemRepository:   magicItemRepo,
+		RingRepository:        ringRepo,
+		AmmoRepository:        ammoRepo,
+		SpellScrollRepository: spellScrollRepo,
+		ContainerRepository:   containerRepo,
+
+		UserController:        userController,
+		CharacterController:   characterController,
+		SpellController:       spellController,
+		ArmorController:       armorController,
+		WeaponController:      weaponController,
+		EquipmentController:   equipmentController,
+		ShieldController:      shieldController,
+		PotionController:      potionController,
+		MagicItemController:   magicItemController,
+		RingController:        ringController,
+		AmmoController:        ammoController,
+		SpellScrollController: spellScrollController,
+		ContainerController:   containerController,
+
+		Templates: tmpl,
 	}, nil
 }
 
@@ -185,6 +212,38 @@ func (a *App) SetupRoutes() http.Handler {
 		r.Get("/{id}", a.MagicItemController.GetMagicItem)
 		r.Put("/{id}", a.MagicItemController.UpdateMagicItem)
 		r.Delete("/{id}", a.MagicItemController.DeleteMagicItem)
+	})
+
+	r.Route("/rings", func(r chi.Router) {
+		r.Get("/", a.RingController.ListRings)
+		r.Post("/", a.RingController.CreateRing)
+		r.Get("/{id}", a.RingController.GetRing)
+		r.Put("/{id}", a.RingController.UpdateRing)
+		r.Delete("/{id}", a.RingController.DeleteRing)
+	})
+
+	r.Route("/ammo", func(r chi.Router) {
+		r.Get("/", a.AmmoController.ListAmmo)
+		r.Post("/", a.AmmoController.CreateAmmo)
+		r.Get("/{id}", a.AmmoController.GetAmmo)
+		r.Put("/{id}", a.AmmoController.UpdateAmmo)
+		r.Delete("/{id}", a.AmmoController.DeleteAmmo)
+	})
+
+	r.Route("/spell-scrolls", func(r chi.Router) {
+		r.Get("/", a.SpellScrollController.ListSpellScrolls)
+		r.Post("/", a.SpellScrollController.CreateSpellScroll)
+		r.Get("/{id}", a.SpellScrollController.GetSpellScroll)
+		r.Put("/{id}", a.SpellScrollController.UpdateSpellScroll)
+		r.Delete("/{id}", a.SpellScrollController.DeleteSpellScroll)
+	})
+
+	r.Route("/containers", func(r chi.Router) {
+		r.Get("/", a.ContainerController.ListContainers)
+		r.Post("/", a.ContainerController.CreateContainer)
+		r.Get("/{id}", a.ContainerController.GetContainer)
+		r.Put("/{id}", a.ContainerController.UpdateContainer)
+		r.Delete("/{id}", a.ContainerController.DeleteContainer)
 	})
 
 	handler := middleware.RecoveryMiddleware(

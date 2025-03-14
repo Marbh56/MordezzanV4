@@ -8,6 +8,7 @@ type Character struct {
 	ID           int64     `json:"id"`
 	UserID       int64     `json:"user_id"`
 	Name         string    `json:"name"`
+	Class        string    `json:"class"`
 	Strength     int       `json:"strength"`
 	Dexterity    int       `json:"dexterity"`
 	Constitution int       `json:"constitution"`
@@ -22,6 +23,7 @@ type Character struct {
 type CreateCharacterInput struct {
 	UserID       int64  `json:"user_id"`
 	Name         string `json:"name"`
+	Class        string `json:"class"`
 	Strength     int    `json:"strength"`
 	Dexterity    int    `json:"dexterity"`
 	Constitution int    `json:"constitution"`
@@ -33,6 +35,7 @@ type CreateCharacterInput struct {
 
 type UpdateCharacterInput struct {
 	Name         string `json:"name"`
+	Class        string `json:"class"`
 	Strength     int    `json:"strength"`
 	Dexterity    int    `json:"dexterity"`
 	Constitution int    `json:"constitution"`
@@ -45,6 +48,9 @@ type UpdateCharacterInput struct {
 func (i *CreateCharacterInput) Validate() error {
 	if i.Name == "" {
 		return NewValidationError("name", "Name cannot be empty")
+	}
+	if i.Class == "" {
+		return NewValidationError("class", "Class cannot be empty")
 	}
 	if i.UserID <= 0 {
 		return NewValidationError("user_id", "Invalid user ID")
@@ -76,6 +82,9 @@ func (i *CreateCharacterInput) Validate() error {
 func (i *UpdateCharacterInput) Validate() error {
 	if i.Name == "" {
 		return NewValidationError("name", "Name cannot be empty")
+	}
+	if i.Class == "" {
+		return NewValidationError("class", "Class cannot be empty")
 	}
 	if i.Strength < 3 || i.Strength > 18 {
 		return NewValidationError("strength", "Strength must be between 3 and 18")

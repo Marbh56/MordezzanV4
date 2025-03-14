@@ -105,7 +105,6 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 
-	// Set up user template
 	templatePath := filepath.Join(tempDir, "user.html")
 	templateContent := `<!DOCTYPE html><html><body>{{.Username}}</body></html>`
 	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
@@ -119,7 +118,6 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		os.WriteFile("web/templates/user.html", input, 0644)
 	}
 
-	// Set up character template
 	characterTemplatePath := filepath.Join(tempDir, "character.html")
 	characterTemplateContent := `<!DOCTYPE html><html><body>{{.Name}}</body></html>`
 	if err := os.WriteFile(characterTemplatePath, []byte(characterTemplateContent), 0644); err != nil {
@@ -130,7 +128,6 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		os.WriteFile("web/templates/character.html", input, 0644)
 	}
 
-	// Set up spell template
 	spellTemplatePath := filepath.Join(tempDir, "spell.html")
 	spellTemplateContent := `<!DOCTYPE html><html><body>{{.Name}}</body></html>`
 	if err := os.WriteFile(spellTemplatePath, []byte(spellTemplateContent), 0644); err != nil {
@@ -141,7 +138,6 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		os.WriteFile("web/templates/spell.html", input, 0644)
 	}
 
-	// Set up armor template
 	armorTemplatePath := filepath.Join(tempDir, "armor.html")
 	armorTemplateContent := `<!DOCTYPE html><html><body>{{.Name}}</body></html>`
 	if err := os.WriteFile(armorTemplatePath, []byte(armorTemplateContent), 0644); err != nil {
@@ -152,7 +148,6 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		os.WriteFile("web/templates/armor.html", input, 0644)
 	}
 
-	// Set up weapon template
 	weaponTemplatePath := filepath.Join(tempDir, "weapon.html")
 	weaponTemplateContent := `<!DOCTYPE html><html><body>{{.Name}}</body></html>`
 	if err := os.WriteFile(weaponTemplatePath, []byte(weaponTemplateContent), 0644); err != nil {
@@ -163,7 +158,6 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		os.WriteFile("web/templates/weapon.html", input, 0644)
 	}
 
-	// Set up shield template
 	shieldTemplatePath := filepath.Join(tempDir, "shield.html")
 	shieldTemplateContent := `<!DOCTYPE html><html><body>{{.Name}}</body></html>`
 	if err := os.WriteFile(shieldTemplatePath, []byte(shieldTemplateContent), 0644); err != nil {
@@ -174,7 +168,6 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		os.WriteFile("web/templates/shield.html", input, 0644)
 	}
 
-	// Set up equipment template
 	equipmentTemplatePath := filepath.Join(tempDir, "equipment.html")
 	equipmentTemplateContent := `<!DOCTYPE html><html><body>{{.Name}}</body></html>`
 	if err := os.WriteFile(equipmentTemplatePath, []byte(equipmentTemplateContent), 0644); err != nil {
@@ -185,7 +178,6 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		os.WriteFile("web/templates/equipment.html", input, 0644)
 	}
 
-	// Set up magic item template
 	magicItemTemplatePath := filepath.Join(tempDir, "magic_item.html")
 	magicItemTemplateContent := `<!DOCTYPE html><html><body>{{.Name}}</body></html>`
 	if err := os.WriteFile(magicItemTemplatePath, []byte(magicItemTemplateContent), 0644); err != nil {
@@ -194,6 +186,46 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 	if err := os.Symlink(magicItemTemplatePath, "web/templates/magic_item.html"); err != nil {
 		input, _ := os.ReadFile(magicItemTemplatePath)
 		os.WriteFile("web/templates/magic_item.html", input, 0644)
+	}
+
+	ringTemplatePath := filepath.Join(tempDir, "ring.html")
+	ringTemplateContent := `<!DOCTYPE html><html><body>{{.Name}}</body></html>`
+	if err := os.WriteFile(ringTemplatePath, []byte(ringTemplateContent), 0644); err != nil {
+		t.Fatalf("Failed to write ring template: %v", err)
+	}
+	if err := os.Symlink(ringTemplatePath, "web/templates/ring.html"); err != nil {
+		input, _ := os.ReadFile(ringTemplatePath)
+		os.WriteFile("web/templates/ring.html", input, 0644)
+	}
+
+	ammoTemplatePath := filepath.Join(tempDir, "ammo.html")
+	ammoTemplateContent := `<!DOCTYPE html><html><body>{{.Name}}</body></html>`
+	if err := os.WriteFile(ammoTemplatePath, []byte(ammoTemplateContent), 0644); err != nil {
+		t.Fatalf("Failed to write ammo template: %v", err)
+	}
+	if err := os.Symlink(ammoTemplatePath, "web/templates/ammo.html"); err != nil {
+		input, _ := os.ReadFile(ammoTemplatePath)
+		os.WriteFile("web/templates/ammo.html", input, 0644)
+	}
+
+	spellScrollTemplatePath := filepath.Join(tempDir, "spell_scroll.html")
+	spellScrollTemplateContent := `<!DOCTYPE html><html><body>{{.SpellName}}</body></html>`
+	if err := os.WriteFile(spellScrollTemplatePath, []byte(spellScrollTemplateContent), 0644); err != nil {
+		t.Fatalf("Failed to write spell scroll template: %v", err)
+	}
+	if err := os.Symlink(spellScrollTemplatePath, "web/templates/spell_scroll.html"); err != nil {
+		input, _ := os.ReadFile(spellScrollTemplatePath)
+		os.WriteFile("web/templates/spell_scroll.html", input, 0644)
+	}
+
+	containerTemplatePath := filepath.Join(tempDir, "container.html")
+	containerTemplateContent := `<!DOCTYPE html><html><body>{{.Name}}</body></html>`
+	if err := os.WriteFile(containerTemplatePath, []byte(containerTemplateContent), 0644); err != nil {
+		t.Fatalf("Failed to write container template: %v", err)
+	}
+	if err := os.Symlink(containerTemplatePath, "web/templates/container.html"); err != nil {
+		input, _ := os.ReadFile(containerTemplatePath)
+		os.WriteFile("web/templates/container.html", input, 0644)
 	}
 
 	dbFile := "./character_integration_test.db"
@@ -221,22 +253,23 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 
 	log.Println("Creating characters table...")
 	_, err = db.Exec(`
-        CREATE TABLE IF NOT EXISTS characters (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            strength INTEGER NOT NULL DEFAULT 10,
-            dexterity INTEGER NOT NULL DEFAULT 10,
-            constitution INTEGER NOT NULL DEFAULT 10,
-            wisdom INTEGER NOT NULL DEFAULT 10,
-            intelligence INTEGER NOT NULL DEFAULT 10,
-            charisma INTEGER NOT NULL DEFAULT 10,
-            hit_points INTEGER NOT NULL DEFAULT 10,
-            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        );
-    `)
+	CREATE TABLE IF NOT EXISTS characters (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		name TEXT NOT NULL,
+		class TEXT NOT NULL DEFAULT 'Fighter',
+		strength INTEGER NOT NULL DEFAULT 10,
+		dexterity INTEGER NOT NULL DEFAULT 10,
+		constitution INTEGER NOT NULL DEFAULT 10,
+		wisdom INTEGER NOT NULL DEFAULT 10,
+		intelligence INTEGER NOT NULL DEFAULT 10,
+		charisma INTEGER NOT NULL DEFAULT 10,
+		hit_points INTEGER NOT NULL DEFAULT 10,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+		);
+	`)
 	if err != nil {
 		db.Close()
 		t.Fatalf("Failed to create characters table: %v", err)
@@ -386,6 +419,75 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		t.Fatalf("Failed to create magic_items table: %v", err)
 	}
 
+	log.Println("Creating rings table...")
+	_, err = db.Exec(`
+	CREATE TABLE rings (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		description TEXT NOT NULL,
+		cost REAL NOT NULL,
+		weight INTEGER NOT NULL,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+	`)
+	if err != nil {
+		db.Close()
+		t.Fatalf("Failed to create rings table: %v", err)
+	}
+
+	log.Println("Creating ammo table...")
+	_, err = db.Exec(`
+    CREATE TABLE IF NOT EXISTS ammo (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        cost REAL NOT NULL,
+        weight INTEGER NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+	`)
+	if err != nil {
+		db.Close()
+		t.Fatalf("Failed to create ammo table: %v", err)
+	}
+
+	log.Println("Creating spell_scrolls table...")
+	_, err = db.Exec(`
+    CREATE TABLE IF NOT EXISTS spell_scrolls (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        spell_id INTEGER NOT NULL,
+        casting_level INTEGER NOT NULL DEFAULT 1,
+        cost REAL NOT NULL,
+        weight INTEGER NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (spell_id) REFERENCES spells (id) ON DELETE CASCADE
+    );
+	`)
+	if err != nil {
+		db.Close()
+		t.Fatalf("Failed to create spell_scrolls table: %v", err)
+	}
+
+	log.Println("Creating containers table...")
+	_, err = db.Exec(`
+	CREATE TABLE containers (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		max_weight INTEGER NOT NULL,
+		allowed_items TEXT NOT NULL,
+		cost REAL NOT NULL,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+	`)
+	if err != nil {
+		db.Close()
+		t.Fatalf("Failed to create containers table: %v", err)
+	}
+
 	db.Close()
 	log.Println("Database tables created successfully")
 
@@ -408,6 +510,10 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		os.Remove("web/templates/shield.html")
 		os.Remove("web/templates/equipment.html")
 		os.Remove("web/templates/magic_item.html")
+		os.Remove("web/templates/ring.html")
+		os.Remove("web/templates/ammo.html")
+		os.Remove("web/templates/spell_scroll.html")
+		os.Remove("web/templates/container.html")
 		log.Println("Cleanup completed")
 	}
 }

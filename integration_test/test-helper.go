@@ -56,11 +56,11 @@ func createTestUser(t *testing.T, server *httptest.Server) int64 {
 	return createdUser.ID
 }
 
-// createTestCharacter creates a test character for a given user
 func createTestCharacter(t *testing.T, server *httptest.Server, userID int64) int64 {
 	characterData := models.CreateCharacterInput{
 		UserID:       userID,
 		Name:         "Gandalf",
+		Class:        "Wizard",
 		Strength:     10,
 		Dexterity:    12,
 		Constitution: 14,

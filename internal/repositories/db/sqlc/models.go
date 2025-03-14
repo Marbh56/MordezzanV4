@@ -9,6 +9,15 @@ import (
 	"time"
 )
 
+type Ammo struct {
+	ID        int64
+	Name      string
+	Cost      float64
+	Weight    int64
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type Armor struct {
 	ID              int64
 	Name            string
@@ -27,6 +36,7 @@ type Character struct {
 	ID           int64
 	UserID       int64
 	Name         string
+	Class        string
 	Strength     int64
 	Dexterity    int64
 	Constitution int64
@@ -34,6 +44,16 @@ type Character struct {
 	Intelligence int64
 	Charisma     int64
 	HitPoints    int64
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+type Container struct {
+	ID           int64
+	Name         string
+	MaxWeight    int64
+	AllowedItems string
+	Cost         float64
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -70,6 +90,16 @@ type Potion struct {
 	UpdatedAt   time.Time
 }
 
+type Ring struct {
+	ID          int64
+	Name        string
+	Description string
+	Cost        float64
+	Weight      int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 type Shield struct {
 	ID              int64
 	Name            string
@@ -97,6 +127,17 @@ type Spell struct {
 	AreaOfEffect sql.NullString
 	Components   sql.NullString
 	Description  string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+type SpellScroll struct {
+	ID           int64
+	SpellID      int64
+	CastingLevel int64
+	Cost         float64
+	Weight       int64
+	Description  sql.NullString
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

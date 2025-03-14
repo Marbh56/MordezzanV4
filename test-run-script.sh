@@ -40,57 +40,83 @@ if ! command -v go &> /dev/null; then
 fi
 
 LOGDIR="test_logs"
+FAILDIR="$LOGDIR/failures"
 mkdir -p $LOGDIR
+mkdir -p $FAILDIR
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 LOGFILE="$LOGDIR/integration_test_$TIMESTAMP.log"
 
-print_section "Running user integration tests"
-go test ./integration_test/... -v -run TestUserCRUDIntegration | tee -a "$LOGFILE"
-USER_TEST_STATUS=${PIPESTATUS[0]}
+run_test() {
+  local test_name=$1
+  local test_pattern=$2
+  print_section "Running $test_name integration tests"
+  local temp_output=$(mktemp)
+  go test ./integration_test/... -v -run $test_pattern | tee "$temp_output" | tee -a "$LOGFILE"
+  local test_status=${PIPESTATUS[0]}
+  if [ $test_status -ne 0 ]; then
+    local failure_file="$FAILDIR/${test_name}_FAILED_$TIMESTAMP.log"
+    cp "$temp_output" "$failure_file"
+    print_error "$test_name integration tests failed. Output saved to $failure_file"
+  fi
+  rm "$temp_output"
+  return $test_status
+}
 
-print_section "Running character integration tests"
-go test ./integration_test/... -v -run TestCharacterCRUDIntegration | tee -a "$LOGFILE"
-CHAR_TEST_STATUS=${PIPESTATUS[0]}
+run_test "user" "TestUserCRUDIntegration"
+USER_TEST_STATUS=$?
 
-print_section "Running spell integration tests"
-go test ./integration_test/... -v -run TestSpellCRUDIntegration | tee -a "$LOGFILE"
-SPELL_TEST_STATUS=${PIPESTATUS[0]}
+run_test "character" "TestCharacterCRUDIntegration"
+CHAR_TEST_STATUS=$?
 
-print_section "Running armor integration tests"
-go test ./integration_test/... -v -run TestArmorCRUDIntegration | tee -a "$LOGFILE"
-ARMOR_TEST_STATUS=${PIPESTATUS[0]}
+run_test "spell" "TestSpellCRUDIntegration"
+SPELL_TEST_STATUS=$?
 
-print_section "Running weapon integration tests"
-go test ./integration_test/... -v -run TestWeaponCRUDIntegration | tee -a "$LOGFILE"
-WEAPON_TEST_STATUS=${PIPESTATUS[0]}
+run_test "armor" "TestArmorCRUDIntegration"
+ARMOR_TEST_STATUS=$?
 
-print_section "Running equipment integration tests"
-go test ./integration_test/... -v -run TestEquipmentCRUDIntegration | tee -a "$LOGFILE"
-EQUIPMENT_TEST_STATUS=${PIPESTATUS[0]}
+run_test "weapon" "TestWeaponCRUDIntegration"
+WEAPON_TEST_STATUS=$?
 
-print_section "Running shield integration tests"
-go test ./integration_test/... -v -run TestShieldCRUDIntegration | tee -a "$LOGFILE"
-SHIELD_TEST_STATUS=${PIPESTATUS[0]}
+run_test "equipment" "TestEquipmentCRUDIntegration"
+EQUIPMENT_TEST_STATUS=$?
 
-print_section "Running potion integration tests"
-go test ./integration_test/... -v -run TestPotionCRUDIntegration | tee -a "$LOGFILE"
-POTION_TEST_STATUS=${PIPESTATUS[0]}
+run_test "shield" "TestShieldCRUDIntegration"
+SHIELD_TEST_STATUS=$?
 
-print_section "Running magic item integration tests"
-go test ./integration_test/... -v -run TestMagicItemCRUDIntegration | tee -a "$LOGFILE"
-MAGIC_ITEM_TEST_STATUS=${PIPESTATUS[0]}
+run_test "potion" "TestPotionCRUDIntegration"
+POTION_TEST_STATUS=$?
+
+run_test "magic_item" "TestMagicItemCRUDIntegration"
+MAGIC_ITEM_TEST_STATUS=$?
+
+run_test "ring" "TestRingCRUDIntegration"
+RING_TEST_STATUS=$?
+
+run_test "ammo" "TestAmmoCRUDIntegration"
+AMMO_TEST_STATUS=$?
+
+run_test "spell_scroll" "TestSpellScrollCRUDIntegration"
+SPELL_SCROLL_TEST_STATUS=$?
+
+run_test "container" "TestContainerCRUDIntegration" 
+CONTAINER_TEST_STATUS=$?
 
 echo ""
-if [ $USER_TEST_STATUS -eq 0 ] &&
-   [ $CHAR_TEST_STATUS -eq 0 ] &&
-   [ $SPELL_TEST_STATUS -eq 0 ] &&
-   [ $ARMOR_TEST_STATUS -eq 0 ] &&
-   [ $WEAPON_TEST_STATUS -eq 0 ] &&
-   [ $EQUIPMENT_TEST_STATUS -eq 0 ] &&
-   [ $SHIELD_TEST_STATUS -eq 0 ] &&
-   [ $POTION_TEST_STATUS -eq 0 ] &&
-   [ $MAGIC_ITEM_TEST_STATUS -eq 0 ]; then
+# Check if any tests failed and print the summary
+if [ $USER_TEST_STATUS -eq 0 ] && \
+   [ $CHAR_TEST_STATUS -eq 0 ] && \
+   [ $SPELL_TEST_STATUS -eq 0 ] && \
+   [ $ARMOR_TEST_STATUS -eq 0 ] && \
+   [ $WEAPON_TEST_STATUS -eq 0 ] && \
+   [ $EQUIPMENT_TEST_STATUS -eq 0 ] && \
+   [ $SHIELD_TEST_STATUS -eq 0 ] && \
+   [ $POTION_TEST_STATUS -eq 0 ] && \
+   [ $MAGIC_ITEM_TEST_STATUS -eq 0 ] && \
+   [ $RING_TEST_STATUS -eq 0 ] && \
+   [ $AMMO_TEST_STATUS -eq 0 ] && \
+   [ $SPELL_SCROLL_TEST_STATUS -eq 0 ] && \
+   [ $CONTAINER_TEST_STATUS -eq 0 ]; then
   print_header "ALL TESTS PASSED SUCCESSFULLY!"
   print_success "User CRUD integration tests: PASSED"
   print_success "Character CRUD integration tests: PASSED"
@@ -101,7 +127,14 @@ if [ $USER_TEST_STATUS -eq 0 ] &&
   print_success "Shield CRUD integration tests: PASSED"
   print_success "Potion CRUD integration tests: PASSED"
   print_success "Magic Item CRUD integration tests: PASSED"
+  print_success "Ring CRUD integration tests: PASSED"
+  print_success "Ammo CRUD integration tests: PASSED"
+  print_success "Spell Scroll CRUD integration tests: PASSED"
+  print_success "Container CRUD integration tests: PASSED"
   print_info "Log file saved to: $LOGFILE"
+  if [ -z "$(ls -A $FAILDIR)" ]; then
+    rmdir $FAILDIR
+  fi
   exit 0
 else
   print_header "TEST FAILURES DETECTED"
@@ -150,6 +183,27 @@ else
   else
     print_error "Magic Item CRUD integration tests: FAILED"
   fi
-  print_info "Check the log file for details: $LOGFILE"
+  if [ $RING_TEST_STATUS -eq 0 ]; then
+    print_success "Ring CRUD integration tests: PASSED"
+  else
+    print_error "Ring CRUD integration tests: FAILED"
+  fi
+  if [ $AMMO_TEST_STATUS -eq 0 ]; then
+    print_success "Ammo CRUD integration tests: PASSED"
+  else
+    print_error "Ammo CRUD integration tests: FAILED"
+  fi
+  if [ $SPELL_SCROLL_TEST_STATUS -eq 0 ]; then
+    print_success "Spell Scroll CRUD integration tests: PASSED"
+  else
+    print_error "Spell Scroll integration tests: FAILED"
+  fi
+  if [ $CONTAINER_TEST_STATUS -eq 0 ]; then
+    print_success "Container CRUD integration tests: PASSED"
+  else
+    print_error "Container CRUD integration tests: FAILED"
+  fi
+  print_info "Complete log file saved to: $LOGFILE"
+  print_info "Failed test logs saved to: $FAILDIR/"
   exit 1
 fi

@@ -50,4 +50,13 @@ repo-ignore:
 
 repo-clean:
 	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/*_test.go,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*"
+		--ignore "**/*_test.go,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh"
+
+repo-frontend:
+	repomix --remove-comments --remove-empty-lines \
+		--ignore "**/*repository*.go,**/*.sql,**/*.sql.go,**/queries/**,**/*_test.go,**/db/**,**/migrations/**,**/sqlc/**,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/middleware/**,**/controllers/**,cmd/**,**/logger/**,**/errors/**,**/app/**,**/contextkeys/**"
+
+repo-backend:
+	repomix --remove-comments --remove-empty-lines \
+		--ignore "**/*_test.go,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/web/static/**,**/web/templates/**,**/docs/**,README.md"
+

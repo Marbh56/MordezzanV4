@@ -13,21 +13,22 @@ ORDER BY name;
 
 -- name: CreateCharacter :execresult
 INSERT INTO characters (
-  user_id, name, strength, dexterity, constitution, 
+  user_id, name, class, strength, dexterity, constitution,
   wisdom, intelligence, charisma, hit_points
 ) VALUES (
-  ?, ?, ?, ?, ?, ?, ?, ?, ?
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 );
 
 -- name: UpdateCharacter :execresult
 UPDATE characters
-SET name = ?, 
-    strength = ?, 
-    dexterity = ?, 
-    constitution = ?, 
-    wisdom = ?, 
-    intelligence = ?, 
-    charisma = ?, 
+SET name = ?,
+    class = ?,
+    strength = ?,
+    dexterity = ?,
+    constitution = ?,
+    wisdom = ?,
+    intelligence = ?,
+    charisma = ?,
     hit_points = ?,
     updated_at = datetime('now')
 WHERE id = ?;

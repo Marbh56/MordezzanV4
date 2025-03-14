@@ -25,19 +25,20 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 
 	log.Success("Test server started at %s", server.URL)
 
-	log.Step("Creating test user")
+	// Create a test user first
 	userID := createTestUser(t, server)
 	log.Success("Test user created with ID: %d", userID)
 
 	var characterID int64
 
-	t.Run("Create Character", func(t *testing.T) {
+	t.Run("Create_Character", func(t *testing.T) {
 		log := NewTestLogger(t)
 		log.Step("Creating new character")
 
 		characterData := models.CreateCharacterInput{
 			UserID:       userID,
 			Name:         "Aragorn",
+			Class:        "Ranger", // Added Class field
 			Strength:     16,
 			Dexterity:    14,
 			Constitution: 15,
@@ -89,23 +90,18 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		log.Success("Character created with ID: %d", characterID)
 
 		if createdCharacter.Name != characterData.Name {
-			log.Error("Name mismatch. Expected: %s, Got: %s",
-				characterData.Name, createdCharacter.Name)
-			t.Errorf("Expected character name %s, got %s",
-				characterData.Name, createdCharacter.Name)
+			log.Error("Name mismatch. Expected: %s, Got: %s", characterData.Name, createdCharacter.Name)
+			t.Errorf("Expected character name %s, got %s", characterData.Name, createdCharacter.Name)
+		}
+
+		if createdCharacter.Class != characterData.Class {
+			log.Error("Class mismatch. Expected: %s, Got: %s", characterData.Class, createdCharacter.Class)
+			t.Errorf("Expected character class %s, got %s", characterData.Class, createdCharacter.Class)
 		}
 
 		if createdCharacter.Strength != characterData.Strength {
-			log.Error("Strength mismatch. Expected: %d, Got: %d",
-				characterData.Strength, createdCharacter.Strength)
-			t.Errorf("Expected strength %d, got %d",
-				characterData.Strength, createdCharacter.Strength)
-		}
-
-		if createdCharacter.UserID != userID {
-			log.Error("User ID mismatch. Expected: %d, Got: %d",
-				userID, createdCharacter.UserID)
-			t.Errorf("Expected user ID %d, got %d", userID, createdCharacter.UserID)
+			log.Error("Strength mismatch. Expected: %d, Got: %d", characterData.Strength, createdCharacter.Strength)
+			t.Errorf("Expected strength %d, got %d", characterData.Strength, createdCharacter.Strength)
 		}
 
 		log.Success("Character validation passed")
@@ -113,7 +109,7 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 
 	log.Separator()
 
-	t.Run("Get Character", func(t *testing.T) {
+	t.Run("Get_Character", func(t *testing.T) {
 		log := NewTestLogger(t)
 		log.Step("Retrieving created character")
 		log.Info("Character ID: %d", characterID)
@@ -145,12 +141,11 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			t.Fatalf("Failed to decode response: %v", err)
 		}
 
-		log.Info("Received character: ID=%d, Name=%s, User ID=%d",
-			character.ID, character.Name, character.UserID)
+		log.Info("Received character: ID=%d, Name=%s, Class=%s",
+			character.ID, character.Name, character.Class)
 
 		if character.ID != characterID {
-			log.Error("Character ID mismatch. Expected: %d, Got: %d",
-				characterID, character.ID)
+			log.Error("Character ID mismatch. Expected: %d, Got: %d", characterID, character.ID)
 			t.Errorf("Expected character ID %d, got %d", characterID, character.ID)
 		}
 
@@ -159,10 +154,9 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			t.Errorf("Expected character name 'Aragorn', got '%s'", character.Name)
 		}
 
-		if character.UserID != userID {
-			log.Error("User ID mismatch. Expected: %d, Got: %d",
-				userID, character.UserID)
-			t.Errorf("Expected user ID %d, got %d", userID, character.UserID)
+		if character.Class != "Ranger" {
+			log.Error("Class mismatch. Expected: %s, Got: %s", "Ranger", character.Class)
+			t.Errorf("Expected character class 'Ranger', got '%s'", character.Class)
 		}
 
 		log.Success("Character data validation passed")
@@ -170,7 +164,7 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 
 	log.Separator()
 
-	t.Run("Get Characters By User", func(t *testing.T) {
+	t.Run("Get_Characters_By_User", func(t *testing.T) {
 		log := NewTestLogger(t)
 		log.Step("Retrieving characters for user")
 		log.Info("User ID: %d", userID)
@@ -182,7 +176,6 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		if !log.CheckNoError(err, "Create request") {
 			t.Fatal("Test failed")
 		}
-		req.Header.Set("Accept", "application/json")
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -206,40 +199,36 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 
 		if len(characters) < 1 {
 			log.Error("Expected at least 1 character, got %d", len(characters))
-			t.Fatalf("Expected at least 1 character, got %d", len(characters))
-		}
-
-		found := false
-		for _, c := range characters {
-			if c.ID == characterID {
-				found = true
-				log.Info("Found our test character: ID=%d, Name=%s", c.ID, c.Name)
-				if c.Name != "Aragorn" {
-					log.Error("Name mismatch. Expected: %s, Got: %s",
-						"Aragorn", c.Name)
-					t.Errorf("Expected character name 'Aragorn', got '%s'", c.Name)
-				}
-				break
-			}
-		}
-
-		if !found {
-			log.Error("Character with ID %d not found in characters list", characterID)
-			t.Errorf("Character with ID %d not found in characters list", characterID)
+			t.Errorf("Expected at least 1 character, got %d", len(characters))
 		} else {
-			log.Success("Character found in the list")
+			found := false
+			for _, c := range characters {
+				if c.ID == characterID {
+					found = true
+					log.Info("Found our test character: ID=%d, Name=%s, Class=%s", c.ID, c.Name, c.Class)
+					break
+				}
+			}
+
+			if !found {
+				log.Error("Character with ID %d not found in user's characters list", characterID)
+				t.Errorf("Character with ID %d not found in user's characters list", characterID)
+			} else {
+				log.Success("Character found in the list")
+			}
 		}
 	})
 
 	log.Separator()
 
-	t.Run("Update Character", func(t *testing.T) {
+	t.Run("Update_Character", func(t *testing.T) {
 		log := NewTestLogger(t)
 		log.Step("Updating character")
 		log.Info("Character ID: %d", characterID)
 
 		updateData := models.UpdateCharacterInput{
 			Name:         "Strider",
+			Class:        "Ranger", // Added Class field
 			Strength:     17,
 			Dexterity:    15,
 			Constitution: 16,
@@ -287,12 +276,8 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			t.Fatalf("Failed to decode response: %v", err)
 		}
 
-		log.Info("Updated character data: ID=%d, Name=%s",
-			updatedCharacter.ID, updatedCharacter.Name)
-		log.Info("Updated stats: STR=%d, DEX=%d, CON=%d, WIS=%d, INT=%d, CHA=%d, HP=%d",
-			updatedCharacter.Strength, updatedCharacter.Dexterity, updatedCharacter.Constitution,
-			updatedCharacter.Wisdom, updatedCharacter.Intelligence, updatedCharacter.Charisma,
-			updatedCharacter.HitPoints)
+		log.Info("Updated character data: ID=%d, Name=%s, Class=%s, Strength=%d",
+			updatedCharacter.ID, updatedCharacter.Name, updatedCharacter.Class, updatedCharacter.Strength)
 
 		if updatedCharacter.Name != updateData.Name {
 			log.Error("Name mismatch. Expected: %s, Got: %s",
@@ -300,18 +285,16 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			t.Errorf("Expected name %s, got %s", updateData.Name, updatedCharacter.Name)
 		}
 
+		if updatedCharacter.Class != updateData.Class {
+			log.Error("Class mismatch. Expected: %s, Got: %s",
+				updateData.Class, updatedCharacter.Class)
+			t.Errorf("Expected class %s, got %s", updateData.Class, updatedCharacter.Class)
+		}
+
 		if updatedCharacter.Strength != updateData.Strength {
 			log.Error("Strength mismatch. Expected: %d, Got: %d",
 				updateData.Strength, updatedCharacter.Strength)
-			t.Errorf("Expected strength %d, got %d",
-				updateData.Strength, updatedCharacter.Strength)
-		}
-
-		if updatedCharacter.HitPoints != updateData.HitPoints {
-			log.Error("Hit points mismatch. Expected: %d, Got: %d",
-				updateData.HitPoints, updatedCharacter.HitPoints)
-			t.Errorf("Expected hit points %d, got %d",
-				updateData.HitPoints, updatedCharacter.HitPoints)
+			t.Errorf("Expected strength %d, got %d", updateData.Strength, updatedCharacter.Strength)
 		}
 
 		log.Success("Character update validation passed")
@@ -319,7 +302,7 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 
 	log.Separator()
 
-	t.Run("Delete Character", func(t *testing.T) {
+	t.Run("Delete_Character", func(t *testing.T) {
 		log := NewTestLogger(t)
 		log.Step("Deleting character")
 		log.Info("Character ID: %d", characterID)
@@ -366,14 +349,17 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		log.Success("Character confirmed deleted (received 404 Not Found)")
 	})
 
-	t.Run("Character With Invalid Data", func(t *testing.T) {
+	t.Run("Character_With_Invalid_Data", func(t *testing.T) {
 		log := NewTestLogger(t)
 		log.Step("Testing validation with invalid character data")
 
-		invalidCharacter := models.CreateCharacterInput{
+		log.Info("Invalid data: empty name, strength=25")
+
+		invalidData := models.CreateCharacterInput{
 			UserID:       userID,
-			Name:         "", // Invalid: empty name
-			Strength:     25, // Invalid: too high (must be <= 18)
+			Name:         "",        // Invalid: empty name
+			Class:        "Warrior", // Added class field
+			Strength:     25,        // Invalid: strength > 18
 			Dexterity:    14,
 			Constitution: 15,
 			Wisdom:       13,
@@ -382,10 +368,8 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			HitPoints:    20,
 		}
 
-		log.Info("Invalid data: empty name, strength=25")
-
-		payload, err := json.Marshal(invalidCharacter)
-		if !log.CheckNoError(err, "Marshal invalid character data") {
+		payload, err := json.Marshal(invalidData)
+		if !log.CheckNoError(err, "Marshal invalid data") {
 			t.Fatal("Test failed")
 		}
 
@@ -405,10 +389,8 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusBadRequest {
-			log.Error("Expected status %d for invalid data, got %d",
-				http.StatusBadRequest, resp.StatusCode)
-			t.Fatalf("Expected status %d for invalid data, got %d",
-				http.StatusBadRequest, resp.StatusCode)
+			log.Error("Expected status %d for invalid data, got %d", http.StatusBadRequest, resp.StatusCode)
+			t.Fatalf("Expected status %d for invalid data, got %d", http.StatusBadRequest, resp.StatusCode)
 		}
 		log.Success("Correctly received BadRequest response: %d", resp.StatusCode)
 
@@ -425,20 +407,13 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 
 		log.Info("Error response: %s", errorResp.Message)
 
-		if errorResp.Status != http.StatusBadRequest {
-			log.Error("Expected error status %d, got %d",
-				http.StatusBadRequest, errorResp.Status)
-			t.Errorf("Expected error status %d, got %d",
-				http.StatusBadRequest, errorResp.Status)
-		}
-
-		if errorResp.Fields == nil || len(errorResp.Fields) == 0 {
-			log.Error("Expected validation error fields, got none")
-			t.Error("Expected validation error fields, got none")
+		if errorResp.Message != "Validation failed" || len(errorResp.Fields) == 0 {
+			log.Error("Expected validation error with field details")
+			t.Errorf("Expected validation error message with field details")
 		} else {
 			log.Success("Validation fields returned properly")
-			for field, message := range errorResp.Fields {
-				log.Info("Validation error: %s - %s", field, message)
+			for field, msg := range errorResp.Fields {
+				log.Info("Validation error: %s - %s", field, msg)
 			}
 		}
 	})

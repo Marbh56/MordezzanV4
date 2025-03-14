@@ -76,11 +76,11 @@ func (r *SQLCCharacterRepository) ListCharacters(ctx context.Context) ([]*models
 	return result, nil
 }
 
-// CreateCharacter creates a new character
 func (r *SQLCCharacterRepository) CreateCharacter(ctx context.Context, input *models.CreateCharacterInput) (int64, error) {
 	result, err := r.q.CreateCharacter(ctx, sqlcdb.CreateCharacterParams{
 		UserID:       input.UserID,
 		Name:         input.Name,
+		Class:        input.Class,
 		Strength:     int64(input.Strength),
 		Dexterity:    int64(input.Dexterity),
 		Constitution: int64(input.Constitution),
@@ -92,25 +92,21 @@ func (r *SQLCCharacterRepository) CreateCharacter(ctx context.Context, input *mo
 	if err != nil {
 		return 0, apperrors.NewDatabaseError(err)
 	}
-
 	id, err := result.LastInsertId()
 	if err != nil {
 		return 0, apperrors.NewDatabaseError(err)
 	}
-
 	return id, nil
 }
 
-// UpdateCharacter updates an existing character
 func (r *SQLCCharacterRepository) UpdateCharacter(ctx context.Context, id int64, input *models.UpdateCharacterInput) error {
-	// Check if character exists
 	_, err := r.GetCharacter(ctx, id)
 	if err != nil {
 		return err
 	}
-
 	_, err = r.q.UpdateCharacter(ctx, sqlcdb.UpdateCharacterParams{
 		Name:         input.Name,
+		Class:        input.Class,
 		Strength:     int64(input.Strength),
 		Dexterity:    int64(input.Dexterity),
 		Constitution: int64(input.Constitution),
@@ -123,7 +119,6 @@ func (r *SQLCCharacterRepository) UpdateCharacter(ctx context.Context, id int64,
 	if err != nil {
 		return apperrors.NewDatabaseError(err)
 	}
-
 	return nil
 }
 
@@ -143,12 +138,12 @@ func (r *SQLCCharacterRepository) DeleteCharacter(ctx context.Context, id int64)
 	return nil
 }
 
-// mapDbCharacterToModel maps a database character to a model character
 func mapDbCharacterToModel(character sqlcdb.Character) *models.Character {
 	return &models.Character{
 		ID:           character.ID,
 		UserID:       character.UserID,
 		Name:         character.Name,
+		Class:        character.Class,
 		Strength:     int(character.Strength),
 		Dexterity:    int(character.Dexterity),
 		Constitution: int(character.Constitution),
