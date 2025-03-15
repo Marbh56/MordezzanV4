@@ -37,6 +37,7 @@ type Character struct {
 	UserID       int64
 	Name         string
 	Class        string
+	Level        int64
 	Strength     int64
 	Dexterity    int64
 	Constitution int64
@@ -64,6 +65,27 @@ type Equipment struct {
 	Description string
 	Cost        float64
 	Weight      int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+type Inventory struct {
+	ID            int64
+	CharacterID   int64
+	MaxWeight     float64
+	CurrentWeight float64
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
+type InventoryItem struct {
+	ID          int64
+	InventoryID int64
+	ItemType    string
+	ItemID      int64
+	Quantity    int64
+	IsEquipped  bool
+	Notes       sql.NullString
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -140,6 +162,22 @@ type SpellScroll struct {
 	Description  sql.NullString
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+}
+
+type Treasure struct {
+	ID             int64
+	CharacterID    sql.NullInt64
+	PlatinumCoins  int64
+	GoldCoins      int64
+	ElectrumCoins  int64
+	SilverCoins    int64
+	CopperCoins    int64
+	Gems           sql.NullString
+	ArtObjects     sql.NullString
+	OtherValuables sql.NullString
+	TotalValueGold float64
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type User struct {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"mordezzanV4/internal/app"
 	"mordezzanV4/internal/logger"
 	"net/http"
@@ -10,10 +11,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
+
+	err := godotenv.Load()
+	if err != nil {
+		// Not a fatal error, as .env might not exist in production
+		fmt.Println("Warning: .env file not found")
+	}
 	// Initialize the Zap logger
 	logger.Init(logger.Config{
 		LogLevel:         logger.LogLevelDebug,

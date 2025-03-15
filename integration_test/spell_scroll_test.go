@@ -25,14 +25,52 @@ func TestSpellScrollCRUDIntegration(t *testing.T) {
 
 	log.Success("Test server started at %s", server.URL)
 
-	// First, we need to create a user
-	log.Step("Creating a test user")
-	userID := createTestUser(t, server)
-	log.Success("Created test user with ID %d", userID)
+	// Create a test user with authentication
+	log.Step("Creating a test user with authentication")
+	testUser := CreateTestUserWithAuth(t, server)
+	log.Success("Created test user with ID %d", testUser.ID)
 
-	// Next, create a character
+	// Create a character
 	log.Step("Creating a test character")
-	characterID := createTestCharacter(t, server, userID)
+	characterData := models.CreateCharacterInput{
+		UserID:       testUser.ID,
+		Name:         "Merlin",
+		Class:        "Wizard",
+		Level:        7,
+		Strength:     9,
+		Dexterity:    12,
+		Constitution: 13,
+		Wisdom:       16,
+		Intelligence: 18,
+		Charisma:     14,
+		HitPoints:    35,
+	}
+
+	payload, err := json.Marshal(characterData)
+	if !log.CheckNoError(err, "Marshal character data") {
+		t.Fatal("Test failed")
+	}
+
+	req := AuthenticatedRequest(t, "POST", server.URL+"/characters", bytes.NewBuffer(payload), testUser)
+
+	resp, err := http.DefaultClient.Do(req)
+	if !log.CheckNoError(err, "Send character request") {
+		t.Fatal("Test failed")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		log.Error("Expected status %d for character creation, got %d", http.StatusCreated, resp.StatusCode)
+		t.Fatalf("Expected status %d, got %d", http.StatusCreated, resp.StatusCode)
+	}
+
+	var createdCharacter models.Character
+	if err := json.NewDecoder(resp.Body).Decode(&createdCharacter); err != nil {
+		log.Error("Failed to decode character response: %v", err)
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+
+	characterID := createdCharacter.ID
 	log.Success("Created test character with ID %d", characterID)
 
 	// Create a spell
@@ -55,14 +93,7 @@ func TestSpellScrollCRUDIntegration(t *testing.T) {
 		t.Fatal("Test failed")
 	}
 
-	spellEndpoint := server.URL + "/spells"
-	log.Info("Sending POST request to %s", spellEndpoint)
-
-	spellReq, err := http.NewRequest("POST", spellEndpoint, bytes.NewBuffer(spellPayload))
-	if !log.CheckNoError(err, "Create spell request") {
-		t.Fatal("Test failed")
-	}
-	spellReq.Header.Set("Content-Type", "application/json")
+	spellReq := AuthenticatedRequest(t, "POST", server.URL+"/spells", bytes.NewBuffer(spellPayload), testUser)
 
 	spellResp, err := http.DefaultClient.Do(spellReq)
 	if !log.CheckNoError(err, "Send spell request") {
@@ -109,13 +140,9 @@ func TestSpellScrollCRUDIntegration(t *testing.T) {
 		}
 
 		endpoint := server.URL + "/spell-scrolls"
-		log.Info("Sending POST request to %s", endpoint)
+		log.Info("Sending authenticated POST request to %s", endpoint)
 
-		req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(payload))
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
-		req.Header.Set("Content-Type", "application/json")
+		req := AuthenticatedRequest(t, "POST", endpoint, bytes.NewBuffer(payload), testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -169,12 +196,9 @@ func TestSpellScrollCRUDIntegration(t *testing.T) {
 		log.Info("Spell Scroll ID: %d", spellScrollID)
 
 		endpoint := fmt.Sprintf("%s/spell-scrolls/%d", server.URL, spellScrollID)
-		log.Info("Sending GET request to %s", endpoint)
+		log.Info("Sending authenticated GET request to %s", endpoint)
 
-		req, err := http.NewRequest("GET", endpoint, nil)
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
+		req := AuthenticatedRequest(t, "GET", endpoint, nil, testUser)
 		req.Header.Set("Accept", "application/json")
 
 		resp, err := http.DefaultClient.Do(req)
@@ -218,12 +242,8 @@ func TestSpellScrollCRUDIntegration(t *testing.T) {
 		log.Step("Retrieving list of spell scrolls")
 
 		endpoint := server.URL + "/spell-scrolls"
-		log.Info("Sending GET request to %s", endpoint)
-
-		req, err := http.NewRequest("GET", endpoint, nil)
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
+		log.Info("Sending authenticated GET request to %s", endpoint)
+		req := AuthenticatedRequest(t, "GET", endpoint, nil, testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -286,13 +306,9 @@ func TestSpellScrollCRUDIntegration(t *testing.T) {
 		}
 
 		endpoint := fmt.Sprintf("%s/spell-scrolls/%d", server.URL, spellScrollID)
-		log.Info("Sending PUT request to %s", endpoint)
+		log.Info("Sending authenticated PUT request to %s", endpoint)
 
-		req, err := http.NewRequest("PUT", endpoint, bytes.NewBuffer(payload))
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
-		req.Header.Set("Content-Type", "application/json")
+		req := AuthenticatedRequest(t, "PUT", endpoint, bytes.NewBuffer(payload), testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -340,12 +356,9 @@ func TestSpellScrollCRUDIntegration(t *testing.T) {
 		log.Info("Spell Scroll ID: %d", spellScrollID)
 
 		endpoint := fmt.Sprintf("%s/spell-scrolls/%d", server.URL, spellScrollID)
-		log.Info("Sending DELETE request to %s", endpoint)
+		log.Info("Sending authenticated DELETE request to %s", endpoint)
 
-		req, err := http.NewRequest("DELETE", endpoint, nil)
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
+		req := AuthenticatedRequest(t, "DELETE", endpoint, nil, testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -360,10 +373,7 @@ func TestSpellScrollCRUDIntegration(t *testing.T) {
 		log.Success("Received correct status code: %d", resp.StatusCode)
 
 		log.Info("Verifying spell scroll deletion by attempting to retrieve it")
-		getReq, err := http.NewRequest("GET", endpoint, nil)
-		if !log.CheckNoError(err, "Create verification request") {
-			t.Fatal("Test failed")
-		}
+		getReq := AuthenticatedRequest(t, "GET", endpoint, nil, testUser)
 		getReq.Header.Set("Accept", "application/json")
 
 		getResp, err := http.DefaultClient.Do(getReq)

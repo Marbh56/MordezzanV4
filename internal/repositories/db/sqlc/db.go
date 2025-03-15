@@ -24,6 +24,9 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
+	if q.addInventoryItemStmt, err = db.PrepareContext(ctx, addInventoryItem); err != nil {
+		return nil, fmt.Errorf("error preparing query AddInventoryItem: %w", err)
+	}
 	if q.createAmmoStmt, err = db.PrepareContext(ctx, createAmmo); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateAmmo: %w", err)
 	}
@@ -38,6 +41,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.createEquipmentStmt, err = db.PrepareContext(ctx, createEquipment); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateEquipment: %w", err)
+	}
+	if q.createInventoryStmt, err = db.PrepareContext(ctx, createInventory); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateInventory: %w", err)
 	}
 	if q.createMagicItemStmt, err = db.PrepareContext(ctx, createMagicItem); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateMagicItem: %w", err)
@@ -56,6 +62,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.createSpellScrollStmt, err = db.PrepareContext(ctx, createSpellScroll); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateSpellScroll: %w", err)
+	}
+	if q.createTreasureStmt, err = db.PrepareContext(ctx, createTreasure); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateTreasure: %w", err)
 	}
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
@@ -78,6 +87,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.deleteEquipmentStmt, err = db.PrepareContext(ctx, deleteEquipment); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteEquipment: %w", err)
 	}
+	if q.deleteInventoryStmt, err = db.PrepareContext(ctx, deleteInventory); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteInventory: %w", err)
+	}
 	if q.deleteMagicItemStmt, err = db.PrepareContext(ctx, deleteMagicItem); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteMagicItem: %w", err)
 	}
@@ -95,6 +107,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.deleteSpellScrollStmt, err = db.PrepareContext(ctx, deleteSpellScroll); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteSpellScroll: %w", err)
+	}
+	if q.deleteTreasureStmt, err = db.PrepareContext(ctx, deleteTreasure); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteTreasure: %w", err)
 	}
 	if q.deleteUserStmt, err = db.PrepareContext(ctx, deleteUser); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteUser: %w", err)
@@ -132,6 +147,27 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getEquipmentByNameStmt, err = db.PrepareContext(ctx, getEquipmentByName); err != nil {
 		return nil, fmt.Errorf("error preparing query GetEquipmentByName: %w", err)
 	}
+	if q.getFullUserByEmailStmt, err = db.PrepareContext(ctx, getFullUserByEmail); err != nil {
+		return nil, fmt.Errorf("error preparing query GetFullUserByEmail: %w", err)
+	}
+	if q.getInventoryStmt, err = db.PrepareContext(ctx, getInventory); err != nil {
+		return nil, fmt.Errorf("error preparing query GetInventory: %w", err)
+	}
+	if q.getInventoryByCharacterStmt, err = db.PrepareContext(ctx, getInventoryByCharacter); err != nil {
+		return nil, fmt.Errorf("error preparing query GetInventoryByCharacter: %w", err)
+	}
+	if q.getInventoryItemStmt, err = db.PrepareContext(ctx, getInventoryItem); err != nil {
+		return nil, fmt.Errorf("error preparing query GetInventoryItem: %w", err)
+	}
+	if q.getInventoryItemByTypeAndItemIDStmt, err = db.PrepareContext(ctx, getInventoryItemByTypeAndItemID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetInventoryItemByTypeAndItemID: %w", err)
+	}
+	if q.getInventoryItemsStmt, err = db.PrepareContext(ctx, getInventoryItems); err != nil {
+		return nil, fmt.Errorf("error preparing query GetInventoryItems: %w", err)
+	}
+	if q.getInventoryItemsByTypeStmt, err = db.PrepareContext(ctx, getInventoryItemsByType); err != nil {
+		return nil, fmt.Errorf("error preparing query GetInventoryItemsByType: %w", err)
+	}
 	if q.getMagicItemStmt, err = db.PrepareContext(ctx, getMagicItem); err != nil {
 		return nil, fmt.Errorf("error preparing query GetMagicItem: %w", err)
 	}
@@ -168,6 +204,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getSpellsByCharacterStmt, err = db.PrepareContext(ctx, getSpellsByCharacter); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSpellsByCharacter: %w", err)
 	}
+	if q.getTreasureStmt, err = db.PrepareContext(ctx, getTreasure); err != nil {
+		return nil, fmt.Errorf("error preparing query GetTreasure: %w", err)
+	}
+	if q.getTreasureByCharacterStmt, err = db.PrepareContext(ctx, getTreasureByCharacter); err != nil {
+		return nil, fmt.Errorf("error preparing query GetTreasureByCharacter: %w", err)
+	}
 	if q.getUserStmt, err = db.PrepareContext(ctx, getUser); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUser: %w", err)
 	}
@@ -192,6 +234,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.listEquipmentStmt, err = db.PrepareContext(ctx, listEquipment); err != nil {
 		return nil, fmt.Errorf("error preparing query ListEquipment: %w", err)
 	}
+	if q.listInventoriesStmt, err = db.PrepareContext(ctx, listInventories); err != nil {
+		return nil, fmt.Errorf("error preparing query ListInventories: %w", err)
+	}
 	if q.listMagicItemsStmt, err = db.PrepareContext(ctx, listMagicItems); err != nil {
 		return nil, fmt.Errorf("error preparing query ListMagicItems: %w", err)
 	}
@@ -213,11 +258,20 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.listSpellsStmt, err = db.PrepareContext(ctx, listSpells); err != nil {
 		return nil, fmt.Errorf("error preparing query ListSpells: %w", err)
 	}
+	if q.listTreasuresStmt, err = db.PrepareContext(ctx, listTreasures); err != nil {
+		return nil, fmt.Errorf("error preparing query ListTreasures: %w", err)
+	}
 	if q.listUsersStmt, err = db.PrepareContext(ctx, listUsers); err != nil {
 		return nil, fmt.Errorf("error preparing query ListUsers: %w", err)
 	}
 	if q.listWeaponsStmt, err = db.PrepareContext(ctx, listWeapons); err != nil {
 		return nil, fmt.Errorf("error preparing query ListWeapons: %w", err)
+	}
+	if q.removeAllInventoryItemsStmt, err = db.PrepareContext(ctx, removeAllInventoryItems); err != nil {
+		return nil, fmt.Errorf("error preparing query RemoveAllInventoryItems: %w", err)
+	}
+	if q.removeInventoryItemStmt, err = db.PrepareContext(ctx, removeInventoryItem); err != nil {
+		return nil, fmt.Errorf("error preparing query RemoveInventoryItem: %w", err)
 	}
 	if q.updateAmmoStmt, err = db.PrepareContext(ctx, updateAmmo); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateAmmo: %w", err)
@@ -233,6 +287,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.updateEquipmentStmt, err = db.PrepareContext(ctx, updateEquipment); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateEquipment: %w", err)
+	}
+	if q.updateInventoryStmt, err = db.PrepareContext(ctx, updateInventory); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateInventory: %w", err)
+	}
+	if q.updateInventoryItemStmt, err = db.PrepareContext(ctx, updateInventoryItem); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateInventoryItem: %w", err)
 	}
 	if q.updateMagicItemStmt, err = db.PrepareContext(ctx, updateMagicItem); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateMagicItem: %w", err)
@@ -252,6 +312,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.updateSpellScrollStmt, err = db.PrepareContext(ctx, updateSpellScroll); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateSpellScroll: %w", err)
 	}
+	if q.updateTreasureStmt, err = db.PrepareContext(ctx, updateTreasure); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateTreasure: %w", err)
+	}
 	if q.updateUserStmt, err = db.PrepareContext(ctx, updateUser); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUser: %w", err)
 	}
@@ -263,6 +326,11 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 
 func (q *Queries) Close() error {
 	var err error
+	if q.addInventoryItemStmt != nil {
+		if cerr := q.addInventoryItemStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing addInventoryItemStmt: %w", cerr)
+		}
+	}
 	if q.createAmmoStmt != nil {
 		if cerr := q.createAmmoStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createAmmoStmt: %w", cerr)
@@ -286,6 +354,11 @@ func (q *Queries) Close() error {
 	if q.createEquipmentStmt != nil {
 		if cerr := q.createEquipmentStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createEquipmentStmt: %w", cerr)
+		}
+	}
+	if q.createInventoryStmt != nil {
+		if cerr := q.createInventoryStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createInventoryStmt: %w", cerr)
 		}
 	}
 	if q.createMagicItemStmt != nil {
@@ -316,6 +389,11 @@ func (q *Queries) Close() error {
 	if q.createSpellScrollStmt != nil {
 		if cerr := q.createSpellScrollStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createSpellScrollStmt: %w", cerr)
+		}
+	}
+	if q.createTreasureStmt != nil {
+		if cerr := q.createTreasureStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createTreasureStmt: %w", cerr)
 		}
 	}
 	if q.createUserStmt != nil {
@@ -353,6 +431,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing deleteEquipmentStmt: %w", cerr)
 		}
 	}
+	if q.deleteInventoryStmt != nil {
+		if cerr := q.deleteInventoryStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteInventoryStmt: %w", cerr)
+		}
+	}
 	if q.deleteMagicItemStmt != nil {
 		if cerr := q.deleteMagicItemStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteMagicItemStmt: %w", cerr)
@@ -381,6 +464,11 @@ func (q *Queries) Close() error {
 	if q.deleteSpellScrollStmt != nil {
 		if cerr := q.deleteSpellScrollStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteSpellScrollStmt: %w", cerr)
+		}
+	}
+	if q.deleteTreasureStmt != nil {
+		if cerr := q.deleteTreasureStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteTreasureStmt: %w", cerr)
 		}
 	}
 	if q.deleteUserStmt != nil {
@@ -443,6 +531,41 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getEquipmentByNameStmt: %w", cerr)
 		}
 	}
+	if q.getFullUserByEmailStmt != nil {
+		if cerr := q.getFullUserByEmailStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getFullUserByEmailStmt: %w", cerr)
+		}
+	}
+	if q.getInventoryStmt != nil {
+		if cerr := q.getInventoryStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getInventoryStmt: %w", cerr)
+		}
+	}
+	if q.getInventoryByCharacterStmt != nil {
+		if cerr := q.getInventoryByCharacterStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getInventoryByCharacterStmt: %w", cerr)
+		}
+	}
+	if q.getInventoryItemStmt != nil {
+		if cerr := q.getInventoryItemStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getInventoryItemStmt: %w", cerr)
+		}
+	}
+	if q.getInventoryItemByTypeAndItemIDStmt != nil {
+		if cerr := q.getInventoryItemByTypeAndItemIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getInventoryItemByTypeAndItemIDStmt: %w", cerr)
+		}
+	}
+	if q.getInventoryItemsStmt != nil {
+		if cerr := q.getInventoryItemsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getInventoryItemsStmt: %w", cerr)
+		}
+	}
+	if q.getInventoryItemsByTypeStmt != nil {
+		if cerr := q.getInventoryItemsByTypeStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getInventoryItemsByTypeStmt: %w", cerr)
+		}
+	}
 	if q.getMagicItemStmt != nil {
 		if cerr := q.getMagicItemStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getMagicItemStmt: %w", cerr)
@@ -503,6 +626,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getSpellsByCharacterStmt: %w", cerr)
 		}
 	}
+	if q.getTreasureStmt != nil {
+		if cerr := q.getTreasureStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getTreasureStmt: %w", cerr)
+		}
+	}
+	if q.getTreasureByCharacterStmt != nil {
+		if cerr := q.getTreasureByCharacterStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getTreasureByCharacterStmt: %w", cerr)
+		}
+	}
 	if q.getUserStmt != nil {
 		if cerr := q.getUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserStmt: %w", cerr)
@@ -543,6 +676,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing listEquipmentStmt: %w", cerr)
 		}
 	}
+	if q.listInventoriesStmt != nil {
+		if cerr := q.listInventoriesStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listInventoriesStmt: %w", cerr)
+		}
+	}
 	if q.listMagicItemsStmt != nil {
 		if cerr := q.listMagicItemsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listMagicItemsStmt: %w", cerr)
@@ -578,6 +716,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing listSpellsStmt: %w", cerr)
 		}
 	}
+	if q.listTreasuresStmt != nil {
+		if cerr := q.listTreasuresStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listTreasuresStmt: %w", cerr)
+		}
+	}
 	if q.listUsersStmt != nil {
 		if cerr := q.listUsersStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listUsersStmt: %w", cerr)
@@ -586,6 +729,16 @@ func (q *Queries) Close() error {
 	if q.listWeaponsStmt != nil {
 		if cerr := q.listWeaponsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listWeaponsStmt: %w", cerr)
+		}
+	}
+	if q.removeAllInventoryItemsStmt != nil {
+		if cerr := q.removeAllInventoryItemsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing removeAllInventoryItemsStmt: %w", cerr)
+		}
+	}
+	if q.removeInventoryItemStmt != nil {
+		if cerr := q.removeInventoryItemStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing removeInventoryItemStmt: %w", cerr)
 		}
 	}
 	if q.updateAmmoStmt != nil {
@@ -611,6 +764,16 @@ func (q *Queries) Close() error {
 	if q.updateEquipmentStmt != nil {
 		if cerr := q.updateEquipmentStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateEquipmentStmt: %w", cerr)
+		}
+	}
+	if q.updateInventoryStmt != nil {
+		if cerr := q.updateInventoryStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateInventoryStmt: %w", cerr)
+		}
+	}
+	if q.updateInventoryItemStmt != nil {
+		if cerr := q.updateInventoryItemStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateInventoryItemStmt: %w", cerr)
 		}
 	}
 	if q.updateMagicItemStmt != nil {
@@ -641,6 +804,11 @@ func (q *Queries) Close() error {
 	if q.updateSpellScrollStmt != nil {
 		if cerr := q.updateSpellScrollStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateSpellScrollStmt: %w", cerr)
+		}
+	}
+	if q.updateTreasureStmt != nil {
+		if cerr := q.updateTreasureStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateTreasureStmt: %w", cerr)
 		}
 	}
 	if q.updateUserStmt != nil {
@@ -690,169 +858,211 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                         DBTX
-	tx                         *sql.Tx
-	createAmmoStmt             *sql.Stmt
-	createArmorStmt            *sql.Stmt
-	createCharacterStmt        *sql.Stmt
-	createContainerStmt        *sql.Stmt
-	createEquipmentStmt        *sql.Stmt
-	createMagicItemStmt        *sql.Stmt
-	createPotionStmt           *sql.Stmt
-	createRingStmt             *sql.Stmt
-	createShieldStmt           *sql.Stmt
-	createSpellStmt            *sql.Stmt
-	createSpellScrollStmt      *sql.Stmt
-	createUserStmt             *sql.Stmt
-	createWeaponStmt           *sql.Stmt
-	deleteAmmoStmt             *sql.Stmt
-	deleteArmorStmt            *sql.Stmt
-	deleteCharacterStmt        *sql.Stmt
-	deleteContainerStmt        *sql.Stmt
-	deleteEquipmentStmt        *sql.Stmt
-	deleteMagicItemStmt        *sql.Stmt
-	deletePotionStmt           *sql.Stmt
-	deleteRingStmt             *sql.Stmt
-	deleteShieldStmt           *sql.Stmt
-	deleteSpellStmt            *sql.Stmt
-	deleteSpellScrollStmt      *sql.Stmt
-	deleteUserStmt             *sql.Stmt
-	deleteWeaponStmt           *sql.Stmt
-	getAmmoStmt                *sql.Stmt
-	getAmmoByNameStmt          *sql.Stmt
-	getArmorStmt               *sql.Stmt
-	getArmorByNameStmt         *sql.Stmt
-	getCharacterStmt           *sql.Stmt
-	getCharactersByUserStmt    *sql.Stmt
-	getContainerStmt           *sql.Stmt
-	getContainerByNameStmt     *sql.Stmt
-	getEquipmentStmt           *sql.Stmt
-	getEquipmentByNameStmt     *sql.Stmt
-	getMagicItemStmt           *sql.Stmt
-	getMagicItemByNameStmt     *sql.Stmt
-	getPotionStmt              *sql.Stmt
-	getPotionByNameStmt        *sql.Stmt
-	getRingStmt                *sql.Stmt
-	getRingByNameStmt          *sql.Stmt
-	getShieldStmt              *sql.Stmt
-	getShieldByNameStmt        *sql.Stmt
-	getSpellStmt               *sql.Stmt
-	getSpellScrollStmt         *sql.Stmt
-	getSpellScrollsBySpellStmt *sql.Stmt
-	getSpellsByCharacterStmt   *sql.Stmt
-	getUserStmt                *sql.Stmt
-	getWeaponStmt              *sql.Stmt
-	getWeaponByNameStmt        *sql.Stmt
-	listAmmoStmt               *sql.Stmt
-	listArmorsStmt             *sql.Stmt
-	listCharactersStmt         *sql.Stmt
-	listContainersStmt         *sql.Stmt
-	listEquipmentStmt          *sql.Stmt
-	listMagicItemsStmt         *sql.Stmt
-	listMagicItemsByTypeStmt   *sql.Stmt
-	listPotionsStmt            *sql.Stmt
-	listRingsStmt              *sql.Stmt
-	listShieldsStmt            *sql.Stmt
-	listSpellScrollsStmt       *sql.Stmt
-	listSpellsStmt             *sql.Stmt
-	listUsersStmt              *sql.Stmt
-	listWeaponsStmt            *sql.Stmt
-	updateAmmoStmt             *sql.Stmt
-	updateArmorStmt            *sql.Stmt
-	updateCharacterStmt        *sql.Stmt
-	updateContainerStmt        *sql.Stmt
-	updateEquipmentStmt        *sql.Stmt
-	updateMagicItemStmt        *sql.Stmt
-	updatePotionStmt           *sql.Stmt
-	updateRingStmt             *sql.Stmt
-	updateShieldStmt           *sql.Stmt
-	updateSpellStmt            *sql.Stmt
-	updateSpellScrollStmt      *sql.Stmt
-	updateUserStmt             *sql.Stmt
-	updateWeaponStmt           *sql.Stmt
+	db                                  DBTX
+	tx                                  *sql.Tx
+	addInventoryItemStmt                *sql.Stmt
+	createAmmoStmt                      *sql.Stmt
+	createArmorStmt                     *sql.Stmt
+	createCharacterStmt                 *sql.Stmt
+	createContainerStmt                 *sql.Stmt
+	createEquipmentStmt                 *sql.Stmt
+	createInventoryStmt                 *sql.Stmt
+	createMagicItemStmt                 *sql.Stmt
+	createPotionStmt                    *sql.Stmt
+	createRingStmt                      *sql.Stmt
+	createShieldStmt                    *sql.Stmt
+	createSpellStmt                     *sql.Stmt
+	createSpellScrollStmt               *sql.Stmt
+	createTreasureStmt                  *sql.Stmt
+	createUserStmt                      *sql.Stmt
+	createWeaponStmt                    *sql.Stmt
+	deleteAmmoStmt                      *sql.Stmt
+	deleteArmorStmt                     *sql.Stmt
+	deleteCharacterStmt                 *sql.Stmt
+	deleteContainerStmt                 *sql.Stmt
+	deleteEquipmentStmt                 *sql.Stmt
+	deleteInventoryStmt                 *sql.Stmt
+	deleteMagicItemStmt                 *sql.Stmt
+	deletePotionStmt                    *sql.Stmt
+	deleteRingStmt                      *sql.Stmt
+	deleteShieldStmt                    *sql.Stmt
+	deleteSpellStmt                     *sql.Stmt
+	deleteSpellScrollStmt               *sql.Stmt
+	deleteTreasureStmt                  *sql.Stmt
+	deleteUserStmt                      *sql.Stmt
+	deleteWeaponStmt                    *sql.Stmt
+	getAmmoStmt                         *sql.Stmt
+	getAmmoByNameStmt                   *sql.Stmt
+	getArmorStmt                        *sql.Stmt
+	getArmorByNameStmt                  *sql.Stmt
+	getCharacterStmt                    *sql.Stmt
+	getCharactersByUserStmt             *sql.Stmt
+	getContainerStmt                    *sql.Stmt
+	getContainerByNameStmt              *sql.Stmt
+	getEquipmentStmt                    *sql.Stmt
+	getEquipmentByNameStmt              *sql.Stmt
+	getFullUserByEmailStmt              *sql.Stmt
+	getInventoryStmt                    *sql.Stmt
+	getInventoryByCharacterStmt         *sql.Stmt
+	getInventoryItemStmt                *sql.Stmt
+	getInventoryItemByTypeAndItemIDStmt *sql.Stmt
+	getInventoryItemsStmt               *sql.Stmt
+	getInventoryItemsByTypeStmt         *sql.Stmt
+	getMagicItemStmt                    *sql.Stmt
+	getMagicItemByNameStmt              *sql.Stmt
+	getPotionStmt                       *sql.Stmt
+	getPotionByNameStmt                 *sql.Stmt
+	getRingStmt                         *sql.Stmt
+	getRingByNameStmt                   *sql.Stmt
+	getShieldStmt                       *sql.Stmt
+	getShieldByNameStmt                 *sql.Stmt
+	getSpellStmt                        *sql.Stmt
+	getSpellScrollStmt                  *sql.Stmt
+	getSpellScrollsBySpellStmt          *sql.Stmt
+	getSpellsByCharacterStmt            *sql.Stmt
+	getTreasureStmt                     *sql.Stmt
+	getTreasureByCharacterStmt          *sql.Stmt
+	getUserStmt                         *sql.Stmt
+	getWeaponStmt                       *sql.Stmt
+	getWeaponByNameStmt                 *sql.Stmt
+	listAmmoStmt                        *sql.Stmt
+	listArmorsStmt                      *sql.Stmt
+	listCharactersStmt                  *sql.Stmt
+	listContainersStmt                  *sql.Stmt
+	listEquipmentStmt                   *sql.Stmt
+	listInventoriesStmt                 *sql.Stmt
+	listMagicItemsStmt                  *sql.Stmt
+	listMagicItemsByTypeStmt            *sql.Stmt
+	listPotionsStmt                     *sql.Stmt
+	listRingsStmt                       *sql.Stmt
+	listShieldsStmt                     *sql.Stmt
+	listSpellScrollsStmt                *sql.Stmt
+	listSpellsStmt                      *sql.Stmt
+	listTreasuresStmt                   *sql.Stmt
+	listUsersStmt                       *sql.Stmt
+	listWeaponsStmt                     *sql.Stmt
+	removeAllInventoryItemsStmt         *sql.Stmt
+	removeInventoryItemStmt             *sql.Stmt
+	updateAmmoStmt                      *sql.Stmt
+	updateArmorStmt                     *sql.Stmt
+	updateCharacterStmt                 *sql.Stmt
+	updateContainerStmt                 *sql.Stmt
+	updateEquipmentStmt                 *sql.Stmt
+	updateInventoryStmt                 *sql.Stmt
+	updateInventoryItemStmt             *sql.Stmt
+	updateMagicItemStmt                 *sql.Stmt
+	updatePotionStmt                    *sql.Stmt
+	updateRingStmt                      *sql.Stmt
+	updateShieldStmt                    *sql.Stmt
+	updateSpellStmt                     *sql.Stmt
+	updateSpellScrollStmt               *sql.Stmt
+	updateTreasureStmt                  *sql.Stmt
+	updateUserStmt                      *sql.Stmt
+	updateWeaponStmt                    *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                         tx,
-		tx:                         tx,
-		createAmmoStmt:             q.createAmmoStmt,
-		createArmorStmt:            q.createArmorStmt,
-		createCharacterStmt:        q.createCharacterStmt,
-		createContainerStmt:        q.createContainerStmt,
-		createEquipmentStmt:        q.createEquipmentStmt,
-		createMagicItemStmt:        q.createMagicItemStmt,
-		createPotionStmt:           q.createPotionStmt,
-		createRingStmt:             q.createRingStmt,
-		createShieldStmt:           q.createShieldStmt,
-		createSpellStmt:            q.createSpellStmt,
-		createSpellScrollStmt:      q.createSpellScrollStmt,
-		createUserStmt:             q.createUserStmt,
-		createWeaponStmt:           q.createWeaponStmt,
-		deleteAmmoStmt:             q.deleteAmmoStmt,
-		deleteArmorStmt:            q.deleteArmorStmt,
-		deleteCharacterStmt:        q.deleteCharacterStmt,
-		deleteContainerStmt:        q.deleteContainerStmt,
-		deleteEquipmentStmt:        q.deleteEquipmentStmt,
-		deleteMagicItemStmt:        q.deleteMagicItemStmt,
-		deletePotionStmt:           q.deletePotionStmt,
-		deleteRingStmt:             q.deleteRingStmt,
-		deleteShieldStmt:           q.deleteShieldStmt,
-		deleteSpellStmt:            q.deleteSpellStmt,
-		deleteSpellScrollStmt:      q.deleteSpellScrollStmt,
-		deleteUserStmt:             q.deleteUserStmt,
-		deleteWeaponStmt:           q.deleteWeaponStmt,
-		getAmmoStmt:                q.getAmmoStmt,
-		getAmmoByNameStmt:          q.getAmmoByNameStmt,
-		getArmorStmt:               q.getArmorStmt,
-		getArmorByNameStmt:         q.getArmorByNameStmt,
-		getCharacterStmt:           q.getCharacterStmt,
-		getCharactersByUserStmt:    q.getCharactersByUserStmt,
-		getContainerStmt:           q.getContainerStmt,
-		getContainerByNameStmt:     q.getContainerByNameStmt,
-		getEquipmentStmt:           q.getEquipmentStmt,
-		getEquipmentByNameStmt:     q.getEquipmentByNameStmt,
-		getMagicItemStmt:           q.getMagicItemStmt,
-		getMagicItemByNameStmt:     q.getMagicItemByNameStmt,
-		getPotionStmt:              q.getPotionStmt,
-		getPotionByNameStmt:        q.getPotionByNameStmt,
-		getRingStmt:                q.getRingStmt,
-		getRingByNameStmt:          q.getRingByNameStmt,
-		getShieldStmt:              q.getShieldStmt,
-		getShieldByNameStmt:        q.getShieldByNameStmt,
-		getSpellStmt:               q.getSpellStmt,
-		getSpellScrollStmt:         q.getSpellScrollStmt,
-		getSpellScrollsBySpellStmt: q.getSpellScrollsBySpellStmt,
-		getSpellsByCharacterStmt:   q.getSpellsByCharacterStmt,
-		getUserStmt:                q.getUserStmt,
-		getWeaponStmt:              q.getWeaponStmt,
-		getWeaponByNameStmt:        q.getWeaponByNameStmt,
-		listAmmoStmt:               q.listAmmoStmt,
-		listArmorsStmt:             q.listArmorsStmt,
-		listCharactersStmt:         q.listCharactersStmt,
-		listContainersStmt:         q.listContainersStmt,
-		listEquipmentStmt:          q.listEquipmentStmt,
-		listMagicItemsStmt:         q.listMagicItemsStmt,
-		listMagicItemsByTypeStmt:   q.listMagicItemsByTypeStmt,
-		listPotionsStmt:            q.listPotionsStmt,
-		listRingsStmt:              q.listRingsStmt,
-		listShieldsStmt:            q.listShieldsStmt,
-		listSpellScrollsStmt:       q.listSpellScrollsStmt,
-		listSpellsStmt:             q.listSpellsStmt,
-		listUsersStmt:              q.listUsersStmt,
-		listWeaponsStmt:            q.listWeaponsStmt,
-		updateAmmoStmt:             q.updateAmmoStmt,
-		updateArmorStmt:            q.updateArmorStmt,
-		updateCharacterStmt:        q.updateCharacterStmt,
-		updateContainerStmt:        q.updateContainerStmt,
-		updateEquipmentStmt:        q.updateEquipmentStmt,
-		updateMagicItemStmt:        q.updateMagicItemStmt,
-		updatePotionStmt:           q.updatePotionStmt,
-		updateRingStmt:             q.updateRingStmt,
-		updateShieldStmt:           q.updateShieldStmt,
-		updateSpellStmt:            q.updateSpellStmt,
-		updateSpellScrollStmt:      q.updateSpellScrollStmt,
-		updateUserStmt:             q.updateUserStmt,
-		updateWeaponStmt:           q.updateWeaponStmt,
+		db:                                  tx,
+		tx:                                  tx,
+		addInventoryItemStmt:                q.addInventoryItemStmt,
+		createAmmoStmt:                      q.createAmmoStmt,
+		createArmorStmt:                     q.createArmorStmt,
+		createCharacterStmt:                 q.createCharacterStmt,
+		createContainerStmt:                 q.createContainerStmt,
+		createEquipmentStmt:                 q.createEquipmentStmt,
+		createInventoryStmt:                 q.createInventoryStmt,
+		createMagicItemStmt:                 q.createMagicItemStmt,
+		createPotionStmt:                    q.createPotionStmt,
+		createRingStmt:                      q.createRingStmt,
+		createShieldStmt:                    q.createShieldStmt,
+		createSpellStmt:                     q.createSpellStmt,
+		createSpellScrollStmt:               q.createSpellScrollStmt,
+		createTreasureStmt:                  q.createTreasureStmt,
+		createUserStmt:                      q.createUserStmt,
+		createWeaponStmt:                    q.createWeaponStmt,
+		deleteAmmoStmt:                      q.deleteAmmoStmt,
+		deleteArmorStmt:                     q.deleteArmorStmt,
+		deleteCharacterStmt:                 q.deleteCharacterStmt,
+		deleteContainerStmt:                 q.deleteContainerStmt,
+		deleteEquipmentStmt:                 q.deleteEquipmentStmt,
+		deleteInventoryStmt:                 q.deleteInventoryStmt,
+		deleteMagicItemStmt:                 q.deleteMagicItemStmt,
+		deletePotionStmt:                    q.deletePotionStmt,
+		deleteRingStmt:                      q.deleteRingStmt,
+		deleteShieldStmt:                    q.deleteShieldStmt,
+		deleteSpellStmt:                     q.deleteSpellStmt,
+		deleteSpellScrollStmt:               q.deleteSpellScrollStmt,
+		deleteTreasureStmt:                  q.deleteTreasureStmt,
+		deleteUserStmt:                      q.deleteUserStmt,
+		deleteWeaponStmt:                    q.deleteWeaponStmt,
+		getAmmoStmt:                         q.getAmmoStmt,
+		getAmmoByNameStmt:                   q.getAmmoByNameStmt,
+		getArmorStmt:                        q.getArmorStmt,
+		getArmorByNameStmt:                  q.getArmorByNameStmt,
+		getCharacterStmt:                    q.getCharacterStmt,
+		getCharactersByUserStmt:             q.getCharactersByUserStmt,
+		getContainerStmt:                    q.getContainerStmt,
+		getContainerByNameStmt:              q.getContainerByNameStmt,
+		getEquipmentStmt:                    q.getEquipmentStmt,
+		getEquipmentByNameStmt:              q.getEquipmentByNameStmt,
+		getFullUserByEmailStmt:              q.getFullUserByEmailStmt,
+		getInventoryStmt:                    q.getInventoryStmt,
+		getInventoryByCharacterStmt:         q.getInventoryByCharacterStmt,
+		getInventoryItemStmt:                q.getInventoryItemStmt,
+		getInventoryItemByTypeAndItemIDStmt: q.getInventoryItemByTypeAndItemIDStmt,
+		getInventoryItemsStmt:               q.getInventoryItemsStmt,
+		getInventoryItemsByTypeStmt:         q.getInventoryItemsByTypeStmt,
+		getMagicItemStmt:                    q.getMagicItemStmt,
+		getMagicItemByNameStmt:              q.getMagicItemByNameStmt,
+		getPotionStmt:                       q.getPotionStmt,
+		getPotionByNameStmt:                 q.getPotionByNameStmt,
+		getRingStmt:                         q.getRingStmt,
+		getRingByNameStmt:                   q.getRingByNameStmt,
+		getShieldStmt:                       q.getShieldStmt,
+		getShieldByNameStmt:                 q.getShieldByNameStmt,
+		getSpellStmt:                        q.getSpellStmt,
+		getSpellScrollStmt:                  q.getSpellScrollStmt,
+		getSpellScrollsBySpellStmt:          q.getSpellScrollsBySpellStmt,
+		getSpellsByCharacterStmt:            q.getSpellsByCharacterStmt,
+		getTreasureStmt:                     q.getTreasureStmt,
+		getTreasureByCharacterStmt:          q.getTreasureByCharacterStmt,
+		getUserStmt:                         q.getUserStmt,
+		getWeaponStmt:                       q.getWeaponStmt,
+		getWeaponByNameStmt:                 q.getWeaponByNameStmt,
+		listAmmoStmt:                        q.listAmmoStmt,
+		listArmorsStmt:                      q.listArmorsStmt,
+		listCharactersStmt:                  q.listCharactersStmt,
+		listContainersStmt:                  q.listContainersStmt,
+		listEquipmentStmt:                   q.listEquipmentStmt,
+		listInventoriesStmt:                 q.listInventoriesStmt,
+		listMagicItemsStmt:                  q.listMagicItemsStmt,
+		listMagicItemsByTypeStmt:            q.listMagicItemsByTypeStmt,
+		listPotionsStmt:                     q.listPotionsStmt,
+		listRingsStmt:                       q.listRingsStmt,
+		listShieldsStmt:                     q.listShieldsStmt,
+		listSpellScrollsStmt:                q.listSpellScrollsStmt,
+		listSpellsStmt:                      q.listSpellsStmt,
+		listTreasuresStmt:                   q.listTreasuresStmt,
+		listUsersStmt:                       q.listUsersStmt,
+		listWeaponsStmt:                     q.listWeaponsStmt,
+		removeAllInventoryItemsStmt:         q.removeAllInventoryItemsStmt,
+		removeInventoryItemStmt:             q.removeInventoryItemStmt,
+		updateAmmoStmt:                      q.updateAmmoStmt,
+		updateArmorStmt:                     q.updateArmorStmt,
+		updateCharacterStmt:                 q.updateCharacterStmt,
+		updateContainerStmt:                 q.updateContainerStmt,
+		updateEquipmentStmt:                 q.updateEquipmentStmt,
+		updateInventoryStmt:                 q.updateInventoryStmt,
+		updateInventoryItemStmt:             q.updateInventoryItemStmt,
+		updateMagicItemStmt:                 q.updateMagicItemStmt,
+		updatePotionStmt:                    q.updatePotionStmt,
+		updateRingStmt:                      q.updateRingStmt,
+		updateShieldStmt:                    q.updateShieldStmt,
+		updateSpellStmt:                     q.updateSpellStmt,
+		updateSpellScrollStmt:               q.updateSpellScrollStmt,
+		updateTreasureStmt:                  q.updateTreasureStmt,
+		updateUserStmt:                      q.updateUserStmt,
+		updateWeaponStmt:                    q.updateWeaponStmt,
 	}
 }

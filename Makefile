@@ -1,4 +1,4 @@
-.PHONY: build run test migrate sqlc clean
+.PHONY: build run test migrate sqlc clean test-integration test-integration-simple
 
 build:
 	go build -o bin/server cmd/server/main.go
@@ -13,12 +13,14 @@ test-unit:
 	go test ./internal/repositories/... ./internal/controllers/... ./internal/middleware/... -v
 
 test-integration:
-	go test ./integration_test/... -v
+	bash integration_test/test-run-script.sh
+
+test-integration-simple:
+	bash integration_test/test-run-script.sh --simple
 
 test-all: test-unit test-integration
 
-integration-test: ensure-test-runner
-	./test-runner.sh
+integration-test: test-integration
 
 create-migration:
 	@if [ -z "$(name)" ]; then \
@@ -58,5 +60,4 @@ repo-frontend:
 
 repo-backend:
 	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/*_test.go,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/web/static/**,**/web/templates/**,**/docs/**,README.md"
-
+		--ignore "**/*_test.go,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/web/static/**,**/web/templates/**,**/docs/**,README.md,**/migrations/*.sql,**/queries/*.sql,**/sqlc/models.go,**/sqlc/db.go,**/sqlc/querier.go,**/sqlc/*.sql.go,Makefile,sqlc.yaml,.gitignore,go.mod,**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell_scroll*.go,**/container*.go,**/spell*.go"

@@ -14,7 +14,8 @@ import (
 // TestUserCRUDIntegration tests the CRUD operations for users
 func TestUserCRUDIntegration(t *testing.T) {
 	log := NewTestLogger(t)
-	log.Section("Setting up test environment")
+	log.Section("User CRUD Integration Test")
+	log.Step("Setting up test environment")
 
 	testApp, cleanup := setupTestApp(t)
 	defer cleanup()
@@ -26,6 +27,7 @@ func TestUserCRUDIntegration(t *testing.T) {
 	log.Success("Test server started at %s", server.URL)
 
 	var userID int64
+	var authToken string
 
 	t.Run("Create User", func(t *testing.T) {
 		log := NewTestLogger(t)
@@ -86,6 +88,10 @@ func TestUserCRUDIntegration(t *testing.T) {
 		}
 
 		log.Success("User validation passed")
+
+		// Generate JWT token for newly created user
+		authToken = generateTestToken(t, userID)
+		log.Success("Generated authentication token for user")
 	})
 
 	if userID <= 0 {
@@ -108,6 +114,8 @@ func TestUserCRUDIntegration(t *testing.T) {
 			t.Fatal("Test failed")
 		}
 		req.Header.Set("Accept", "application/json")
+		// Add the authorization header
+		req.Header.Set("Authorization", "Bearer "+authToken)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -150,6 +158,8 @@ func TestUserCRUDIntegration(t *testing.T) {
 		if !log.CheckNoError(err, "Create request") {
 			t.Fatal("Test failed")
 		}
+		// Add authorization for the list endpoint
+		req.Header.Set("Authorization", "Bearer "+authToken)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -218,6 +228,8 @@ func TestUserCRUDIntegration(t *testing.T) {
 			t.Fatal("Test failed")
 		}
 		req.Header.Set("Content-Type", "application/json")
+		// Add authorization for the update endpoint
+		req.Header.Set("Authorization", "Bearer "+authToken)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -271,6 +283,8 @@ func TestUserCRUDIntegration(t *testing.T) {
 		if !log.CheckNoError(err, "Create request") {
 			t.Fatal("Test failed")
 		}
+		// Add authorization for the delete endpoint
+		req.Header.Set("Authorization", "Bearer "+authToken)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -290,6 +304,7 @@ func TestUserCRUDIntegration(t *testing.T) {
 			t.Fatal("Test failed")
 		}
 		getReq.Header.Set("Accept", "application/json")
+		// No need for authorization here as we expect a 404 anyway
 
 		getResp, err := http.DefaultClient.Do(getReq)
 		if !log.CheckNoError(err, "Send verification request") {

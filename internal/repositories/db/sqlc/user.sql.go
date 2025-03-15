@@ -38,6 +38,25 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) (sql.Result, error) 
 	return q.exec(ctx, q.deleteUserStmt, deleteUser, id)
 }
 
+const getFullUserByEmail = `-- name: GetFullUserByEmail :one
+SELECT id, username, email, password_hash, created_at, updated_at FROM users
+WHERE email = ? LIMIT 1
+`
+
+func (q *Queries) GetFullUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.queryRow(ctx, q.getFullUserByEmailStmt, getFullUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUser = `-- name: GetUser :one
 SELECT id, username, email, created_at, updated_at FROM users
 WHERE id = ? LIMIT 1

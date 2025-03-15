@@ -25,12 +25,53 @@ func TestSpellCRUDIntegration(t *testing.T) {
 
 	log.Success("Test server started at %s", server.URL)
 
-	log.Step("Creating test user")
-	userID := createTestUser(t, server)
-	log.Success("Test user created with ID: %d", userID)
+	// Create a test user with authentication
+	log.Step("Creating test user with authentication")
+	testUser := CreateTestUserWithAuth(t, server)
+	log.Success("Test user created with ID: %d", testUser.ID)
 
 	log.Step("Creating test character")
-	characterID := createTestCharacter(t, server, userID)
+	// Prepare character data
+	characterData := models.CreateCharacterInput{
+		UserID:       testUser.ID,
+		Name:         "Gandalf",
+		Class:        "Wizard",
+		Level:        5,
+		Strength:     10,
+		Dexterity:    12,
+		Constitution: 14,
+		Wisdom:       18,
+		Intelligence: 16,
+		Charisma:     14,
+		HitPoints:    30,
+	}
+
+	payload, err := json.Marshal(characterData)
+	if !log.CheckNoError(err, "Marshal character data") {
+		t.Fatal("Test failed")
+	}
+
+	// Use AuthenticatedRequest for character creation
+	req := AuthenticatedRequest(t, "POST", server.URL+"/characters", bytes.NewBuffer(payload), testUser)
+
+	resp, err := http.DefaultClient.Do(req)
+	if !log.CheckNoError(err, "Send request") {
+		t.Fatal("Test failed")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		log.Error("Expected status %d, got %d", http.StatusCreated, resp.StatusCode)
+		t.Fatalf("Expected status %d, got %d", http.StatusCreated, resp.StatusCode)
+	}
+
+	var createdCharacter models.Character
+	if err := json.NewDecoder(resp.Body).Decode(&createdCharacter); err != nil {
+		log.Error("Failed to decode response: %v", err)
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+
+	characterID := createdCharacter.ID
 	log.Success("Test character created with ID: %d", characterID)
 
 	var spellID int64
@@ -68,13 +109,10 @@ func TestSpellCRUDIntegration(t *testing.T) {
 		}
 
 		endpoint := server.URL + "/spells"
-		log.Info("Sending POST request to %s", endpoint)
+		log.Info("Sending authenticated POST request to %s", endpoint)
 
-		req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(payload))
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
-		req.Header.Set("Content-Type", "application/json")
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "POST", endpoint, bytes.NewBuffer(payload), testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -123,12 +161,10 @@ func TestSpellCRUDIntegration(t *testing.T) {
 		log.Info("Spell ID: %d", spellID)
 
 		endpoint := fmt.Sprintf("%s/spells/%d", server.URL, spellID)
-		log.Info("Sending GET request to %s", endpoint)
+		log.Info("Sending authenticated GET request to %s", endpoint)
 
-		req, err := http.NewRequest("GET", endpoint, nil)
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "GET", endpoint, nil, testUser)
 		req.Header.Set("Accept", "application/json")
 
 		resp, err := http.DefaultClient.Do(req)
@@ -178,13 +214,10 @@ func TestSpellCRUDIntegration(t *testing.T) {
 		log.Info("Character ID: %d", characterID)
 
 		endpoint := fmt.Sprintf("%s/characters/%d/spells", server.URL, characterID)
-		log.Info("Sending GET request to %s", endpoint)
+		log.Info("Sending authenticated GET request to %s", endpoint)
 
-		req, err := http.NewRequest("GET", endpoint, nil)
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
-		req.Header.Set("Accept", "application/json")
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "GET", endpoint, nil, testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -265,13 +298,10 @@ func TestSpellCRUDIntegration(t *testing.T) {
 		}
 
 		endpoint := fmt.Sprintf("%s/spells/%d", server.URL, spellID)
-		log.Info("Sending PUT request to %s", endpoint)
+		log.Info("Sending authenticated PUT request to %s", endpoint)
 
-		req, err := http.NewRequest("PUT", endpoint, bytes.NewBuffer(payload))
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
-		req.Header.Set("Content-Type", "application/json")
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "PUT", endpoint, bytes.NewBuffer(payload), testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -319,12 +349,10 @@ func TestSpellCRUDIntegration(t *testing.T) {
 		log.Info("Spell ID: %d", spellID)
 
 		endpoint := fmt.Sprintf("%s/spells/%d", server.URL, spellID)
-		log.Info("Sending DELETE request to %s", endpoint)
+		log.Info("Sending authenticated DELETE request to %s", endpoint)
 
-		req, err := http.NewRequest("DELETE", endpoint, nil)
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "DELETE", endpoint, nil, testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -339,10 +367,7 @@ func TestSpellCRUDIntegration(t *testing.T) {
 		log.Success("Received correct status code: %d", resp.StatusCode)
 
 		log.Info("Verifying spell deletion by attempting to retrieve it")
-		getReq, err := http.NewRequest("GET", endpoint, nil)
-		if !log.CheckNoError(err, "Create verification request") {
-			t.Fatal("Test failed")
-		}
+		getReq := AuthenticatedRequest(t, "GET", endpoint, nil, testUser)
 		getReq.Header.Set("Accept", "application/json")
 
 		getResp, err := http.DefaultClient.Do(getReq)
@@ -386,13 +411,10 @@ func TestSpellCRUDIntegration(t *testing.T) {
 		}
 
 		endpoint := server.URL + "/spells"
-		log.Info("Sending POST request to %s with invalid data", endpoint)
+		log.Info("Sending authenticated POST request to %s with invalid data", endpoint)
 
-		req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(payload))
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
-		req.Header.Set("Content-Type", "application/json")
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "POST", endpoint, bytes.NewBuffer(payload), testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {

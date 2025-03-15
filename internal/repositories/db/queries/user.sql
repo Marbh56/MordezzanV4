@@ -2,6 +2,10 @@
 SELECT id, username, email, created_at, updated_at FROM users
 WHERE id = ? LIMIT 1;
 
+-- name: GetFullUserByEmail :one
+SELECT id, username, email, password_hash, created_at, updated_at FROM users
+WHERE email = ? LIMIT 1;
+
 -- name: ListUsers :many
 SELECT id, username, email, created_at, updated_at FROM users
 ORDER BY username;

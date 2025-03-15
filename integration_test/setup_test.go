@@ -5,6 +5,7 @@ import (
 	"log"
 	"mordezzanV4/internal/app"
 	"mordezzanV4/internal/logger"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -33,6 +34,23 @@ func init() {
 		IncludeFileLine:  true,
 		Output:           os.Stdout,
 	})
+}
+
+func setupTestEnvironment(t *testing.T) (*app.App, *httptest.Server, *TestUser, func()) {
+	testApp, appCleanup := setupTestAppWithFullSchema(t)
+
+	handler := testApp.SetupRoutes()
+	server := httptest.NewServer(handler)
+
+	// Create authenticated user
+	testUser := CreateTestUserWithAuth(t, server)
+
+	cleanup := func() {
+		server.Close()
+		appCleanup()
+	}
+
+	return testApp, server, testUser, cleanup
 }
 
 // setupTestApp creates a test app instance with a temporary database
@@ -228,6 +246,16 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		os.WriteFile("web/templates/container.html", input, 0644)
 	}
 
+	treasureTemplatePath := filepath.Join(tempDir, "treasure.html")
+	treasureTemplateContent := `<!DOCTYPE html><html><body>Character ID: {{.CharacterID}}, Gold: {{.GoldCoins}}</body></html>`
+	if err := os.WriteFile(treasureTemplatePath, []byte(treasureTemplateContent), 0644); err != nil {
+		t.Fatalf("Failed to write treasure template: %v", err)
+	}
+	if err := os.Symlink(treasureTemplatePath, "web/templates/treasure.html"); err != nil {
+		input, _ := os.ReadFile(treasureTemplatePath)
+		os.WriteFile("web/templates/treasure.html", input, 0644)
+	}
+
 	dbFile := "./character_integration_test.db"
 	log.Printf("Setting up test database at %s", dbFile)
 	os.Remove(dbFile)
@@ -253,21 +281,22 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 
 	log.Println("Creating characters table...")
 	_, err = db.Exec(`
-	CREATE TABLE IF NOT EXISTS characters (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER NOT NULL,
-		name TEXT NOT NULL,
-		class TEXT NOT NULL DEFAULT 'Fighter',
-		strength INTEGER NOT NULL DEFAULT 10,
-		dexterity INTEGER NOT NULL DEFAULT 10,
-		constitution INTEGER NOT NULL DEFAULT 10,
-		wisdom INTEGER NOT NULL DEFAULT 10,
-		intelligence INTEGER NOT NULL DEFAULT 10,
-		charisma INTEGER NOT NULL DEFAULT 10,
-		hit_points INTEGER NOT NULL DEFAULT 10,
-		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+		CREATE TABLE characters (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			name TEXT NOT NULL,
+			class TEXT NOT NULL DEFAULT 'Fighter',
+			level INTEGER NOT NULL DEFAULT 1,
+			strength INTEGER NOT NULL DEFAULT 10,
+			dexterity INTEGER NOT NULL DEFAULT 10,
+			constitution INTEGER NOT NULL DEFAULT 10,
+			wisdom INTEGER NOT NULL DEFAULT 10,
+			intelligence INTEGER NOT NULL DEFAULT 10,
+			charisma INTEGER NOT NULL DEFAULT 10,
+			hit_points INTEGER NOT NULL DEFAULT 10,
+			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 		);
 	`)
 	if err != nil {
@@ -488,6 +517,68 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		t.Fatalf("Failed to create containers table: %v", err)
 	}
 
+	log.Println("Creating treasures table...")
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS treasures (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		character_id INTEGER NULL,
+		platinum_coins INTEGER NOT NULL DEFAULT 0,
+		gold_coins INTEGER NOT NULL DEFAULT 0,
+		electrum_coins INTEGER NOT NULL DEFAULT 0,
+		silver_coins INTEGER NOT NULL DEFAULT 0,
+		copper_coins INTEGER NOT NULL DEFAULT 0,
+		gems TEXT NULL,
+		art_objects TEXT NULL,
+		other_valuables TEXT NULL,
+		total_value_gold REAL NOT NULL DEFAULT 0,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (character_id) REFERENCES characters (id) ON DELETE SET NULL
+		);
+
+	`)
+	if err != nil {
+		db.Close()
+		t.Fatalf("Failed to create treasures table: %v", err)
+	}
+
+	log.Println("Creating inventories table...")
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS inventories (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		character_id INTEGER NOT NULL,
+		max_weight REAL NOT NULL DEFAULT 100.0,
+		current_weight REAL NOT NULL DEFAULT 0.0,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (character_id) REFERENCES characters (id) ON DELETE CASCADE
+		);
+	`)
+	if err != nil {
+		db.Close()
+		t.Fatalf("Failed to create inventories table: %v", err)
+	}
+
+	log.Println("Creating inventory_items table...")
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS inventory_items (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		inventory_id INTEGER NOT NULL,
+		item_type TEXT NOT NULL,
+		item_id INTEGER NOT NULL,
+		quantity INTEGER NOT NULL DEFAULT 1,
+		is_equipped BOOLEAN NOT NULL DEFAULT 0,
+		notes TEXT,
+		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (inventory_id) REFERENCES inventories (id) ON DELETE CASCADE
+		);
+	`)
+	if err != nil {
+		db.Close()
+		t.Fatalf("Failed to create inventory_items table: %v", err)
+	}
+
 	db.Close()
 	log.Println("Database tables created successfully")
 
@@ -514,6 +605,7 @@ func setupTestAppWithFullSchema(t *testing.T) (*app.App, func()) {
 		os.Remove("web/templates/ammo.html")
 		os.Remove("web/templates/spell_scroll.html")
 		os.Remove("web/templates/container.html")
+		os.Remove("web/templates/treasure.html")
 		log.Println("Cleanup completed")
 	}
 }

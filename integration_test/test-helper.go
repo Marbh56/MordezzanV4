@@ -5,31 +5,43 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"mordezzanV4/internal/models"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-// createTestUser creates a test user for use in other tests
-func createTestUser(t *testing.T, server *httptest.Server) int64 {
+type TestUser struct {
+	ID       int64
+	Token    string
+	Username string
+	Email    string
+}
+
+func CreateTestUserWithAuth(t *testing.T, server *httptest.Server) *TestUser {
+	randomSuffix := fmt.Sprintf("%d", time.Now().UnixNano()%100000)
+	username := "testuser_" + randomSuffix
+	email := "testuser_" + randomSuffix + "@example.com"
+
 	userData := models.CreateUserInput{
-		Username: "characteruser",
-		Email:    "character@example.com",
+		Username: username,
+		Email:    email,
 		Password: "securepassword123",
 	}
+
 	payload, err := json.Marshal(userData)
 	if err != nil {
 		t.Fatalf("Failed to marshal user data: %v", err)
 	}
 
-	log.Println("Sending request to create test user...")
 	req, err := http.NewRequest("POST", server.URL+"/users", bytes.NewBuffer(payload))
 	if err != nil {
 		t.Fatalf("Failed to create request: %v", err)
@@ -52,15 +64,40 @@ func createTestUser(t *testing.T, server *httptest.Server) int64 {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
 
-	log.Printf("Created test user with ID: %d", createdUser.ID)
-	return createdUser.ID
+	// Generate JWT token for the user
+	token := generateTestToken(t, createdUser.ID)
+
+	return &TestUser{
+		ID:       createdUser.ID,
+		Token:    token,
+		Username: username,
+		Email:    email,
+	}
 }
 
-func createTestCharacter(t *testing.T, server *httptest.Server, userID int64) int64 {
+func AuthenticatedRequest(t *testing.T, method, url string, body io.Reader, user *TestUser) *http.Request {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	// Add authentication header
+	req.Header.Set("Authorization", "Bearer "+user.Token)
+
+	return req
+}
+
+// CreateTestCharacter creates a character for testing purposes
+func CreateTestCharacter(t *testing.T, server *httptest.Server, user *TestUser) int64 {
 	characterData := models.CreateCharacterInput{
-		UserID:       userID,
+		UserID:       user.ID,
 		Name:         "Gandalf",
 		Class:        "Wizard",
+		Level:        5,
 		Strength:     10,
 		Dexterity:    12,
 		Constitution: 14,
@@ -75,11 +112,7 @@ func createTestCharacter(t *testing.T, server *httptest.Server, userID int64) in
 		t.Fatalf("Failed to marshal character data: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", server.URL+"/characters", bytes.NewBuffer(payload))
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
+	req := AuthenticatedRequest(t, "POST", server.URL+"/characters", bytes.NewBuffer(payload), user)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -97,6 +130,95 @@ func createTestCharacter(t *testing.T, server *httptest.Server, userID int64) in
 	}
 
 	return createdCharacter.ID
+}
+
+// CreateTestWeapon creates a weapon for testing purposes
+func CreateTestWeapon(t *testing.T, server *httptest.Server, user *TestUser) models.Weapon {
+	weaponData := models.CreateWeaponInput{
+		Name:        "Test Sword",
+		Category:    "Melee",
+		WeaponClass: 1,
+		Cost:        15,
+		Weight:      2,
+		Damage:      "1d6",
+		Properties:  "Versatile",
+	}
+
+	payload, err := json.Marshal(weaponData)
+	if err != nil {
+		t.Fatalf("Failed to marshal weapon data: %v", err)
+	}
+
+	var req *http.Request
+	if user != nil {
+		req = AuthenticatedRequest(t, "POST", server.URL+"/weapons", bytes.NewBuffer(payload), user)
+	} else {
+		req, err = http.NewRequest("POST", server.URL+"/weapons", bytes.NewBuffer(payload))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Failed to send request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("Expected status %d, got %d", http.StatusCreated, resp.StatusCode)
+	}
+
+	var createdWeapon models.Weapon
+	if err := json.NewDecoder(resp.Body).Decode(&createdWeapon); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+
+	return createdWeapon
+}
+
+// CreateTestEquipment creates equipment for testing purposes
+func CreateTestEquipment(t *testing.T, server *httptest.Server, user *TestUser) models.Equipment {
+	equipmentData := models.CreateEquipmentInput{
+		Name:        "Backpack",
+		Description: "A sturdy leather backpack for adventuring",
+		Cost:        2.0,
+		Weight:      5,
+	}
+
+	payload, err := json.Marshal(equipmentData)
+	if err != nil {
+		t.Fatalf("Failed to marshal equipment data: %v", err)
+	}
+
+	var req *http.Request
+	if user != nil {
+		req = AuthenticatedRequest(t, "POST", server.URL+"/equipment", bytes.NewBuffer(payload), user)
+	} else {
+		req, err = http.NewRequest("POST", server.URL+"/equipment", bytes.NewBuffer(payload))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Failed to send request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("Expected status %d, got %d", http.StatusCreated, resp.StatusCode)
+	}
+
+	var createdEquipment models.Equipment
+	if err := json.NewDecoder(resp.Body).Decode(&createdEquipment); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+
+	return createdEquipment
 }
 
 // NewTestLogger creates a new test logger for nicer test output
@@ -251,4 +373,43 @@ func ShouldUseColors() bool {
 		return false
 	}
 	return true
+}
+
+func generateTestToken(t *testing.T, userID int64) string {
+	// Load the .env file to get the JWT_SECRET
+	err := godotenv.Load()
+	if err != nil {
+		t.Logf("Warning: .env file not found, using app default secret")
+	}
+
+	// Get the JWT secret from environment or use the app's default
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		secret = "mordezzan_development_secret_key_not_for_production"
+	}
+
+	// Create token with claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": userID,
+		"role":    "user", // Add the role claim as expected by your auth middleware
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	// Sign and get the complete encoded token as a string
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		t.Fatalf("Failed to generate JWT token: %v", err)
+	}
+
+	return tokenString
+}
+
+// Helper function to add auth token to requests
+func addAuthHeader(req *http.Request, token string) {
+	req.Header.Set("Authorization", "Bearer "+token)
+}
+
+func (l *TestLogger) AuthInfo(user *TestUser) {
+	l.Info("Using authenticated user: ID=%d, Username=%s", user.ID, user.Username)
+	l.Info("Authentication token is present: %v", user.Token != "")
 }

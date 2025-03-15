@@ -81,6 +81,7 @@ func (r *SQLCCharacterRepository) CreateCharacter(ctx context.Context, input *mo
 		UserID:       input.UserID,
 		Name:         input.Name,
 		Class:        input.Class,
+		Level:        int64(input.Level),
 		Strength:     int64(input.Strength),
 		Dexterity:    int64(input.Dexterity),
 		Constitution: int64(input.Constitution),
@@ -107,6 +108,7 @@ func (r *SQLCCharacterRepository) UpdateCharacter(ctx context.Context, id int64,
 	_, err = r.q.UpdateCharacter(ctx, sqlcdb.UpdateCharacterParams{
 		Name:         input.Name,
 		Class:        input.Class,
+		Level:        int64(input.Level), // Added level field
 		Strength:     int64(input.Strength),
 		Dexterity:    int64(input.Dexterity),
 		Constitution: int64(input.Constitution),
@@ -144,6 +146,7 @@ func mapDbCharacterToModel(character sqlcdb.Character) *models.Character {
 		UserID:       character.UserID,
 		Name:         character.Name,
 		Class:        character.Class,
+		Level:        int(character.Level),
 		Strength:     int(character.Strength),
 		Dexterity:    int(character.Dexterity),
 		Constitution: int(character.Constitution),

@@ -12,10 +12,10 @@ import (
 
 const createCharacter = `-- name: CreateCharacter :execresult
 INSERT INTO characters (
-  user_id, name, class, strength, dexterity, constitution,
+  user_id, name, class, level, strength, dexterity, constitution,
   wisdom, intelligence, charisma, hit_points
 ) VALUES (
-  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 `
 
@@ -23,6 +23,7 @@ type CreateCharacterParams struct {
 	UserID       int64
 	Name         string
 	Class        string
+	Level        int64
 	Strength     int64
 	Dexterity    int64
 	Constitution int64
@@ -37,6 +38,7 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 		arg.UserID,
 		arg.Name,
 		arg.Class,
+		arg.Level,
 		arg.Strength,
 		arg.Dexterity,
 		arg.Constitution,
@@ -57,7 +59,7 @@ func (q *Queries) DeleteCharacter(ctx context.Context, id int64) (sql.Result, er
 }
 
 const getCharacter = `-- name: GetCharacter :one
-SELECT id, user_id, name, class, strength, dexterity, constitution, wisdom, intelligence, charisma, hit_points, created_at, updated_at FROM characters
+SELECT id, user_id, name, class, level, strength, dexterity, constitution, wisdom, intelligence, charisma, hit_points, created_at, updated_at FROM characters
 WHERE id = ? LIMIT 1
 `
 
@@ -69,6 +71,7 @@ func (q *Queries) GetCharacter(ctx context.Context, id int64) (Character, error)
 		&i.UserID,
 		&i.Name,
 		&i.Class,
+		&i.Level,
 		&i.Strength,
 		&i.Dexterity,
 		&i.Constitution,
@@ -83,7 +86,7 @@ func (q *Queries) GetCharacter(ctx context.Context, id int64) (Character, error)
 }
 
 const getCharactersByUser = `-- name: GetCharactersByUser :many
-SELECT id, user_id, name, class, strength, dexterity, constitution, wisdom, intelligence, charisma, hit_points, created_at, updated_at FROM characters
+SELECT id, user_id, name, class, level, strength, dexterity, constitution, wisdom, intelligence, charisma, hit_points, created_at, updated_at FROM characters
 WHERE user_id = ?
 ORDER BY name
 `
@@ -102,6 +105,7 @@ func (q *Queries) GetCharactersByUser(ctx context.Context, userID int64) ([]Char
 			&i.UserID,
 			&i.Name,
 			&i.Class,
+			&i.Level,
 			&i.Strength,
 			&i.Dexterity,
 			&i.Constitution,
@@ -126,7 +130,7 @@ func (q *Queries) GetCharactersByUser(ctx context.Context, userID int64) ([]Char
 }
 
 const listCharacters = `-- name: ListCharacters :many
-SELECT id, user_id, name, class, strength, dexterity, constitution, wisdom, intelligence, charisma, hit_points, created_at, updated_at FROM characters
+SELECT id, user_id, name, class, level, strength, dexterity, constitution, wisdom, intelligence, charisma, hit_points, created_at, updated_at FROM characters
 ORDER BY name
 `
 
@@ -144,6 +148,7 @@ func (q *Queries) ListCharacters(ctx context.Context) ([]Character, error) {
 			&i.UserID,
 			&i.Name,
 			&i.Class,
+			&i.Level,
 			&i.Strength,
 			&i.Dexterity,
 			&i.Constitution,
@@ -171,6 +176,7 @@ const updateCharacter = `-- name: UpdateCharacter :execresult
 UPDATE characters
 SET name = ?,
     class = ?,
+    level = ?,
     strength = ?,
     dexterity = ?,
     constitution = ?,
@@ -185,6 +191,7 @@ WHERE id = ?
 type UpdateCharacterParams struct {
 	Name         string
 	Class        string
+	Level        int64
 	Strength     int64
 	Dexterity    int64
 	Constitution int64
@@ -199,6 +206,7 @@ func (q *Queries) UpdateCharacter(ctx context.Context, arg UpdateCharacterParams
 	return q.exec(ctx, q.updateCharacterStmt, updateCharacter,
 		arg.Name,
 		arg.Class,
+		arg.Level,
 		arg.Strength,
 		arg.Dexterity,
 		arg.Constitution,

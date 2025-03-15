@@ -8,9 +8,11 @@ import (
 	"mordezzanV4/internal/middleware"
 	"mordezzanV4/internal/repositories"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/cors"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -29,6 +31,8 @@ type App struct {
 	AmmoRepository        repositories.AmmoRepository
 	SpellScrollRepository repositories.SpellScrollRepository
 	ContainerRepository   repositories.ContainerRepository
+	TreasureRepository    repositories.TreasureRepository
+	InventoryRepository   repositories.InventoryRepository
 
 	UserController        *controllers.UserController
 	CharacterController   *controllers.CharacterController
@@ -43,8 +47,12 @@ type App struct {
 	AmmoController        *controllers.AmmoController
 	SpellScrollController *controllers.SpellScrollController
 	ContainerController   *controllers.ContainerController
+	AuthController        *controllers.AuthController
+	TreasureController    *controllers.TreasureController
+	InventoryController   *controllers.InventoryController
 
 	Templates *template.Template
+	JWTSecret string
 }
 
 func NewApp(dbPath string) (*App, error) {
@@ -59,7 +67,6 @@ func NewApp(dbPath string) (*App, error) {
 		return nil, err
 	}
 	logger.Debug("Database connection established successfully")
-
 	tmplPath := filepath.Join("web", "templates", "*.html")
 	logger.Debug("Loading templates from %s", tmplPath)
 	tmpl, err := template.ParseGlob(tmplPath)
@@ -69,7 +76,13 @@ func NewApp(dbPath string) (*App, error) {
 	}
 	logger.Debug("Templates loaded successfully")
 
-	// Initialize repositories
+	// Read JWT secret from environment or use a default for development
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		logger.Warning("JWT_SECRET not set, using default secret for development")
+		jwtSecret = "mordezzan_development_secret_key_not_for_production"
+	}
+
 	userRepo := repositories.NewSQLCUserRepository(db)
 	characterRepo := repositories.NewSQLCCharacterRepository(db)
 	spellRepo := repositories.NewSQLCSpellRepository(db)
@@ -83,8 +96,9 @@ func NewApp(dbPath string) (*App, error) {
 	ammoRepo := repositories.NewSQLCAmmoRepository(db)
 	spellScrollRepo := repositories.NewSQLCSpellScrollRepository(db)
 	containerRepo := repositories.NewSQLCContainerRepository(db)
+	treasureRepo := repositories.NewSQLCTreasureRepository(db)
+	inventoryRepo := repositories.NewSQLCInventoryRepository(db)
 
-	// Initialize controllers
 	userController := controllers.NewUserController(userRepo, tmpl)
 	characterController := controllers.NewCharacterController(characterRepo, userRepo, tmpl)
 	spellController := controllers.NewSpellController(spellRepo, characterRepo, tmpl)
@@ -98,8 +112,27 @@ func NewApp(dbPath string) (*App, error) {
 	ammoController := controllers.NewAmmoController(ammoRepo, tmpl)
 	spellScrollController := controllers.NewSpellScrollController(spellScrollRepo, spellRepo, tmpl)
 	containerController := controllers.NewContainerController(containerRepo, tmpl)
+	authController := controllers.NewAuthController(userRepo, tmpl, jwtSecret)
+	treasureController := controllers.NewTreasureController(treasureRepo, characterRepo, tmpl)
+	inventoryController := controllers.NewInventoryController(
+		inventoryRepo,
+		characterRepo,
+		weaponRepo,
+		armorRepo,
+		shieldRepo,
+		potionRepo,
+		magicItemRepo,
+		ringRepo,
+		ammoRepo,
+		spellScrollRepo,
+		containerRepo,
+		equipmentRepo,
+		treasureRepo,
+		tmpl,
+	)
 
 	logger.Info("Application initialized successfully")
+
 	return &App{
 		DB:                    db,
 		UserRepository:        userRepo,
@@ -115,6 +148,8 @@ func NewApp(dbPath string) (*App, error) {
 		AmmoRepository:        ammoRepo,
 		SpellScrollRepository: spellScrollRepo,
 		ContainerRepository:   containerRepo,
+		TreasureRepository:    treasureRepo,
+		InventoryRepository:   inventoryRepo,
 
 		UserController:        userController,
 		CharacterController:   characterController,
@@ -129,8 +164,12 @@ func NewApp(dbPath string) (*App, error) {
 		AmmoController:        ammoController,
 		SpellScrollController: spellScrollController,
 		ContainerController:   containerController,
+		AuthController:        authController,
+		TreasureController:    treasureController,
+		InventoryController:   inventoryController,
 
 		Templates: tmpl,
+		JWTSecret: jwtSecret,
 	}, nil
 }
 
@@ -138,7 +177,34 @@ func (a *App) SetupRoutes() http.Handler {
 	logger.Debug("Setting up application routes")
 	r := chi.NewRouter()
 
+	// CORS middleware
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+
 	r.Get("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))).ServeHTTP)
+
+	// Health check endpoint
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("OK"))
+	})
+
+	// Home page
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		a.Templates.ExecuteTemplate(w, "home.html", nil)
+	})
+
+	// Authentication routes
+	r.Route("/auth", func(r chi.Router) {
+		r.Get("/login-page", a.AuthController.RenderLoginPage)
+		r.Get("/register-page", a.AuthController.RenderRegisterPage)
+		r.Post("/login", a.AuthController.Login)
+	})
 
 	r.Route("/users", func(r chi.Router) {
 		r.Get("/", a.UserController.ListUsers)
@@ -246,9 +312,46 @@ func (a *App) SetupRoutes() http.Handler {
 		r.Delete("/{id}", a.ContainerController.DeleteContainer)
 	})
 
+	r.Route("/treasures", func(r chi.Router) {
+		r.Get("/", a.TreasureController.ListTreasures)
+		r.Post("/", a.TreasureController.CreateTreasure)
+		r.Get("/{id}", a.TreasureController.GetTreasure)
+		r.Put("/{id}", a.TreasureController.UpdateTreasure)
+		r.Delete("/{id}", a.TreasureController.DeleteTreasure)
+	})
+
+	r.Route("/characters/{characterId}/treasure", func(r chi.Router) {
+		r.Get("/", a.TreasureController.GetTreasureByCharacter)
+	})
+
+	r.Route("/inventories", func(r chi.Router) {
+		r.Get("/", a.InventoryController.ListInventories)
+		r.Post("/", a.InventoryController.CreateInventory)
+		r.Get("/{id}", a.InventoryController.GetInventory)
+		r.Put("/{id}", a.InventoryController.UpdateInventory)
+		r.Delete("/{id}", a.InventoryController.DeleteInventory)
+
+		// Inventory items
+		r.Post("/{id}/items", a.InventoryController.AddInventoryItem)
+		r.Get("/{id}/items/{itemId}", a.InventoryController.GetInventoryItem)
+		r.Put("/{id}/items/{itemId}", a.InventoryController.UpdateInventoryItem)
+		r.Delete("/{id}/items/{itemId}", a.InventoryController.RemoveInventoryItem)
+	})
+
+	r.Route("/characters/{characterId}/inventory", func(r chi.Router) {
+		r.Get("/", a.InventoryController.GetInventoryByCharacter)
+	})
+
+	// Configure JWT authentication
+	authConfig := middleware.AuthConfig{
+		JWTSecret: a.JWTSecret,
+		Issuer:    "mordezzanV4",
+	}
+
+	// Apply JWT auth middleware to protected routes
 	handler := middleware.RecoveryMiddleware(
 		middleware.LoggingMiddleware(
-			middleware.AuthMiddleware(r),
+			middleware.JWTAuthMiddleware(authConfig)(r),
 		),
 	)
 

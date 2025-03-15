@@ -4,6 +4,7 @@ CREATE TABLE characters (
     user_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     class TEXT NOT NULL DEFAULT 'Fighter',
+    level INTEGER NOT NULL DEFAULT 1,
     strength INTEGER NOT NULL DEFAULT 10,
     dexterity INTEGER NOT NULL DEFAULT 10,
     constitution INTEGER NOT NULL DEFAULT 10,

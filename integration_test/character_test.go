@@ -25,9 +25,11 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 
 	log.Success("Test server started at %s", server.URL)
 
-	// Create a test user first
-	userID := createTestUser(t, server)
-	log.Success("Test user created with ID: %d", userID)
+	// Create a test user with authentication
+	log.Step("Creating test user with authentication")
+	testUser := CreateTestUserWithAuth(t, server)
+	log.Success("Test user created with ID: %d", testUser.ID)
+	log.Success("Authentication token generated for user")
 
 	var characterID int64
 
@@ -36,9 +38,10 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		log.Step("Creating new character")
 
 		characterData := models.CreateCharacterInput{
-			UserID:       userID,
+			UserID:       testUser.ID,
 			Name:         "Aragorn",
-			Class:        "Ranger", // Added Class field
+			Class:        "Ranger",
+			Level:        5, // Added level field
 			Strength:     16,
 			Dexterity:    14,
 			Constitution: 15,
@@ -49,8 +52,8 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		}
 
 		log.Info("Character Name: %s", characterData.Name)
-		log.Info("Stats: STR=%d, DEX=%d, CON=%d, WIS=%d, INT=%d, CHA=%d, HP=%d",
-			characterData.Strength, characterData.Dexterity, characterData.Constitution,
+		log.Info("Stats: Level=%d, STR=%d, DEX=%d, CON=%d, WIS=%d, INT=%d, CHA=%d, HP=%d",
+			characterData.Level, characterData.Strength, characterData.Dexterity, characterData.Constitution,
 			characterData.Wisdom, characterData.Intelligence, characterData.Charisma,
 			characterData.HitPoints)
 
@@ -60,13 +63,10 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		}
 
 		endpoint := server.URL + "/characters"
-		log.Info("Sending POST request to %s", endpoint)
+		log.Info("Sending authenticated POST request to %s", endpoint)
 
-		req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(payload))
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
-		req.Header.Set("Content-Type", "application/json")
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "POST", endpoint, bytes.NewBuffer(payload), testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -99,6 +99,11 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			t.Errorf("Expected character class %s, got %s", characterData.Class, createdCharacter.Class)
 		}
 
+		if createdCharacter.Level != characterData.Level {
+			log.Error("Level mismatch. Expected: %d, Got: %d", characterData.Level, createdCharacter.Level)
+			t.Errorf("Expected level %d, got %d", characterData.Level, createdCharacter.Level)
+		}
+
 		if createdCharacter.Strength != characterData.Strength {
 			log.Error("Strength mismatch. Expected: %d, Got: %d", characterData.Strength, createdCharacter.Strength)
 			t.Errorf("Expected strength %d, got %d", characterData.Strength, createdCharacter.Strength)
@@ -115,12 +120,10 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		log.Info("Character ID: %d", characterID)
 
 		endpoint := fmt.Sprintf("%s/characters/%d", server.URL, characterID)
-		log.Info("Sending GET request to %s", endpoint)
+		log.Info("Sending authenticated GET request to %s", endpoint)
 
-		req, err := http.NewRequest("GET", endpoint, nil)
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "GET", endpoint, nil, testUser)
 		req.Header.Set("Accept", "application/json")
 
 		resp, err := http.DefaultClient.Do(req)
@@ -141,8 +144,8 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			t.Fatalf("Failed to decode response: %v", err)
 		}
 
-		log.Info("Received character: ID=%d, Name=%s, Class=%s",
-			character.ID, character.Name, character.Class)
+		log.Info("Received character: ID=%d, Name=%s, Class=%s, Level=%d",
+			character.ID, character.Name, character.Class, character.Level)
 
 		if character.ID != characterID {
 			log.Error("Character ID mismatch. Expected: %d, Got: %d", characterID, character.ID)
@@ -159,6 +162,11 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			t.Errorf("Expected character class 'Ranger', got '%s'", character.Class)
 		}
 
+		if character.Level != 5 {
+			log.Error("Level mismatch. Expected: %d, Got: %d", 5, character.Level)
+			t.Errorf("Expected character level 5, got %d", character.Level)
+		}
+
 		log.Success("Character data validation passed")
 	})
 
@@ -167,15 +175,13 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 	t.Run("Get_Characters_By_User", func(t *testing.T) {
 		log := NewTestLogger(t)
 		log.Step("Retrieving characters for user")
-		log.Info("User ID: %d", userID)
+		log.Info("User ID: %d", testUser.ID)
 
-		endpoint := fmt.Sprintf("%s/users/%d/characters", server.URL, userID)
-		log.Info("Sending GET request to %s", endpoint)
+		endpoint := fmt.Sprintf("%s/users/%d/characters", server.URL, testUser.ID)
+		log.Info("Sending authenticated GET request to %s", endpoint)
 
-		req, err := http.NewRequest("GET", endpoint, nil)
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "GET", endpoint, nil, testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -205,7 +211,8 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			for _, c := range characters {
 				if c.ID == characterID {
 					found = true
-					log.Info("Found our test character: ID=%d, Name=%s, Class=%s", c.ID, c.Name, c.Class)
+					log.Info("Found our test character: ID=%d, Name=%s, Class=%s, Level=%d",
+						c.ID, c.Name, c.Class, c.Level)
 					break
 				}
 			}
@@ -228,7 +235,8 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 
 		updateData := models.UpdateCharacterInput{
 			Name:         "Strider",
-			Class:        "Ranger", // Added Class field
+			Class:        "Ranger",
+			Level:        6, // Increase the level
 			Strength:     17,
 			Dexterity:    15,
 			Constitution: 16,
@@ -239,8 +247,8 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		}
 
 		log.Info("New character name: %s", updateData.Name)
-		log.Info("New stats: STR=%d, DEX=%d, CON=%d, WIS=%d, INT=%d, CHA=%d, HP=%d",
-			updateData.Strength, updateData.Dexterity, updateData.Constitution,
+		log.Info("New stats: Level=%d, STR=%d, DEX=%d, CON=%d, WIS=%d, INT=%d, CHA=%d, HP=%d",
+			updateData.Level, updateData.Strength, updateData.Dexterity, updateData.Constitution,
 			updateData.Wisdom, updateData.Intelligence, updateData.Charisma,
 			updateData.HitPoints)
 
@@ -250,13 +258,10 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		}
 
 		endpoint := fmt.Sprintf("%s/characters/%d", server.URL, characterID)
-		log.Info("Sending PUT request to %s", endpoint)
+		log.Info("Sending authenticated PUT request to %s", endpoint)
 
-		req, err := http.NewRequest("PUT", endpoint, bytes.NewBuffer(payload))
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
-		req.Header.Set("Content-Type", "application/json")
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "PUT", endpoint, bytes.NewBuffer(payload), testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -276,8 +281,9 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			t.Fatalf("Failed to decode response: %v", err)
 		}
 
-		log.Info("Updated character data: ID=%d, Name=%s, Class=%s, Strength=%d",
-			updatedCharacter.ID, updatedCharacter.Name, updatedCharacter.Class, updatedCharacter.Strength)
+		log.Info("Updated character data: ID=%d, Name=%s, Class=%s, Level=%d, Strength=%d",
+			updatedCharacter.ID, updatedCharacter.Name, updatedCharacter.Class,
+			updatedCharacter.Level, updatedCharacter.Strength)
 
 		if updatedCharacter.Name != updateData.Name {
 			log.Error("Name mismatch. Expected: %s, Got: %s",
@@ -289,6 +295,12 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			log.Error("Class mismatch. Expected: %s, Got: %s",
 				updateData.Class, updatedCharacter.Class)
 			t.Errorf("Expected class %s, got %s", updateData.Class, updatedCharacter.Class)
+		}
+
+		if updatedCharacter.Level != updateData.Level {
+			log.Error("Level mismatch. Expected: %d, Got: %d",
+				updateData.Level, updatedCharacter.Level)
+			t.Errorf("Expected level %d, got %d", updateData.Level, updatedCharacter.Level)
 		}
 
 		if updatedCharacter.Strength != updateData.Strength {
@@ -308,12 +320,10 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		log.Info("Character ID: %d", characterID)
 
 		endpoint := fmt.Sprintf("%s/characters/%d", server.URL, characterID)
-		log.Info("Sending DELETE request to %s", endpoint)
+		log.Info("Sending authenticated DELETE request to %s", endpoint)
 
-		req, err := http.NewRequest("DELETE", endpoint, nil)
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "DELETE", endpoint, nil, testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {
@@ -333,6 +343,7 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 			t.Fatal("Test failed")
 		}
 		getReq.Header.Set("Accept", "application/json")
+		getReq.Header.Set("Authorization", "Bearer "+testUser.Token)
 
 		getResp, err := http.DefaultClient.Do(getReq)
 		if !log.CheckNoError(err, "Send verification request") {
@@ -353,13 +364,14 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		log := NewTestLogger(t)
 		log.Step("Testing validation with invalid character data")
 
-		log.Info("Invalid data: empty name, strength=25")
+		log.Info("Invalid data: empty name, level=0, strength=25")
 
 		invalidData := models.CreateCharacterInput{
-			UserID:       userID,
-			Name:         "",        // Invalid: empty name
-			Class:        "Warrior", // Added class field
-			Strength:     25,        // Invalid: strength > 18
+			UserID:       testUser.ID,
+			Name:         "", // Invalid: empty name
+			Class:        "Warrior",
+			Level:        0,  // Invalid: level=0
+			Strength:     25, // Invalid: strength > 18
 			Dexterity:    14,
 			Constitution: 15,
 			Wisdom:       13,
@@ -374,13 +386,10 @@ func TestCharacterCRUDIntegration(t *testing.T) {
 		}
 
 		endpoint := server.URL + "/characters"
-		log.Info("Sending POST request to %s with invalid data", endpoint)
+		log.Info("Sending authenticated POST request to %s with invalid data", endpoint)
 
-		req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(payload))
-		if !log.CheckNoError(err, "Create request") {
-			t.Fatal("Test failed")
-		}
-		req.Header.Set("Content-Type", "application/json")
+		// Use AuthenticatedRequest helper
+		req := AuthenticatedRequest(t, "POST", endpoint, bytes.NewBuffer(payload), testUser)
 
 		resp, err := http.DefaultClient.Do(req)
 		if !log.CheckNoError(err, "Send request") {

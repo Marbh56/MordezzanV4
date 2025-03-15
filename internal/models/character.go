@@ -9,6 +9,7 @@ type Character struct {
 	UserID       int64     `json:"user_id"`
 	Name         string    `json:"name"`
 	Class        string    `json:"class"`
+	Level        int       `json:"level"` // Added level field
 	Strength     int       `json:"strength"`
 	Dexterity    int       `json:"dexterity"`
 	Constitution int       `json:"constitution"`
@@ -24,6 +25,7 @@ type CreateCharacterInput struct {
 	UserID       int64  `json:"user_id"`
 	Name         string `json:"name"`
 	Class        string `json:"class"`
+	Level        int    `json:"level"` // Added level field
 	Strength     int    `json:"strength"`
 	Dexterity    int    `json:"dexterity"`
 	Constitution int    `json:"constitution"`
@@ -36,6 +38,7 @@ type CreateCharacterInput struct {
 type UpdateCharacterInput struct {
 	Name         string `json:"name"`
 	Class        string `json:"class"`
+	Level        int    `json:"level"` // Added level field
 	Strength     int    `json:"strength"`
 	Dexterity    int    `json:"dexterity"`
 	Constitution int    `json:"constitution"`
@@ -54,6 +57,9 @@ func (i *CreateCharacterInput) Validate() error {
 	}
 	if i.UserID <= 0 {
 		return NewValidationError("user_id", "Invalid user ID")
+	}
+	if i.Level < 1 {
+		return NewValidationError("level", "Level must be at least 1") // Added validation for level
 	}
 	if i.Strength < 3 || i.Strength > 18 {
 		return NewValidationError("strength", "Strength must be between 3 and 18")
@@ -85,6 +91,9 @@ func (i *UpdateCharacterInput) Validate() error {
 	}
 	if i.Class == "" {
 		return NewValidationError("class", "Class cannot be empty")
+	}
+	if i.Level < 1 {
+		return NewValidationError("level", "Level must be at least 1") // Added validation for level
 	}
 	if i.Strength < 3 || i.Strength > 18 {
 		return NewValidationError("strength", "Strength must be between 3 and 18")
