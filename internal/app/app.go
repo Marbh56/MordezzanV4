@@ -7,6 +7,7 @@ import (
 	"mordezzanV4/internal/logger"
 	"mordezzanV4/internal/middleware"
 	"mordezzanV4/internal/repositories"
+	"mordezzanV4/internal/services"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -74,6 +75,7 @@ func NewApp(dbPath string) (*App, error) {
 	// Create a template with function map
 	tmpl := template.New("").Funcs(template.FuncMap{
 		"lower": strings.ToLower,
+		"add":   func(a, b int) int { return a + b },
 	})
 
 	// Parse templates
@@ -106,9 +108,12 @@ func NewApp(dbPath string) (*App, error) {
 	containerRepo := repositories.NewSQLCContainerRepository(db)
 	treasureRepo := repositories.NewSQLCTreasureRepository(db)
 	inventoryRepo := repositories.NewSQLCInventoryRepository(db)
+	fighterDataRepo := repositories.NewSQLCFighterDataRepository(db)
+
+	fighterService := services.NewFighterService(fighterDataRepo)
 
 	userController := controllers.NewUserController(userRepo, tmpl)
-	characterController := controllers.NewCharacterController(characterRepo, userRepo, tmpl)
+	characterController := controllers.NewCharacterController(characterRepo, userRepo, fighterService, tmpl)
 	spellController := controllers.NewSpellController(spellRepo, characterRepo, tmpl)
 	armorController := controllers.NewArmorController(armorRepo, tmpl)
 	weaponController := controllers.NewWeaponController(weaponRepo, tmpl)
@@ -206,6 +211,7 @@ func (a *App) SetupRoutes() http.Handler {
 	r.Get("/", a.CharacterController.RenderDashboard)
 	r.Get("/characters/create", a.CharacterController.RenderCreateForm)
 	r.Get("/characters/view/{id}", a.CharacterController.RenderCharacterDetail)
+	r.Get("/characters/{id}/edit", a.CharacterController.RenderEditForm)
 
 	// Authentication routes
 	r.Route("/auth", func(r chi.Router) {
@@ -234,9 +240,10 @@ func (a *App) SetupRoutes() http.Handler {
 			r.Put("/{id}", a.CharacterController.UpdateCharacter)
 			r.Delete("/{id}", a.CharacterController.DeleteCharacter)
 			r.Get("/{id}/spells", a.SpellController.GetSpellsByCharacter)
+			r.Patch("/{id}/hp", a.CharacterController.UpdateCharacterHP)
+			r.Patch("/{id}/xp", a.CharacterController.UpdateCharacterXP)
 		})
 
-		// Other API routes
 		r.Route("/spells", func(r chi.Router) {
 			r.Get("/", a.SpellController.ListSpells)
 			r.Post("/", a.SpellController.CreateSpell)

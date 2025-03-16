@@ -33,20 +33,21 @@ type Armor struct {
 }
 
 type Character struct {
-	ID           int64
-	UserID       int64
-	Name         string
-	Class        string
-	Level        int64
-	Strength     int64
-	Dexterity    int64
-	Constitution int64
-	Wisdom       int64
-	Intelligence int64
-	Charisma     int64
-	HitPoints    int64
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID               int64
+	UserID           int64
+	Name             string
+	Class            string
+	Level            int64
+	ExperiencePoints int64
+	Strength         int64
+	Dexterity        int64
+	Constitution     int64
+	Wisdom           int64
+	Intelligence     int64
+	Charisma         int64
+	HitPoints        int64
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type Container struct {
@@ -67,6 +68,14 @@ type Equipment struct {
 	Weight      int64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type FighterClassDatum struct {
+	Level            int64
+	ExperiencePoints int64
+	HitDice          string
+	SavingThrow      int64
+	FightingAbility  int64
 }
 
 type Inventory struct {

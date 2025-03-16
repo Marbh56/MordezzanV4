@@ -65,3 +65,7 @@ repo-backend:
 repo-dashboard:
 	repomix --remove-comments --remove-empty-lines \
 		--ignore "**/*repository*.go,**/*.sql,**/*.sql.go,**/queries/**,**/*_test.go,**/db/**,**/migrations/**,**/sqlc/**,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell*.go,**/spell_scroll*.go,**/container*.go,**/treasure*.go,**/inventory*.go"
+
+repo-fighter:
+	repomix --remove-comments --remove-empty-lines \
+		--ignore "**/ammo*,**/armor*,**/treasure*,**/weapon*,**/equipment*,**/inventory*,**/shield*,**/spell*,**/magic*,**/potion*,**/ring*,**/container*,*test*,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/auth/**,**/contextkeys/**,**/errors/**,**/logger/**,**/middleware/**"

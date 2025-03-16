@@ -5,6 +5,7 @@ CREATE TABLE characters (
     name TEXT NOT NULL,
     class TEXT NOT NULL DEFAULT 'Fighter',
     level INTEGER NOT NULL DEFAULT 1,
+    experience_points INTEGER NOT NULL DEFAULT 0,
     strength INTEGER NOT NULL DEFAULT 10,
     dexterity INTEGER NOT NULL DEFAULT 10,
     constitution INTEGER NOT NULL DEFAULT 10,

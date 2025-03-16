@@ -1,22 +1,35 @@
 package models
 
 import (
+	"fmt"
 	"time"
 )
 
 type Character struct {
-	ID           int64  `json:"id"`
-	UserID       int64  `json:"user_id"`
-	Name         string `json:"name"`
-	Class        string `json:"class"`
-	Level        int    `json:"level"`
-	Strength     int    `json:"strength"`
-	Dexterity    int    `json:"dexterity"`
-	Constitution int    `json:"constitution"`
-	Wisdom       int    `json:"wisdom"`
-	Intelligence int    `json:"intelligence"`
-	Charisma     int    `json:"charisma"`
-	HitPoints    int    `json:"hit_points"`
+	ID               int64  `json:"id"`
+	UserID           int64  `json:"user_id"`
+	Name             string `json:"name"`
+	Class            string `json:"class"`
+	Level            int    `json:"level"`
+	ExperiencePoints int    `json:"experience_points"`
+	Strength         int    `json:"strength"`
+	Dexterity        int    `json:"dexterity"`
+	Constitution     int    `json:"constitution"`
+	Wisdom           int    `json:"wisdom"`
+	Intelligence     int    `json:"intelligence"`
+	Charisma         int    `json:"charisma"`
+	HitPoints        int    `json:"hit_points"`
+
+	HitDice         string `json:"hit_dice,omitempty"`
+	SavingThrow     int    `json:"saving_throw,omitempty"`
+	FightingAbility int    `json:"fighting_ability,omitempty"`
+
+	// Save Bonuses
+	DeathSaveBonus          int `json:"death_save_bonus,omitempty"`
+	TransformationSaveBonus int `json:"transformation_save_bonus,omitempty"`
+
+	// Class Abilities
+	Abilities []*FighterAbility `json:"abilities,omitempty"`
 
 	// Derived stats
 	// Str
@@ -56,30 +69,32 @@ type Character struct {
 }
 
 type CreateCharacterInput struct {
-	UserID       int64  `json:"user_id"`
-	Name         string `json:"name"`
-	Class        string `json:"class"`
-	Level        int    `json:"level"`
-	Strength     int    `json:"strength"`
-	Dexterity    int    `json:"dexterity"`
-	Constitution int    `json:"constitution"`
-	Wisdom       int    `json:"wisdom"`
-	Intelligence int    `json:"intelligence"`
-	Charisma     int    `json:"charisma"`
-	HitPoints    int    `json:"hit_points"`
+	UserID           int64  `json:"user_id"`
+	Name             string `json:"name"`
+	Class            string `json:"class"`
+	Level            int    `json:"level"`
+	ExperiencePoints int    `json:"experience_points"`
+	Strength         int    `json:"strength"`
+	Dexterity        int    `json:"dexterity"`
+	Constitution     int    `json:"constitution"`
+	Wisdom           int    `json:"wisdom"`
+	Intelligence     int    `json:"intelligence"`
+	Charisma         int    `json:"charisma"`
+	HitPoints        int    `json:"hit_points"`
 }
 
 type UpdateCharacterInput struct {
-	Name         string `json:"name"`
-	Class        string `json:"class"`
-	Level        int    `json:"level"`
-	Strength     int    `json:"strength"`
-	Dexterity    int    `json:"dexterity"`
-	Constitution int    `json:"constitution"`
-	Wisdom       int    `json:"wisdom"`
-	Intelligence int    `json:"intelligence"`
-	Charisma     int    `json:"charisma"`
-	HitPoints    int    `json:"hit_points"`
+	Name             string `json:"name"`
+	Class            string `json:"class"`
+	Level            int    `json:"level"`
+	ExperiencePoints int    `json:"experience_points"`
+	Strength         int    `json:"strength"`
+	Dexterity        int    `json:"dexterity"`
+	Constitution     int    `json:"constitution"`
+	Wisdom           int    `json:"wisdom"`
+	Intelligence     int    `json:"intelligence"`
+	Charisma         int    `json:"charisma"`
+	HitPoints        int    `json:"hit_points"`
 }
 
 func (i *CreateCharacterInput) Validate() error {
@@ -176,8 +191,16 @@ func (c *Character) CalculateDerivedStats() {
 	c.calculateIntelligenceModifiers()
 	c.calculateWisdomModifiers()
 	c.calculateCharismaModifiers()
+	c.calculateSaveBonuses()
 
-	// Add other stat calculations as needed
+}
+
+func (c *Character) calculateSaveBonuses() {
+	switch {
+	case c.Class == "Fighter":
+		c.DeathSaveBonus = 2
+		c.TransformationSaveBonus = 2
+	}
 }
 
 func (c *Character) calculateStrengthModifiers() {
@@ -222,6 +245,14 @@ func (c *Character) calculateStrengthModifiers() {
 		c.DamageAdjustment = 3
 		c.StrengthTest = "5:6"
 		c.ExtraStrengthFeat = "32%"
+	}
+	if c.Class == "Fighter" {
+		// Parse the current percentage value
+		var currentPercent int
+		fmt.Sscanf(c.ExtraStrengthFeat, "%d%%", &currentPercent)
+
+		// Apply the 8% bonus
+		c.ExtraStrengthFeat = fmt.Sprintf("%d%%", currentPercent+8)
 	}
 }
 

@@ -147,6 +147,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getEquipmentByNameStmt, err = db.PrepareContext(ctx, getEquipmentByName); err != nil {
 		return nil, fmt.Errorf("error preparing query GetEquipmentByName: %w", err)
 	}
+	if q.getFighterClassDataStmt, err = db.PrepareContext(ctx, getFighterClassData); err != nil {
+		return nil, fmt.Errorf("error preparing query GetFighterClassData: %w", err)
+	}
 	if q.getFullUserByEmailStmt, err = db.PrepareContext(ctx, getFullUserByEmail); err != nil {
 		return nil, fmt.Errorf("error preparing query GetFullUserByEmail: %w", err)
 	}
@@ -173,6 +176,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getMagicItemByNameStmt, err = db.PrepareContext(ctx, getMagicItemByName); err != nil {
 		return nil, fmt.Errorf("error preparing query GetMagicItemByName: %w", err)
+	}
+	if q.getNextFighterLevelStmt, err = db.PrepareContext(ctx, getNextFighterLevel); err != nil {
+		return nil, fmt.Errorf("error preparing query GetNextFighterLevel: %w", err)
 	}
 	if q.getPotionStmt, err = db.PrepareContext(ctx, getPotion); err != nil {
 		return nil, fmt.Errorf("error preparing query GetPotion: %w", err)
@@ -233,6 +239,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.listEquipmentStmt, err = db.PrepareContext(ctx, listEquipment); err != nil {
 		return nil, fmt.Errorf("error preparing query ListEquipment: %w", err)
+	}
+	if q.listFighterClassDataStmt, err = db.PrepareContext(ctx, listFighterClassData); err != nil {
+		return nil, fmt.Errorf("error preparing query ListFighterClassData: %w", err)
 	}
 	if q.listInventoriesStmt, err = db.PrepareContext(ctx, listInventories); err != nil {
 		return nil, fmt.Errorf("error preparing query ListInventories: %w", err)
@@ -531,6 +540,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getEquipmentByNameStmt: %w", cerr)
 		}
 	}
+	if q.getFighterClassDataStmt != nil {
+		if cerr := q.getFighterClassDataStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getFighterClassDataStmt: %w", cerr)
+		}
+	}
 	if q.getFullUserByEmailStmt != nil {
 		if cerr := q.getFullUserByEmailStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getFullUserByEmailStmt: %w", cerr)
@@ -574,6 +588,11 @@ func (q *Queries) Close() error {
 	if q.getMagicItemByNameStmt != nil {
 		if cerr := q.getMagicItemByNameStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getMagicItemByNameStmt: %w", cerr)
+		}
+	}
+	if q.getNextFighterLevelStmt != nil {
+		if cerr := q.getNextFighterLevelStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getNextFighterLevelStmt: %w", cerr)
 		}
 	}
 	if q.getPotionStmt != nil {
@@ -674,6 +693,11 @@ func (q *Queries) Close() error {
 	if q.listEquipmentStmt != nil {
 		if cerr := q.listEquipmentStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listEquipmentStmt: %w", cerr)
+		}
+	}
+	if q.listFighterClassDataStmt != nil {
+		if cerr := q.listFighterClassDataStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listFighterClassDataStmt: %w", cerr)
 		}
 	}
 	if q.listInventoriesStmt != nil {
@@ -901,6 +925,7 @@ type Queries struct {
 	getContainerByNameStmt              *sql.Stmt
 	getEquipmentStmt                    *sql.Stmt
 	getEquipmentByNameStmt              *sql.Stmt
+	getFighterClassDataStmt             *sql.Stmt
 	getFullUserByEmailStmt              *sql.Stmt
 	getInventoryStmt                    *sql.Stmt
 	getInventoryByCharacterStmt         *sql.Stmt
@@ -910,6 +935,7 @@ type Queries struct {
 	getInventoryItemsByTypeStmt         *sql.Stmt
 	getMagicItemStmt                    *sql.Stmt
 	getMagicItemByNameStmt              *sql.Stmt
+	getNextFighterLevelStmt             *sql.Stmt
 	getPotionStmt                       *sql.Stmt
 	getPotionByNameStmt                 *sql.Stmt
 	getRingStmt                         *sql.Stmt
@@ -930,6 +956,7 @@ type Queries struct {
 	listCharactersStmt                  *sql.Stmt
 	listContainersStmt                  *sql.Stmt
 	listEquipmentStmt                   *sql.Stmt
+	listFighterClassDataStmt            *sql.Stmt
 	listInventoriesStmt                 *sql.Stmt
 	listMagicItemsStmt                  *sql.Stmt
 	listMagicItemsByTypeStmt            *sql.Stmt
@@ -1006,6 +1033,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getContainerByNameStmt:              q.getContainerByNameStmt,
 		getEquipmentStmt:                    q.getEquipmentStmt,
 		getEquipmentByNameStmt:              q.getEquipmentByNameStmt,
+		getFighterClassDataStmt:             q.getFighterClassDataStmt,
 		getFullUserByEmailStmt:              q.getFullUserByEmailStmt,
 		getInventoryStmt:                    q.getInventoryStmt,
 		getInventoryByCharacterStmt:         q.getInventoryByCharacterStmt,
@@ -1015,6 +1043,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getInventoryItemsByTypeStmt:         q.getInventoryItemsByTypeStmt,
 		getMagicItemStmt:                    q.getMagicItemStmt,
 		getMagicItemByNameStmt:              q.getMagicItemByNameStmt,
+		getNextFighterLevelStmt:             q.getNextFighterLevelStmt,
 		getPotionStmt:                       q.getPotionStmt,
 		getPotionByNameStmt:                 q.getPotionByNameStmt,
 		getRingStmt:                         q.getRingStmt,
@@ -1035,6 +1064,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		listCharactersStmt:                  q.listCharactersStmt,
 		listContainersStmt:                  q.listContainersStmt,
 		listEquipmentStmt:                   q.listEquipmentStmt,
+		listFighterClassDataStmt:            q.listFighterClassDataStmt,
 		listInventoriesStmt:                 q.listInventoriesStmt,
 		listMagicItemsStmt:                  q.listMagicItemsStmt,
 		listMagicItemsByTypeStmt:            q.listMagicItemsByTypeStmt,

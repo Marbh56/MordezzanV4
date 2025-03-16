@@ -133,6 +133,224 @@
         .btn-back:hover {
             background-color: #7f8c8d;
         }
+
+        /* HP Control Styles */
+        .hp-control {
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .hp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .btn-toggle {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 4px;
+            color: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hp-update-container {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 100px;
+            opacity: 1;
+            transition: all 0.3s ease;
+        }
+
+        .hp-control.collapsed .hp-update-container {
+            max-height: 0;
+            margin-top: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .hp-actions,
+        .hp-set {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #hp-change,
+        #hp-set {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .btn-damage {
+            background-color: #e74c3c;
+            color: white;
+            font-weight: bold;
+            min-width: 40px;
+        }
+
+        .btn-heal {
+            background-color: #2ecc71;
+            color: white;
+            font-weight: bold;
+            min-width: 40px;
+        }
+
+        .btn-set-hp {
+            background-color: #3498db;
+            color: white;
+        }
+
+        /* XP Control Styles */
+        .xp-control {
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .xp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .xp-update-container {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 100px;
+            opacity: 1;
+            transition: all 0.3s ease;
+        }
+
+        .xp-control.collapsed .xp-update-container {
+            max-height: 0;
+            margin-top: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .xp-actions,
+        .xp-set {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #xp-change,
+        #xp-set {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .btn-reward {
+            background-color: #9b59b6;
+            color: white;
+            font-weight: bold;
+            min-width: 40px;
+        }
+
+        .btn-set-xp {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .fighter-level-info {
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Add a color for the next level indicator */
+        .next-level {
+            color: #9b59b6;
+            font-weight: bold;
+        }
+
+        .save-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .save-table th,
+        .save-table td {
+            padding: 8px 12px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .save-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .save-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .save-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .ability-card {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .ability-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #2c3e50;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .ability-description {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
+            white-space: pre-line;
+        }
+
+        .ability-level {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: white;
+            background-color: #3498db;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
     </style>
 </head>
 
@@ -156,24 +374,110 @@
             </h1>
 
             <div class="character-section">
-                <h2>Basic Information</h2>
+                <h2>Character Information</h2>
                 <div class="character-info">
                     <div class="info-item">
                         <span class="info-label">Name</span>
                         <span class="info-value" id="info-name">Loading...</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">Class</span>
-                        <span class="info-value" id="info-class">Loading...</span>
-                    </div>
-                    <div class="info-item">
                         <span class="info-label">Level</span>
                         <span class="info-value" id="info-level">Loading...</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">Hit Points</span>
-                        <span class="info-value" id="info-hp">Loading...</span>
+                        <span class="info-label">Class</span>
+                        <span class="info-value" id="info-class">Loading...</span>
                     </div>
+                    <div class="info-item">
+                        <span class="info-label">Hit Dice</span>
+                        <span class="info-value" id="info-hit-dice">Loading...</span>
+                    </div>
+
+                    <!-- HP Control Panel -->
+                    <div class="info-item hp-control collapsed" id="hp-control-panel">
+                        <span class="info-label hp-header">
+                            <span>Hit Points: <span id="info-hp">Loading...</span></span>
+                            <button class="btn btn-toggle" id="toggle-hp-panel">
+                                <span class="toggle-icon">⚔️</span>
+                            </button>
+                        </span>
+                        <div class="hp-update-container" id="hp-update-container">
+                            <div class="hp-actions">
+                                <button class="btn btn-damage" id="btn-damage">-</button>
+                                <input type="number" id="hp-change" min="1" value="1">
+                                <button class="btn btn-heal" id="btn-heal">+</button>
+                            </div>
+                            <div class="hp-set">
+                                <input type="number" id="hp-set" min="0" placeholder="Set exact HP">
+                                <button class="btn btn-set-hp" id="btn-set-hp">Set</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- XP Control Panel -->
+                    <div class="info-item xp-control collapsed" id="xp-control-panel">
+                        <span class="info-label xp-header">
+                            <span>Experience: <span id="info-experience">Loading...</span></span>
+                            <button class="btn btn-toggle" id="toggle-xp-panel">
+                                <span class="toggle-icon">📈</span>
+                            </button>
+                        </span>
+                        <div class="xp-update-container" id="xp-update-container">
+                            <div class="xp-actions">
+                                <input type="number" id="xp-change" min="1" value="100">
+                                <button class="btn btn-reward" id="btn-reward">+</button>
+                            </div>
+                            <div class="xp-set">
+                                <input type="number" id="xp-set" min="0" placeholder="Set exact XP">
+                                <button class="btn btn-set-xp" id="btn-set-xp">Set</button>
+                            </div>
+                            <div class="fighter-level-info" id="fighter-level-info" style="display: none;">
+                                <div>Current level: <span id="current-level">-</span></div>
+                                <div>Next level at: <span id="next-level-xp" class="next-level">-</span> XP</div>
+                                <div>XP needed: <span id="xp-needed">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="character-section" id="saving-throws-section" style="display: none;">
+                <h2>Saving Throws</h2>
+                <div class="saving-throws-container">
+                    <div class="save-info">
+                        <p>Base Save: <strong id="base-save">-</strong></p>
+                        <p>Roll this number or higher on a d20 to save successfully (with modifiers)</p>
+                    </div>
+                    <table class="save-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Modifier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Death</td>
+                                <td id="death-mod">+0</td>
+                            </tr>
+                            <tr>
+                                <td>Transformation</td>
+                                <td id="transform-mod">+0</td>
+                            </tr>
+                            <tr>
+                                <td>Device</td>
+                                <td id="device-mod">+0</td>
+                            </tr>
+                            <tr>
+                                <td>Avoidance</td>
+                                <td id="avoidance-mod">+0</td>
+                            </tr>
+                            <tr>
+                                <td>Sorcery</td>
+                                <td id="sorcery-mod">+0</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -239,6 +543,12 @@
                     </div>
                 </div>
             </div>
+            <div class="character-section" id="fighter-abilities-section" style="display: none;">
+                <h2>Fighter Abilities</h2>
+                <div class="fighter-abilities-container" id="fighter-abilities-container">
+                    <!-- Abilities will be dynamically inserted here -->
+                </div>
+            </div>
 
             <div class="actions">
                 <a href="#" class="btn btn-edit" id="edit-character-btn">Edit Character</a>
@@ -248,6 +558,13 @@
     </div>
 
     <script>
+        // Global variables
+        let currentHP = 0;
+        let currentXP = 0;
+        let currentClass = '';
+        let fighterLevels = [];
+        let currentLevel = 1;
+
         document.addEventListener('DOMContentLoaded', function () {
             // Check if user is logged in
             const token = localStorage.getItem('authToken');
@@ -273,18 +590,246 @@
             });
 
             // Get character ID from URL
-            const pathParts = window.location.pathname.split('/');
-            const characterId = pathParts[pathParts.length - 1];
+            const characterId = getCharacterIdFromURL();
 
             if (characterId) {
                 fetchCharacterDetails(characterId);
+                // If character is a fighter, fetch fighter level data
+                fetchFighterLevels();
 
                 // Update edit button link
                 document.getElementById('edit-character-btn').href = `/characters/${characterId}/edit`;
             } else {
                 window.location.href = '/'; // Redirect to dashboard if no character ID
             }
+
+            // Set up HP toggle functionality
+            setupHPControls();
+
+            // Set up XP toggle functionality
+            setupXPControls();
         });
+
+        function getCharacterIdFromURL() {
+            const pathParts = window.location.pathname.split('/');
+            return pathParts[pathParts.length - 1];
+        }
+
+        function setupHPControls() {
+            const hpControl = document.getElementById('hp-control-panel');
+            const toggleButton = document.getElementById('toggle-hp-panel');
+            const hpHeader = document.querySelector('.hp-header');
+
+            function toggleHPPanel() {
+                hpControl.classList.toggle('collapsed');
+            }
+
+            // Allow clicking either the button or the header to toggle
+            toggleButton.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleHPPanel();
+            });
+
+            hpHeader.addEventListener('click', toggleHPPanel);
+
+            // HP update event listeners
+            document.getElementById('btn-damage').addEventListener('click', function (e) {
+                e.stopPropagation();
+                const damageAmount = parseInt(document.getElementById('hp-change').value) || 0;
+                if (damageAmount <= 0) return;
+
+                const newHP = Math.max(0, currentHP - damageAmount);
+                updateCharacterHP(newHP);
+            });
+
+            document.getElementById('btn-heal').addEventListener('click', function (e) {
+                e.stopPropagation();
+                const healAmount = parseInt(document.getElementById('hp-change').value) || 0;
+                if (healAmount <= 0) return;
+
+                const newHP = currentHP + healAmount;
+                updateCharacterHP(newHP);
+            });
+
+            document.getElementById('btn-set-hp').addEventListener('click', function (e) {
+                e.stopPropagation();
+                const newHP = parseInt(document.getElementById('hp-set').value);
+                if (isNaN(newHP) || newHP < 0) return;
+
+                updateCharacterHP(newHP);
+            });
+        }
+
+        function setupXPControls() {
+            const xpControl = document.getElementById('xp-control-panel');
+            const toggleButton = document.getElementById('toggle-xp-panel');
+            const xpHeader = document.querySelector('.xp-header');
+
+            function toggleXPPanel() {
+                xpControl.classList.toggle('collapsed');
+            }
+
+            // Allow clicking either the button or the header to toggle
+            toggleButton.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleXPPanel();
+            });
+
+            xpHeader.addEventListener('click', toggleXPPanel);
+
+            // XP update event listeners
+            document.getElementById('btn-reward').addEventListener('click', function (e) {
+                e.stopPropagation();
+                const rewardAmount = parseInt(document.getElementById('xp-change').value) || 0;
+                if (rewardAmount <= 0) return;
+
+                const newXP = currentXP + rewardAmount;
+                updateCharacterXP(newXP);
+            });
+
+            document.getElementById('btn-set-xp').addEventListener('click', function (e) {
+                e.stopPropagation();
+                const newXP = parseInt(document.getElementById('xp-set').value);
+                if (isNaN(newXP) || newXP < 0) return;
+
+                updateCharacterXP(newXP);
+            });
+        }
+
+        function updateHPDisplay(hp) {
+            currentHP = hp;
+            document.getElementById('info-hp').textContent = hp;
+        }
+
+        function updateXPDisplay(xp, level, characterClass) {
+            currentXP = xp;
+            currentLevel = level;
+            currentClass = characterClass;
+
+            document.getElementById('info-experience').textContent = xp.toLocaleString();
+            document.getElementById('xp-set').value = xp;
+
+            // Update fighter-specific level info if applicable
+            updateFighterLevelInfo();
+        }
+
+        function updateFighterLevelInfo() {
+            const fighterLevelInfo = document.getElementById('fighter-level-info');
+
+            if (currentClass === 'Fighter' && fighterLevels.length > 0) {
+                fighterLevelInfo.style.display = 'block';
+
+                document.getElementById('current-level').textContent = currentLevel;
+
+                // Find next level XP
+                let nextLevelXP = null;
+                let xpNeeded = 0;
+
+                for (let i = 0; i < fighterLevels.length; i++) {
+                    if (fighterLevels[i].level > currentLevel) {
+                        nextLevelXP = fighterLevels[i].experience_points;
+                        xpNeeded = nextLevelXP - currentXP;
+                        break;
+                    }
+                }
+
+                if (nextLevelXP !== null) {
+                    document.getElementById('next-level-xp').textContent = nextLevelXP.toLocaleString();
+                    document.getElementById('xp-needed').textContent = xpNeeded.toLocaleString();
+                } else {
+                    // Max level reached
+                    document.getElementById('next-level-xp').textContent = "Max level reached";
+                    document.getElementById('xp-needed').textContent = "0";
+                }
+            } else {
+                fighterLevelInfo.style.display = 'none';
+            }
+        }
+
+        async function updateCharacterHP(newHP) {
+            try {
+                const token = localStorage.getItem('authToken');
+                const characterId = getCharacterIdFromURL();
+
+                const response = await fetch(`/api/characters/${characterId}/hp`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ hit_points: newHP })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update hit points');
+                }
+
+                const character = await response.json();
+                updateHPDisplay(character.hit_points);
+                return character;
+            } catch (error) {
+                console.error('Error updating hit points:', error);
+                alert('Failed to update hit points: ' + error.message);
+            }
+        }
+
+        async function updateCharacterXP(newXP) {
+            try {
+                const token = localStorage.getItem('authToken');
+                const characterId = getCharacterIdFromURL();
+
+                const response = await fetch(`/api/characters/${characterId}/xp`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ experience_points: newXP })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update experience points');
+                }
+
+                const character = await response.json();
+
+                // Update the UI with new character data
+                updateXPDisplay(character.experience_points, character.level, character.class);
+
+                // If level changed, update level display
+                document.getElementById('info-level').textContent = character.level;
+                document.getElementById('character-level-class').textContent = `Level ${character.level} ${character.class}`;
+
+                return character;
+            } catch (error) {
+                console.error('Error updating experience points:', error);
+                alert('Failed to update experience points: ' + error.message);
+            }
+        }
+
+        async function fetchFighterLevels() {
+            try {
+                const token = localStorage.getItem('authToken');
+
+                const response = await fetch('/api/fighter-levels', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    fighterLevels = await response.json();
+
+                    // Update the fighter level info display if character is a fighter
+                    if (currentClass === 'Fighter') {
+                        updateFighterLevelInfo();
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching fighter levels:', error);
+                // Silently fail - not critical
+            }
+        }
 
         async function fetchCharacterDetails(characterId) {
             try {
@@ -312,6 +857,64 @@
             return value >= 0 ? `+${value}` : value.toString();
         }
 
+        function updateSavingThrows(character) {
+            // Base save is the character's saving throw
+            const baseSave = character.saving_throw;
+
+            // Update base save display
+            document.getElementById('base-save').textContent = baseSave;
+
+            // Set modifiers (defaults to 0 for all categories)
+            document.getElementById('death-mod').textContent = '+0';
+            document.getElementById('transform-mod').textContent = '+0';
+            document.getElementById('device-mod').textContent = '+0';
+            document.getElementById('avoidance-mod').textContent = '+0';
+            document.getElementById('sorcery-mod').textContent = '+0';
+        }
+
+        function displayFighterAbilities(character) {
+            const fighterAbilitiesSection = document.getElementById('fighter-abilities-section');
+            const fighterAbilitiesContainer = document.getElementById('fighter-abilities-container');
+
+            if (character.class === 'Fighter' && character.abilities && character.abilities.length > 0) {
+                // Clear previous abilities
+                fighterAbilitiesContainer.innerHTML = '';
+
+                // Add each ability
+                character.abilities.forEach(ability => {
+                    const abilityCard = document.createElement('div');
+                    abilityCard.className = 'ability-card';
+
+                    const abilityHeader = document.createElement('div');
+                    abilityHeader.className = 'ability-name';
+                    abilityHeader.textContent = ability.name;
+
+                    if (ability.min_level > 1) {
+                        const levelBadge = document.createElement('span');
+                        levelBadge.className = 'ability-level';
+                        levelBadge.textContent = `Level ${ability.min_level}+`;
+                        abilityHeader.appendChild(levelBadge);
+                    }
+
+                    const abilityDescription = document.createElement('div');
+                    abilityDescription.className = 'ability-description';
+                    abilityDescription.textContent = ability.description;
+
+                    abilityCard.appendChild(abilityHeader);
+                    abilityCard.appendChild(abilityDescription);
+                    fighterAbilitiesContainer.appendChild(abilityCard);
+                });
+
+                // Show the section
+                fighterAbilitiesSection.style.display = 'block';
+            } else {
+                // Hide the section if not a fighter or no abilities
+                fighterAbilitiesSection.style.display = 'none';
+            }
+        }
+
+
+
         function displayCharacterDetails(character) {
             // Set page title
             document.title = `${character.name} - Mordezzan`;
@@ -324,7 +927,29 @@
             document.getElementById('info-name').textContent = character.name;
             document.getElementById('info-class').textContent = character.class;
             document.getElementById('info-level').textContent = character.level;
-            document.getElementById('info-hp').textContent = character.hit_points;
+            document.getElementById('info-hit-dice').textContent = character.hit_dice || '-';
+
+            // Update HP display and set field
+            updateHPDisplay(character.hit_points);
+            document.getElementById('hp-set').value = character.hit_points;
+
+            // Update XP display and set field
+            updateXPDisplay(character.experience_points || 0, character.level, character.class);
+
+            const savingThrowsSection = document.getElementById('saving-throws-section');
+            if (character.class === 'Fighter' && character.saving_throw) {
+                updateSavingThrows(character);
+                savingThrowsSection.style.display = 'block';
+            } else {
+                savingThrowsSection.style.display = 'none';
+            }
+
+            // Set modifiers with the actual save bonuses
+            document.getElementById('death-mod').textContent = formatModifier(character.death_save_bonus || 0);
+            document.getElementById('transform-mod').textContent = formatModifier(character.transformation_save_bonus || 0);
+            document.getElementById('device-mod').textContent = '+0';
+            document.getElementById('avoidance-mod').textContent = '+0';
+            document.getElementById('sorcery-mod').textContent = '+0';
 
             // Strength
             document.getElementById('ability-str').textContent = character.strength;
@@ -364,10 +989,10 @@
             document.getElementById('cha-reaction-mod').textContent = formatModifier(character.reaction_modifier);
             document.getElementById('cha-followers').textContent = character.max_followers || '-';
             document.getElementById('cha-turn-mod').textContent = formatModifier(character.undead_turning_modifier);
+
+            // Display fighter abilities
+            displayFighterAbilities(character);
         }
-
-
-
     </script>
 </body>
 
