@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Details - Mordezzan</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .character-sheet {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .character-sheet h1 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .character-section {
+            margin-bottom: 30px;
+        }
+
+        .character-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #3498db;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        .character-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        .ability-scores {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .ability-item {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .ability-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .ability-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .ability-item {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .ability-modifiers {
+            margin-top: 10px;
+            font-size: 12px;
+            text-align: left;
+            border-top: 1px solid #e9ecef;
+            padding-top: 8px;
+        }
+
+        .modifier-item {
+            margin: 3px 0;
+            color: #555;
+            padding-bottom: 3px;
+            border-bottom: 1px dotted #e9ecef;
+            text-align: center;
+        }
+
+        .actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-edit {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background-color: #e67e22;
+        }
+
+        .btn-back {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <div class="container">
+            <a href="/" class="navbar-brand">Mordezzan</a>
+            <ul class="navbar-menu">
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/profile" id="username-display"></a></li>
+                <li><a href="#" id="logout-link">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="character-sheet">
+            <h1>
+                <span id="character-name">Loading...</span>
+                <span id="character-level-class"></span>
+            </h1>
+
+            <div class="character-section">
+                <h2>Basic Information</h2>
+                <div class="character-info">
+                    <div class="info-item">
+                        <span class="info-label">Name</span>
+                        <span class="info-value" id="info-name">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Class</span>
+                        <span class="info-value" id="info-class">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Level</span>
+                        <span class="info-value" id="info-level">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Hit Points</span>
+                        <span class="info-value" id="info-hp">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="character-section">
+                <h2>Ability Scores</h2>
+                <div class="ability-scores">
+                    <div class="ability-item">
+                        <div class="ability-label">Strength</div>
+                        <div class="ability-value" id="ability-str">-</div>
+                        <div class="ability-modifiers">
+                            <div class="modifier-item">Attack: <span id="str-attack-mod">-</span></div>
+                            <div class="modifier-item">Damage: <span id="str-damage-adj">-</span></div>
+                            <div class="modifier-item">Test: <span id="str-test">-</span></div>
+                            <div class="modifier-item">Feat: <span id="str-feat">-</span></div>
+                        </div>
+                    </div>
+                    <div class="ability-item">
+                        <div class="ability-label">Dexterity</div>
+                        <div class="ability-value" id="ability-dex">-</div>
+                        <div class="ability-modifiers">
+                            <div class="modifier-item">Attack: <span id="dex-attack-mod">-</span></div>
+                            <div class="modifier-item">Defense: <span id="dex-defense-adj">-</span></div>
+                            <div class="modifier-item">Test: <span id="dex-test">-</span></div>
+                            <div class="modifier-item">Feat: <span id="dex-feat">-</span></div>
+                        </div>
+                    </div>
+                    <div class="ability-item">
+                        <div class="ability-label">Constitution</div>
+                        <div class="ability-value" id="ability-con">-</div>
+                        <div class="ability-modifiers">
+                            <div class="modifier-item">HP: <span id="con-hp-mod">-</span></div>
+                            <div class="modifier-item">Save: <span id="con-save-mod">-</span></div>
+                            <div class="modifier-item">Survival: <span id="con-survival">-</span></div>
+                            <div class="modifier-item">Test: <span id="con-test">-</span></div>
+                        </div>
+                    </div>
+                    <div class="ability-item">
+                        <div class="ability-label">Intelligence</div>
+                        <div class="ability-value" id="ability-int">-</div>
+                        <div class="ability-modifiers">
+                            <div class="modifier-item">Lang: <span id="int-lang-mod">-</span></div>
+                            <div class="modifier-item">Magic: <span id="int-magic-bonus">-</span></div>
+                            <div class="modifier-item">Chance: <span id="int-magic-chance">-</span></div>
+                        </div>
+                    </div>
+                    <div class="ability-item">
+                        <div class="ability-label">Wisdom</div>
+                        <div class="ability-value" id="ability-wis">-</div>
+                        <div class="ability-modifiers">
+                            <div class="modifier-item">Will: <span id="wis-will-mod">-</span></div>
+                            <div class="modifier-item">Cleric: <span id="wis-cleric-bonus">-</span></div>
+                            <div class="modifier-item">Chance: <span id="wis-cleric-chance">-</span></div>
+                        </div>
+                    </div>
+                    <div class="ability-item">
+                        <div class="ability-label">Charisma</div>
+                        <div class="ability-value" id="ability-cha">-</div>
+                        <div class="ability-modifiers">
+                            <div class="modifier-item">React: <span id="cha-reaction-mod">-</span></div>
+                            <div class="modifier-item">Followers: <span id="cha-followers">-</span></div>
+                            <div class="modifier-item">Turn: <span id="cha-turn-mod">-</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="#" class="btn btn-edit" id="edit-character-btn">Edit Character</a>
+                <a href="/" class="btn btn-back">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check if user is logged in
+            const token = localStorage.getItem('authToken');
+            const userId = localStorage.getItem('userId');
+            const username = localStorage.getItem('username');
+
+            if (!token || !userId) {
+                // Redirect to login if not logged in
+                window.location.href = '/auth/login-page';
+                return;
+            }
+
+            // Display username in navbar
+            document.getElementById('username-display').textContent = username;
+
+            // Logout functionality
+            document.getElementById('logout-link').addEventListener('click', function (e) {
+                e.preventDefault();
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('username');
+                window.location.href = '/auth/login-page';
+            });
+
+            // Get character ID from URL
+            const pathParts = window.location.pathname.split('/');
+            const characterId = pathParts[pathParts.length - 1];
+
+            if (characterId) {
+                fetchCharacterDetails(characterId);
+
+                // Update edit button link
+                document.getElementById('edit-character-btn').href = `/characters/${characterId}/edit`;
+            } else {
+                window.location.href = '/'; // Redirect to dashboard if no character ID
+            }
+        });
+
+        async function fetchCharacterDetails(characterId) {
+            try {
+                const token = localStorage.getItem('authToken');
+
+                const response = await fetch(`/api/characters/${characterId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch character details');
+                }
+
+                const character = await response.json();
+                displayCharacterDetails(character);
+            } catch (error) {
+                console.error('Error fetching character details:', error);
+                alert('Failed to load character details: ' + error.message);
+            }
+        }
+
+        function formatModifier(value) {
+            return value >= 0 ? `+${value}` : value.toString();
+        }
+
+        function displayCharacterDetails(character) {
+            // Set page title
+            document.title = `${character.name} - Mordezzan`;
+
+            // Update header
+            document.getElementById('character-name').textContent = character.name;
+            document.getElementById('character-level-class').textContent = `Level ${character.level} ${character.class}`;
+
+            // Update basic info
+            document.getElementById('info-name').textContent = character.name;
+            document.getElementById('info-class').textContent = character.class;
+            document.getElementById('info-level').textContent = character.level;
+            document.getElementById('info-hp').textContent = character.hit_points;
+
+            // Strength
+            document.getElementById('ability-str').textContent = character.strength;
+            document.getElementById('str-attack-mod').textContent = formatModifier(character.Melee_modifier);
+            document.getElementById('str-damage-adj').textContent = formatModifier(character.damage_adjustment);
+            document.getElementById('str-test').textContent = character.strength_test || '-';
+            document.getElementById('str-feat').textContent = character.extra_strength_feat || '-';
+
+            // Dexterity
+            document.getElementById('ability-dex').textContent = character.dexterity;
+            document.getElementById('dex-attack-mod').textContent = formatModifier(character.Ranged_modifier);
+            document.getElementById('dex-defense-adj').textContent = formatModifier(character.defence_adjustment);
+            document.getElementById('dex-test').textContent = character.dexterity_test || '-';
+            document.getElementById('dex-feat').textContent = character.extra_dexterity_feat || '-';
+
+            // Constitution
+            document.getElementById('ability-con').textContent = character.constitution;
+            document.getElementById('con-hp-mod').textContent = formatModifier(character.HP_modifier);
+            document.getElementById('con-save-mod').textContent = formatModifier(character.poison_rad_modifier);
+            document.getElementById('con-survival').textContent = character.trauma_survival || '-';
+            document.getElementById('con-test').textContent = character.constitution_test || '-';
+
+            // Intelligence
+            document.getElementById('ability-int').textContent = character.intelligence;
+            document.getElementById('int-lang-mod').textContent = character.language_modifier || '-';
+            document.getElementById('int-magic-bonus').textContent = character.magicians_bonus || '-';
+            document.getElementById('int-magic-chance').textContent = character.magicians_chance || '-';
+
+            // Wisdom
+            document.getElementById('ability-wis').textContent = character.wisdom;
+            document.getElementById('wis-will-mod').textContent = formatModifier(character.willpower_modifier);
+            document.getElementById('wis-cleric-bonus').textContent = character.cleric_bonus || '-';
+            document.getElementById('wis-cleric-chance').textContent = character.cleric_chance || '-';
+
+            // Charisma
+            document.getElementById('ability-cha').textContent = character.charisma;
+            document.getElementById('cha-reaction-mod').textContent = formatModifier(character.reaction_modifier);
+            document.getElementById('cha-followers').textContent = character.max_followers || '-';
+            document.getElementById('cha-turn-mod').textContent = formatModifier(character.undead_turning_modifier);
+        }
+
+
+
+    </script>
+</body>
+
+</html>

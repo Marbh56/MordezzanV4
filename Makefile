@@ -56,8 +56,12 @@ repo-clean:
 
 repo-frontend:
 	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/*repository*.go,**/*.sql,**/*.sql.go,**/queries/**,**/*_test.go,**/db/**,**/migrations/**,**/sqlc/**,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/middleware/**,**/controllers/**,cmd/**,**/logger/**,**/errors/**,**/app/**,**/contextkeys/**"
+		--ignore "**/*repository*.go,**/*.sql,**/*.sql.go,**/queries/**,**/*_test.go,**/db/**,**/migrations/**,**/sqlc/**,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/middleware/**,cmd/**,**/logger/**,**/errors/**,**/app/**,**/contextkeys/**"
 
 repo-backend:
 	repomix --remove-comments --remove-empty-lines \
 		--ignore "**/*_test.go,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/web/static/**,**/web/templates/**,**/docs/**,README.md,**/migrations/*.sql,**/queries/*.sql,**/sqlc/models.go,**/sqlc/db.go,**/sqlc/querier.go,**/sqlc/*.sql.go,Makefile,sqlc.yaml,.gitignore,go.mod,**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell_scroll*.go,**/container*.go,**/spell*.go"
+
+repo-dashboard:
+	repomix --remove-comments --remove-empty-lines \
+		--ignore "**/*repository*.go,**/*.sql,**/*.sql.go,**/queries/**,**/*_test.go,**/db/**,**/migrations/**,**/sqlc/**,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell*.go,**/spell_scroll*.go,**/container*.go,**/treasure*.go,**/inventory*.go"
