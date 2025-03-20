@@ -11,6 +11,10 @@ import (
 
 type Querier interface {
 	AddInventoryItem(ctx context.Context, arg AddInventoryItemParams) (sql.Result, error)
+	AddSpellToSpellbook(ctx context.Context, arg AddSpellToSpellbookParams) error
+	ClearPreparedSpells(ctx context.Context, characterID int64) error
+	CountPreparedSpell(ctx context.Context, arg CountPreparedSpellParams) (int64, error)
+	CountPreparedSpellsByLevel(ctx context.Context, arg CountPreparedSpellsByLevelParams) (int64, error)
 	CreateAmmo(ctx context.Context, arg CreateAmmoParams) (sql.Result, error)
 	CreateArmor(ctx context.Context, arg CreateArmorParams) (sql.Result, error)
 	CreateCharacter(ctx context.Context, arg CreateCharacterParams) (sql.Result, error)
@@ -23,9 +27,11 @@ type Querier interface {
 	CreateShield(ctx context.Context, arg CreateShieldParams) (sql.Result, error)
 	CreateSpell(ctx context.Context, arg CreateSpellParams) (sql.Result, error)
 	CreateSpellScroll(ctx context.Context, arg CreateSpellScrollParams) (sql.Result, error)
+	CreateSpellbook(ctx context.Context, arg CreateSpellbookParams) (sql.Result, error)
 	CreateTreasure(ctx context.Context, arg CreateTreasureParams) (sql.Result, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error)
 	CreateWeapon(ctx context.Context, arg CreateWeaponParams) (sql.Result, error)
+	DeleteAllSpellsFromSpellbook(ctx context.Context, spellbookID int64) error
 	DeleteAmmo(ctx context.Context, id int64) (sql.Result, error)
 	DeleteArmor(ctx context.Context, id int64) (sql.Result, error)
 	DeleteCharacter(ctx context.Context, id int64) (sql.Result, error)
@@ -38,6 +44,7 @@ type Querier interface {
 	DeleteShield(ctx context.Context, id int64) (sql.Result, error)
 	DeleteSpell(ctx context.Context, id int64) (sql.Result, error)
 	DeleteSpellScroll(ctx context.Context, id int64) (sql.Result, error)
+	DeleteSpellbook(ctx context.Context, id int64) error
 	DeleteTreasure(ctx context.Context, id int64) (sql.Result, error)
 	DeleteUser(ctx context.Context, id int64) (sql.Result, error)
 	DeleteWeapon(ctx context.Context, id int64) (sql.Result, error)
@@ -61,17 +68,24 @@ type Querier interface {
 	GetInventoryItemsByType(ctx context.Context, arg GetInventoryItemsByTypeParams) ([]InventoryItem, error)
 	GetMagicItem(ctx context.Context, id int64) (MagicItem, error)
 	GetMagicItemByName(ctx context.Context, name string) (MagicItem, error)
+	GetMagicianClassData(ctx context.Context, level int64) (MagicianClassDatum, error)
 	GetNextFighterLevel(ctx context.Context, level int64) (FighterClassDatum, error)
+	GetNextMagicianLevel(ctx context.Context, level int64) (MagicianClassDatum, error)
 	GetPotion(ctx context.Context, id int64) (Potion, error)
 	GetPotionByName(ctx context.Context, name string) (Potion, error)
+	GetPreparedSpell(ctx context.Context, id int64) (PreparedSpell, error)
+	GetPreparedSpellsByCharacter(ctx context.Context, characterID int64) ([]PreparedSpell, error)
 	GetRing(ctx context.Context, id int64) (Ring, error)
 	GetRingByName(ctx context.Context, name string) (Ring, error)
 	GetShield(ctx context.Context, id int64) (Shield, error)
 	GetShieldByName(ctx context.Context, name string) (Shield, error)
 	GetSpell(ctx context.Context, id int64) (Spell, error)
+	GetSpellFromSpellbook(ctx context.Context, arg GetSpellFromSpellbookParams) (SpellbookSpell, error)
 	GetSpellScroll(ctx context.Context, id int64) (GetSpellScrollRow, error)
 	GetSpellScrollsBySpell(ctx context.Context, spellID int64) ([]GetSpellScrollsBySpellRow, error)
-	GetSpellsByCharacter(ctx context.Context, characterID int64) ([]Spell, error)
+	GetSpellbook(ctx context.Context, id int64) (Spellbook, error)
+	GetSpellbookByName(ctx context.Context, name string) (Spellbook, error)
+	GetSpellsInSpellbook(ctx context.Context, spellbookID int64) ([]int64, error)
 	GetTreasure(ctx context.Context, id int64) (Treasure, error)
 	GetTreasureByCharacter(ctx context.Context, characterID sql.NullInt64) (Treasure, error)
 	GetUser(ctx context.Context, id int64) (GetUserRow, error)
@@ -86,16 +100,22 @@ type Querier interface {
 	ListInventories(ctx context.Context) ([]Inventory, error)
 	ListMagicItems(ctx context.Context) ([]MagicItem, error)
 	ListMagicItemsByType(ctx context.Context, itemType string) ([]MagicItem, error)
+	ListMagicianClassData(ctx context.Context) ([]MagicianClassDatum, error)
 	ListPotions(ctx context.Context) ([]Potion, error)
 	ListRings(ctx context.Context) ([]Ring, error)
 	ListShields(ctx context.Context) ([]Shield, error)
 	ListSpellScrolls(ctx context.Context) ([]ListSpellScrollsRow, error)
+	ListSpellbooks(ctx context.Context) ([]Spellbook, error)
 	ListSpells(ctx context.Context) ([]Spell, error)
 	ListTreasures(ctx context.Context) ([]Treasure, error)
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
 	ListWeapons(ctx context.Context) ([]Weapon, error)
+	PrepareSpell(ctx context.Context, arg PrepareSpellParams) (sql.Result, error)
+	RecalculateInventoryWeight(ctx context.Context, id int64) error
 	RemoveAllInventoryItems(ctx context.Context, inventoryID int64) error
 	RemoveInventoryItem(ctx context.Context, id int64) error
+	RemoveSpellFromSpellbook(ctx context.Context, arg RemoveSpellFromSpellbookParams) error
+	UnprepareSpell(ctx context.Context, arg UnprepareSpellParams) error
 	UpdateAmmo(ctx context.Context, arg UpdateAmmoParams) (sql.Result, error)
 	UpdateArmor(ctx context.Context, arg UpdateArmorParams) (sql.Result, error)
 	UpdateCharacter(ctx context.Context, arg UpdateCharacterParams) (sql.Result, error)
@@ -103,12 +123,15 @@ type Querier interface {
 	UpdateEquipment(ctx context.Context, arg UpdateEquipmentParams) (sql.Result, error)
 	UpdateInventory(ctx context.Context, arg UpdateInventoryParams) (sql.Result, error)
 	UpdateInventoryItem(ctx context.Context, arg UpdateInventoryItemParams) (sql.Result, error)
+	UpdateInventoryWeight(ctx context.Context, arg UpdateInventoryWeightParams) error
 	UpdateMagicItem(ctx context.Context, arg UpdateMagicItemParams) (sql.Result, error)
 	UpdatePotion(ctx context.Context, arg UpdatePotionParams) (sql.Result, error)
 	UpdateRing(ctx context.Context, arg UpdateRingParams) (sql.Result, error)
 	UpdateShield(ctx context.Context, arg UpdateShieldParams) (sql.Result, error)
 	UpdateSpell(ctx context.Context, arg UpdateSpellParams) (sql.Result, error)
 	UpdateSpellScroll(ctx context.Context, arg UpdateSpellScrollParams) (sql.Result, error)
+	UpdateSpellbook(ctx context.Context, arg UpdateSpellbookParams) error
+	UpdateSpellbookUsedPages(ctx context.Context, arg UpdateSpellbookUsedPagesParams) error
 	UpdateTreasure(ctx context.Context, arg UpdateTreasureParams) (sql.Result, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error)
 	UpdateWeapon(ctx context.Context, arg UpdateWeaponParams) (sql.Result, error)

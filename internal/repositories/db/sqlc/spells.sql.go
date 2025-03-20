@@ -12,17 +12,16 @@ import (
 
 const createSpell = `-- name: CreateSpell :execresult
 INSERT INTO spells (
-  character_id, name, 
+  name, 
   mag_level, cry_level, ill_level, nec_level, 
   pyr_level, wch_level, clr_level, drd_level,
   range, duration, area_of_effect, components, description
 ) VALUES (
-  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 `
 
 type CreateSpellParams struct {
-	CharacterID  int64
 	Name         string
 	MagLevel     int64
 	CryLevel     int64
@@ -41,7 +40,6 @@ type CreateSpellParams struct {
 
 func (q *Queries) CreateSpell(ctx context.Context, arg CreateSpellParams) (sql.Result, error) {
 	return q.exec(ctx, q.createSpellStmt, createSpell,
-		arg.CharacterID,
 		arg.Name,
 		arg.MagLevel,
 		arg.CryLevel,
@@ -69,7 +67,7 @@ func (q *Queries) DeleteSpell(ctx context.Context, id int64) (sql.Result, error)
 }
 
 const getSpell = `-- name: GetSpell :one
-SELECT id, character_id, name, mag_level, cry_level, ill_level, nec_level, pyr_level, wch_level, clr_level, drd_level, "range", duration, area_of_effect, components, description, created_at, updated_at FROM spells
+SELECT id, name, mag_level, cry_level, ill_level, nec_level, pyr_level, wch_level, clr_level, drd_level, "range", duration, area_of_effect, components, description, created_at, updated_at FROM spells
 WHERE id = ? LIMIT 1
 `
 
@@ -78,7 +76,6 @@ func (q *Queries) GetSpell(ctx context.Context, id int64) (Spell, error) {
 	var i Spell
 	err := row.Scan(
 		&i.ID,
-		&i.CharacterID,
 		&i.Name,
 		&i.MagLevel,
 		&i.CryLevel,
@@ -99,56 +96,8 @@ func (q *Queries) GetSpell(ctx context.Context, id int64) (Spell, error) {
 	return i, err
 }
 
-const getSpellsByCharacter = `-- name: GetSpellsByCharacter :many
-SELECT id, character_id, name, mag_level, cry_level, ill_level, nec_level, pyr_level, wch_level, clr_level, drd_level, "range", duration, area_of_effect, components, description, created_at, updated_at FROM spells
-WHERE character_id = ?
-ORDER BY name
-`
-
-func (q *Queries) GetSpellsByCharacter(ctx context.Context, characterID int64) ([]Spell, error) {
-	rows, err := q.query(ctx, q.getSpellsByCharacterStmt, getSpellsByCharacter, characterID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Spell{}
-	for rows.Next() {
-		var i Spell
-		if err := rows.Scan(
-			&i.ID,
-			&i.CharacterID,
-			&i.Name,
-			&i.MagLevel,
-			&i.CryLevel,
-			&i.IllLevel,
-			&i.NecLevel,
-			&i.PyrLevel,
-			&i.WchLevel,
-			&i.ClrLevel,
-			&i.DrdLevel,
-			&i.Range,
-			&i.Duration,
-			&i.AreaOfEffect,
-			&i.Components,
-			&i.Description,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listSpells = `-- name: ListSpells :many
-SELECT id, character_id, name, mag_level, cry_level, ill_level, nec_level, pyr_level, wch_level, clr_level, drd_level, "range", duration, area_of_effect, components, description, created_at, updated_at FROM spells
+SELECT id, name, mag_level, cry_level, ill_level, nec_level, pyr_level, wch_level, clr_level, drd_level, "range", duration, area_of_effect, components, description, created_at, updated_at FROM spells
 ORDER BY name
 `
 
@@ -163,7 +112,6 @@ func (q *Queries) ListSpells(ctx context.Context) ([]Spell, error) {
 		var i Spell
 		if err := rows.Scan(
 			&i.ID,
-			&i.CharacterID,
 			&i.Name,
 			&i.MagLevel,
 			&i.CryLevel,

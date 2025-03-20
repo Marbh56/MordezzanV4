@@ -16,23 +16,26 @@ import (
 )
 
 type CharacterController struct {
-	characterRepo  repositories.CharacterRepository
-	userRepo       repositories.UserRepository
-	fighterService *services.FighterService
-	tmpl           *template.Template
+	characterRepo   repositories.CharacterRepository
+	userRepo        repositories.UserRepository
+	fighterService  *services.FighterService
+	magicianService *services.MagicianService
+	tmpl            *template.Template
 }
 
 func NewCharacterController(
 	characterRepo repositories.CharacterRepository,
 	userRepo repositories.UserRepository,
 	fighterService *services.FighterService,
+	magicianService *services.MagicianService,
 	tmpl *template.Template,
 ) *CharacterController {
 	return &CharacterController{
-		characterRepo:  characterRepo,
-		userRepo:       userRepo,
-		fighterService: fighterService,
-		tmpl:           tmpl,
+		characterRepo:   characterRepo,
+		userRepo:        userRepo,
+		fighterService:  fighterService,
+		magicianService: magicianService,
+		tmpl:            tmpl,
 	}
 }
 
@@ -67,12 +70,15 @@ func (c *CharacterController) GetCharacter(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
+	character.CalculateDerivedStats()
+
 	// Return the character data
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(character)
 }
 
 func (c *CharacterController) RenderCharacterDetail(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	idParam := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
@@ -90,17 +96,19 @@ func (c *CharacterController) RenderCharacterDetail(w http.ResponseWriter, r *ht
 		return
 	}
 
-	// Enrich with fighter class data if applicable
-	if character.Class == "Fighter" {
+	// First calculate basic derived stats
+	character.CalculateDerivedStats()
+
+	// Then enrich with class-specific data (including save bonuses)
+	switch character.Class {
+	case "Fighter":
 		if err := c.fighterService.EnrichCharacterWithFighterData(r.Context(), character); err != nil {
 			apperrors.HandleError(w, apperrors.NewInternalError(err))
 			return
 		}
 
-		// Get next level experience for the character
 		nextLevelExp, err := c.fighterService.GetExperienceForNextLevel(r.Context(), character.Level)
 		if err == nil && character.Level < 12 {
-			// Create a data wrapper to pass to the template
 			data := struct {
 				*models.Character
 				NextLevelExperience int
@@ -110,17 +118,19 @@ func (c *CharacterController) RenderCharacterDetail(w http.ResponseWriter, r *ht
 				NextLevelExperience: nextLevelExp,
 				ExperienceNeeded:    nextLevelExp - character.ExperiencePoints,
 			}
-
-			character.CalculateDerivedStats()
 			err = c.tmpl.ExecuteTemplate(w, "character_detail.html", data)
 			if err != nil {
 				apperrors.HandleError(w, apperrors.NewInternalError(err))
 			}
 			return
 		}
+	case "Magician":
+		if err := c.magicianService.EnrichCharacterWithMagicianData(r.Context(), character); err != nil {
+			apperrors.HandleError(w, apperrors.NewInternalError(err))
+			return
+		}
 	}
 
-	// If not fighter or error getting next level exp, just render the character
 	err = c.tmpl.ExecuteTemplate(w, "character_detail.html", character)
 	if err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
@@ -501,4 +511,94 @@ func (c *CharacterController) UpdateCharacterXP(w http.ResponseWriter, r *http.R
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(character)
+}
+
+func (c *CharacterController) GetCharacterClassData(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+
+	id, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		apperrors.HandleError(w, apperrors.NewBadRequest(fmt.Sprintf("Invalid character ID: %s", idParam)))
+		return
+	}
+
+	// Get the character to determine the class
+	character, err := c.characterRepo.GetCharacter(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
+			apperrors.HandleError(w, apperrors.NewNotFound("character", id))
+		} else {
+			apperrors.HandleError(w, apperrors.NewInternalError(err))
+		}
+		return
+	}
+
+	// Determine which service to use based on the character's class
+	var classData interface{}
+	var enrichErr error
+
+	switch character.Class {
+	case "Fighter":
+		// Get fighter-specific data
+		fighterData, err := c.fighterService.GetAllFighterLevelData(r.Context())
+		if err != nil {
+			apperrors.HandleError(w, apperrors.NewInternalError(err))
+			return
+		}
+
+		// Enrich character with fighter-specific data for its current level
+		enrichErr = c.fighterService.EnrichCharacterWithFighterData(r.Context(), character)
+
+		// Create a response with both the full level progression and current abilities
+		classData = map[string]interface{}{
+			"class_type": "Fighter",
+			"level_data": fighterData,
+			"current_level_data": map[string]interface{}{
+				"level":            character.Level,
+				"hit_dice":         character.HitDice,
+				"saving_throw":     character.SavingThrow,
+				"fighting_ability": character.FightingAbility,
+				"abilities":        character.Abilities,
+			},
+		}
+	case "Magician", "Wizard": // Handle both terms in case you use them interchangeably
+		// Get magician-specific data
+		magicianData, err := c.magicianService.GetAllMagicianLevelData(r.Context())
+		if err != nil {
+			apperrors.HandleError(w, apperrors.NewInternalError(err))
+			return
+		}
+
+		// Enrich character with magician-specific data for its current level
+		enrichErr = c.magicianService.EnrichCharacterWithMagicianData(r.Context(), character)
+
+		// Create a response with both the full level progression and current abilities
+		classData = map[string]interface{}{
+			"class_type": "Magician",
+			"level_data": magicianData,
+			"current_level_data": map[string]interface{}{
+				"level":           character.Level,
+				"hit_dice":        character.HitDice,
+				"saving_throw":    character.SavingThrow,
+				"casting_ability": character.CastingAbility,
+				"spell_slots":     character.SpellSlots,
+				"abilities":       character.Abilities,
+			},
+		}
+	default:
+		// For other classes or if no specific handler exists
+		classData = map[string]interface{}{
+			"class_type": character.Class,
+			"message":    "No specific class data available for this character class",
+		}
+	}
+
+	if enrichErr != nil {
+		apperrors.HandleError(w, apperrors.NewInternalError(enrichErr))
+		return
+	}
+
+	// Return the class data
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(classData)
 }

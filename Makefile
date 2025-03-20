@@ -69,3 +69,17 @@ repo-dashboard:
 repo-fighter:
 	repomix --remove-comments --remove-empty-lines \
 		--ignore "**/ammo*,**/armor*,**/treasure*,**/weapon*,**/equipment*,**/inventory*,**/shield*,**/spell*,**/magic*,**/potion*,**/ring*,**/container*,*test*,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/auth/**,**/contextkeys/**,**/errors/**,**/logger/**,**/middleware/**"
+
+tree:
+	@if command -v tree > /dev/null; then \
+		tree -I "node_modules|vendor|.git" --dirsfirst -F > project_structure.txt; \
+		echo "Project structure saved to project_structure.txt"; \
+	else \
+		find . -type d -not -path "*/\.*" -not -path "*/node_modules/*" -not -path "*/vendor/*" | sort > project_structure.txt; \
+		find . -type f -not -path "*/\.*" -not -path "*/node_modules/*" -not -path "*/vendor/*" | sort >> project_structure.txt; \
+		echo "Project structure saved to project_structure.txt (using find command)"; \
+	fi
+
+repo-character-detail:
+	repomix --remove-comments --remove-empty-lines \
+		--ignore "**/*repository*.go,**/*.sql,**/*.sql.go,**/queries/**,**/*_test.go,**/db/**,**/migrations/**,**/sqlc/**,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/middleware/**,cmd/**,**/logger/**,**/errors/**,**/app/**,**/contextkeys/**,**/auth/**,**/ammo*.*,**/armor*.*,**/shield*.*,**/ring*.*,**/potion*.*,**/weapon*.*,**/equipment*.*,**/magic_item*.*,**/spell_scroll*.*,**/container*.*,**/treasure*.*,**/spell*.*,**/notes*.*,**/inventory*.html,**/login*.html,**/register*.html,**/dashboard*.html,**/navbar*.html,**/user*.html,**/spells_tab*.html"

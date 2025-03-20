@@ -1,7 +1,6 @@
 -- +goose Up
 CREATE TABLE spells (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    character_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     mag_level INTEGER NOT NULL DEFAULT 0,  -- Magician level
     cry_level INTEGER NOT NULL DEFAULT 0,  -- Cryomancer level
@@ -17,10 +16,8 @@ CREATE TABLE spells (
     components TEXT,
     description TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (character_id) REFERENCES characters (id) ON DELETE CASCADE
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- +goose Down
 DROP TABLE spells;
-

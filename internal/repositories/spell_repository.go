@@ -12,7 +12,6 @@ import (
 // SpellRepository defines the interface for spell data operations
 type SpellRepository interface {
 	GetSpell(ctx context.Context, id int64) (*models.Spell, error)
-	GetSpellsByCharacter(ctx context.Context, characterID int64) ([]*models.Spell, error)
 	ListSpells(ctx context.Context) ([]*models.Spell, error)
 	CreateSpell(ctx context.Context, input *models.CreateSpellInput) (int64, error)
 	UpdateSpell(ctx context.Context, id int64, input *models.UpdateSpellInput) error
@@ -45,19 +44,6 @@ func (r *SQLCSpellRepository) GetSpell(ctx context.Context, id int64) (*models.S
 	return mapDbSpellToModel(spell), nil
 }
 
-// GetSpellsByCharacter retrieves all spells for a specific character
-func (r *SQLCSpellRepository) GetSpellsByCharacter(ctx context.Context, characterID int64) ([]*models.Spell, error) {
-	spells, err := r.q.GetSpellsByCharacter(ctx, characterID)
-	if err != nil {
-		return nil, apperrors.NewDatabaseError(err)
-	}
-	result := make([]*models.Spell, len(spells))
-	for i, spell := range spells {
-		result[i] = mapDbSpellToModel(spell)
-	}
-	return result, nil
-}
-
 // ListSpells retrieves all spells
 func (r *SQLCSpellRepository) ListSpells(ctx context.Context) ([]*models.Spell, error) {
 	spells, err := r.q.ListSpells(ctx)
@@ -74,7 +60,6 @@ func (r *SQLCSpellRepository) ListSpells(ctx context.Context) ([]*models.Spell, 
 // CreateSpell creates a new spell
 func (r *SQLCSpellRepository) CreateSpell(ctx context.Context, input *models.CreateSpellInput) (int64, error) {
 	result, err := r.q.CreateSpell(ctx, sqlcdb.CreateSpellParams{
-		CharacterID:  input.CharacterID,
 		Name:         input.Name,
 		MagLevel:     int64(input.MagLevel),
 		CryLevel:     int64(input.CryLevel),
@@ -150,7 +135,6 @@ func (r *SQLCSpellRepository) DeleteSpell(ctx context.Context, id int64) error {
 func mapDbSpellToModel(spell sqlcdb.Spell) *models.Spell {
 	return &models.Spell{
 		ID:           spell.ID,
-		CharacterID:  spell.CharacterID,
 		Name:         spell.Name,
 		MagLevel:     int(spell.MagLevel),
 		CryLevel:     int(spell.CryLevel),

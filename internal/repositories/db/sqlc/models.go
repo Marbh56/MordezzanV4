@@ -111,6 +111,22 @@ type MagicItem struct {
 	UpdatedAt   time.Time
 }
 
+type MagicianClassDatum struct {
+	ID               int64
+	Level            int64
+	ExperiencePoints int64
+	HitDice          string
+	SavingThrow      int64
+	FightingAbility  int64
+	CastingAbility   int64
+	SpellSlotsLevel1 int64
+	SpellSlotsLevel2 int64
+	SpellSlotsLevel3 int64
+	SpellSlotsLevel4 int64
+	SpellSlotsLevel5 int64
+	SpellSlotsLevel6 int64
+}
+
 type Potion struct {
 	ID          int64
 	Name        string
@@ -119,6 +135,14 @@ type Potion struct {
 	Weight      int64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type PreparedSpell struct {
+	ID          int64
+	CharacterID int64
+	SpellID     int64
+	SlotLevel   int64
+	PreparedAt  time.Time
 }
 
 type Ring struct {
@@ -143,7 +167,6 @@ type Shield struct {
 
 type Spell struct {
 	ID           int64
-	CharacterID  int64
 	Name         string
 	MagLevel     int64
 	CryLevel     int64
@@ -171,6 +194,26 @@ type SpellScroll struct {
 	Description  sql.NullString
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+}
+
+type Spellbook struct {
+	ID          int64
+	Name        string
+	Description sql.NullString
+	TotalPages  int64
+	UsedPages   int64
+	Value       int64
+	Weight      float64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+type SpellbookSpell struct {
+	ID             int64
+	SpellbookID    int64
+	SpellID        int64
+	CharacterClass string
+	PagesUsed      int64
 }
 
 type Treasure struct {

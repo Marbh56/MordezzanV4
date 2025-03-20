@@ -26,6 +26,9 @@ type InventoryRepository interface {
 	UpdateInventoryItem(ctx context.Context, id int64, input *models.UpdateItemInput) error
 	RemoveInventoryItem(ctx context.Context, id int64) error
 	RemoveAllInventoryItems(ctx context.Context, inventoryID int64) error
+
+	UpdateInventoryWeight(ctx context.Context, id int64, weight float64) error
+	RecalculateInventoryWeight(ctx context.Context, id int64) error
 }
 
 type SQLCInventoryRepository struct {
@@ -482,5 +485,24 @@ func (r *SQLCInventoryRepository) RemoveAllInventoryItems(ctx context.Context, i
 		return apperrors.NewDatabaseError(err)
 	}
 
+	return nil
+}
+
+func (r *SQLCInventoryRepository) UpdateInventoryWeight(ctx context.Context, id int64, weight float64) error {
+	err := r.q.UpdateInventoryWeight(ctx, sqlcdb.UpdateInventoryWeightParams{
+		CurrentWeight: weight,
+		ID:            id,
+	})
+	if err != nil {
+		return apperrors.NewDatabaseError(err)
+	}
+	return nil
+}
+
+func (r *SQLCInventoryRepository) RecalculateInventoryWeight(ctx context.Context, id int64) error {
+	err := r.q.RecalculateInventoryWeight(ctx, id)
+	if err != nil {
+		return apperrors.NewDatabaseError(err)
+	}
 	return nil
 }

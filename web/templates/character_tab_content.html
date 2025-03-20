@@ -1,0 +1,108 @@
+{{define "character_tab_content.html"}}
+<div id="saving-throws-section" style="display: none;">
+    <h2>Saving Throws</h2>
+    <div class="saving-throws-container">
+        <div class="save-info">
+            <p>Base Save: <strong id="base_save">-</strong></p>
+            <p>Roll this number or higher on a d20 to save successfully (with modifiers)</p>
+        </div>
+        <table class="save-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Modifier</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Death</td>
+                    <td id="death_save_bonus">+0</td>
+                </tr>
+                <tr>
+                    <td>Transformation</td>
+                    <td id="transformation_save_bonus">+0</td>
+                </tr>
+                <tr>
+                    <td>Device</td>
+                    <td id="device_save_bonus">+0</td>
+                </tr>
+                <tr>
+                    <td>Avoidance</td>
+                    <td id="avoidance_save_bonus">+0</td>
+                </tr>
+                <tr>
+                    <td>Sorcery</td>
+                    <td id="sorcery_save_bonus">+0</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="character-section">
+    <h2>Ability Scores</h2>
+    <div class="ability-scores">
+        <div class="ability-item">
+            <div class="ability-label">Strength</div>
+            <div class="ability-value" id="ability-str">-</div>
+            <div class="ability-modifiers">
+                <div class="modifier-item">Attack: <span id="str-attack-mod">-</span></div>
+                <div class="modifier-item">Damage: <span id="str-damage-adj">-</span></div>
+                <div class="modifier-item">Test: <span id="str-test">-</span></div>
+                <div class="modifier-item">Feat: <span id="str-feat">-</span></div>
+            </div>
+        </div>
+        <div class="ability-item">
+            <div class="ability-label">Dexterity</div>
+            <div class="ability-value" id="ability-dex">-</div>
+            <div class="ability-modifiers">
+                <div class="modifier-item">Ranged: <span id="dex-ranged-mod">-</span></div>
+                <div class="modifier-item">Defence: <span id="dex-defence-adj">-</span></div>
+                <div class="modifier-item">Test: <span id="dex-test">-</span></div>
+                <div class="modifier-item">Feat: <span id="dex-feat">-</span></div>
+            </div>
+        </div>
+        <div class="ability-item">
+            <div class="ability-label">Constitution</div>
+            <div class="ability-value" id="ability-con">-</div>
+            <div class="ability-modifiers">
+                <div class="modifier-item">HP Bonus: <span id="con-hp-mod">-</span></div>
+                <div class="modifier-item">Poison/Rad: <span id="con-poison-mod">-</span></div>
+                <div class="modifier-item">Trauma: <span id="con-trauma">-</span></div>
+                <div class="modifier-item">Test: <span id="con-test">-</span></div>
+            </div>
+        </div>
+        <div class="ability-item">
+            <div class="ability-label">Intelligence</div>
+            <div class="ability-value" id="ability-int">-</div>
+            <div class="ability-modifiers">
+                <div class="modifier-item">Languages: <span id="int-language">-</span></div>
+                <div class="modifier-item">Magic Bonus: <span id="int-magician-bonus">-</span></div>
+                <div class="modifier-item">Magic Chance: <span id="int-magician-chance">-</span></div>
+            </div>
+        </div>
+        <div class="ability-item">
+            <div class="ability-label">Wisdom</div>
+            <div class="ability-value" id="ability-wis">-</div>
+            <div class="ability-modifiers">
+                <div class="modifier-item">Willpower: <span id="wis-willpower">-</span></div>
+                <div class="modifier-item">Cleric Bonus: <span id="wis-cleric-bonus">-</span></div>
+                <div class="modifier-item">Cleric Chance: <span id="wis-cleric-chance">-</span></div>
+            </div>
+        </div>
+        <div class="ability-item">
+            <div class="ability-label">Charisma</div>
+            <div class="ability-value" id="ability-cha">-</div>
+            <div class="ability-modifiers">
+                <div class="modifier-item">Reaction: <span id="cha-reaction">-</span></div>
+                <div class="modifier-item">Max Followers: <span id="cha-followers">-</span></div>
+                <div class="modifier-item">Turn Undead: <span id="cha-turning">-</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="class-abilities-section" style="display: none;">
+    <h2><span id="class-abilities-title">Class</span> Abilities</h2>
+    <div class="class-abilities-container" id="class-abilities-container">
+    </div>
+</div>
+{{end}}

@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"html/template"
 	apperrors "mordezzanV4/internal/errors"
 	"mordezzanV4/internal/models"
@@ -17,17 +16,15 @@ import (
 
 // SpellController handles HTTP requests related to spells
 type SpellController struct {
-	spellRepo     repositories.SpellRepository
-	characterRepo repositories.CharacterRepository
-	tmpl          *template.Template
+	spellRepo repositories.SpellRepository
+	tmpl      *template.Template
 }
 
 // NewSpellController creates a new SpellController
-func NewSpellController(spellRepo repositories.SpellRepository, characterRepo repositories.CharacterRepository, tmpl *template.Template) *SpellController {
+func NewSpellController(spellRepo repositories.SpellRepository, tmpl *template.Template) *SpellController {
 	return &SpellController{
-		spellRepo:     spellRepo,
-		characterRepo: characterRepo,
-		tmpl:          tmpl,
+		spellRepo: spellRepo,
+		tmpl:      tmpl,
 	}
 }
 
@@ -55,36 +52,6 @@ func (c *SpellController) GetSpell(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := c.tmpl.ExecuteTemplate(w, "spell.html", spell); err != nil {
-		apperrors.HandleError(w, apperrors.NewInternalError(err))
-	}
-}
-
-// GetSpellsByCharacter handles requests to get all spells for a specific character
-func (c *SpellController) GetSpellsByCharacter(w http.ResponseWriter, r *http.Request) {
-	characterIDStr := chi.URLParam(r, "id")
-	characterID, err := strconv.ParseInt(characterIDStr, 10, 64)
-	if err != nil {
-		apperrors.HandleError(w, apperrors.NewBadRequest("Invalid character ID format"))
-		return
-	}
-
-	// Check if the character exists
-	if c.characterRepo != nil {
-		_, err := c.characterRepo.GetCharacter(r.Context(), characterID)
-		if err != nil {
-			apperrors.HandleError(w, err)
-			return
-		}
-	}
-
-	spells, err := c.spellRepo.GetSpellsByCharacter(r.Context(), characterID)
-	if err != nil {
-		apperrors.HandleError(w, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(spells); err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 	}
 }
@@ -122,15 +89,6 @@ func (c *SpellController) CreateSpell(w http.ResponseWriter, r *http.Request) {
 		}
 		apperrors.HandleError(w, err)
 		return
-	}
-
-	// Check if the character exists
-	if c.characterRepo != nil {
-		_, err := c.characterRepo.GetCharacter(r.Context(), input.CharacterID)
-		if err != nil {
-			apperrors.HandleError(w, apperrors.NewBadRequest(fmt.Sprintf("Character with ID %d does not exist", input.CharacterID)))
-			return
-		}
 	}
 
 	id, err := c.spellRepo.CreateSpell(r.Context(), &input)

@@ -24,26 +24,32 @@ type Character struct {
 	SavingThrow     int    `json:"saving_throw,omitempty"`
 	FightingAbility int    `json:"fighting_ability,omitempty"`
 
+	CastingAbility int            `json:"casting_ability,omitempty"`
+	SpellSlots     map[string]int `json:"spell_slots,omitempty"`
+
 	// Save Bonuses
 	DeathSaveBonus          int `json:"death_save_bonus,omitempty"`
 	TransformationSaveBonus int `json:"transformation_save_bonus,omitempty"`
+	DeviceSaveBonus         int `json:"device_save_bonus,omitempty"`
+	SorcerySaveBonus        int `json:"sorcery_save_bonus,omitempty"`
+	AvoidanceSaveBonus      int `json:"avoidance_save_bonus,omitempty"`
 
 	// Class Abilities
-	Abilities []*FighterAbility `json:"abilities,omitempty"`
+	Abilities interface{} `json:"abilities,omitempty"`
 
 	// Derived stats
 	// Str
-	MeleeModifier     int    `json:"Melee_modifier"`
+	MeleeModifier     int    `json:"melee_modifier"`
 	DamageAdjustment  int    `json:"damage_adjustment"`
 	StrengthTest      string `json:"strength_test"`
 	ExtraStrengthFeat string `json:"extra_strength_feat"`
 	// Dex
-	RangedModifier     int    `json:"Ranged_modifier"`
+	RangedModifier     int    `json:"ranged_modifier"`
 	DefenceAdjustment  int    `json:"defence_adjustment"`
 	DexterityTest      string `json:"dexterity_test"`
 	ExtraDexterityFeat string `json:"extra_dexterity_feat"`
 	// Con
-	HPModifier            int    `json:"HP_modifier"`
+	HPModifier            int    `json:"hp_modifier"`
 	PoisonRadModifier     int    `json:"poison_rad_modifier"`
 	TraumaSurvival        string `json:"trauma_survival"`
 	ConstitutionTest      string `json:"constitution_test"`
@@ -191,16 +197,7 @@ func (c *Character) CalculateDerivedStats() {
 	c.calculateIntelligenceModifiers()
 	c.calculateWisdomModifiers()
 	c.calculateCharismaModifiers()
-	c.calculateSaveBonuses()
 
-}
-
-func (c *Character) calculateSaveBonuses() {
-	switch {
-	case c.Class == "Fighter":
-		c.DeathSaveBonus = 2
-		c.TransformationSaveBonus = 2
-	}
 }
 
 func (c *Character) calculateStrengthModifiers() {

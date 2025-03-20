@@ -44,3 +44,5 @@ go.work
 #Add To RepoLater
 repomix-output.txt
 /test_logs/
+/internal/repositories/db/inserts
+project_structure.txt

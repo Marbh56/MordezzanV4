@@ -1,0 +1,75 @@
+/* Tab Styles */
+.tabs-container {
+    margin-top: 20px;
+}
+
+.tabs-nav {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.tab-item {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #7f8c8d;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.3s;
+}
+
+.tab-item:hover {
+    color: #3498db;
+}
+
+.tab-item.active {
+    color: #3498db;
+    border-bottom: 2px solid #3498db;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Notes Tab */
+.notes-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.notes-textarea {
+    width: 100%;
+    min-height: 200px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 15px;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.notes-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.btn-save-notes {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-save-notes:hover {
+    background-color: #2980b9;
+}
+
+/* Tab-specific: spells tab styles can go here */
+.tab-item[data-tab="spells-tab"].active {
+    color: #9b59b6;
+    border-bottom-color: #9b59b6;
+}

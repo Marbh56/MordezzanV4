@@ -286,6 +286,32 @@ func (q *Queries) ListInventories(ctx context.Context) ([]Inventory, error) {
 	return items, nil
 }
 
+const recalculateInventoryWeight = `-- name: RecalculateInventoryWeight :exec
+UPDATE inventories
+SET current_weight = (
+    SELECT COALESCE(SUM(ii.quantity * COALESCE(
+        CASE ii.item_type
+            WHEN 'weapon' THEN (SELECT weight FROM weapons WHERE weapons.id = ii.item_id)
+            WHEN 'armor' THEN (SELECT weight FROM armors WHERE armors.id = ii.item_id)
+            WHEN 'shield' THEN (SELECT weight FROM shields WHERE shields.id = ii.item_id)
+            WHEN 'potion' THEN (SELECT weight FROM potions WHERE potions.id = ii.item_id)
+            WHEN 'magic_item' THEN (SELECT weight FROM magic_items WHERE magic_items.id = ii.item_id)
+            WHEN 'ring' THEN (SELECT weight FROM rings WHERE rings.id = ii.item_id)
+            WHEN 'ammo' THEN (SELECT weight FROM ammo WHERE ammo.id = ii.item_id)
+            WHEN 'spell_scroll' THEN (SELECT weight FROM spell_scrolls WHERE spell_scrolls.id = ii.item_id)
+            WHEN 'container' THEN (SELECT weight FROM containers WHERE containers.id = ii.item_id)
+            WHEN 'equipment' THEN (SELECT weight FROM equipment WHERE equipment.id = ii.item_id)
+            ELSE 0.1
+        END, 0.1)
+    ), 0) FROM inventory_items ii WHERE ii.inventory_id = inventories.id)
+WHERE inventories.id = ?
+`
+
+func (q *Queries) RecalculateInventoryWeight(ctx context.Context, id int64) error {
+	_, err := q.exec(ctx, q.recalculateInventoryWeightStmt, recalculateInventoryWeight, id)
+	return err
+}
+
 const removeAllInventoryItems = `-- name: RemoveAllInventoryItems :exec
 DELETE FROM inventory_items
 WHERE inventory_id = ?
@@ -347,4 +373,20 @@ func (q *Queries) UpdateInventoryItem(ctx context.Context, arg UpdateInventoryIt
 		arg.Notes,
 		arg.ID,
 	)
+}
+
+const updateInventoryWeight = `-- name: UpdateInventoryWeight :exec
+UPDATE inventories
+SET current_weight = ?
+WHERE id = ?
+`
+
+type UpdateInventoryWeightParams struct {
+	CurrentWeight float64
+	ID            int64
+}
+
+func (q *Queries) UpdateInventoryWeight(ctx context.Context, arg UpdateInventoryWeightParams) error {
+	_, err := q.exec(ctx, q.updateInventoryWeightStmt, updateInventoryWeight, arg.CurrentWeight, arg.ID)
+	return err
 }

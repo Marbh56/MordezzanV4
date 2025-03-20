@@ -19,39 +19,45 @@ import (
 )
 
 type App struct {
-	DB                    *sql.DB
-	UserRepository        repositories.UserRepository
-	CharacterRepository   repositories.CharacterRepository
-	SpellRepository       repositories.SpellRepository
-	ArmorRepository       repositories.ArmorRepository
-	WeaponRepository      repositories.WeaponRepository
-	EquipmentRepository   repositories.EquipmentRepository
-	ShieldRepository      repositories.ShieldRepository
-	PotionRepository      repositories.PotionRepository
-	MagicItemRepository   repositories.MagicItemRepository
-	RingRepository        repositories.RingRepository
-	AmmoRepository        repositories.AmmoRepository
-	SpellScrollRepository repositories.SpellScrollRepository
-	ContainerRepository   repositories.ContainerRepository
-	TreasureRepository    repositories.TreasureRepository
-	InventoryRepository   repositories.InventoryRepository
+	DB                      *sql.DB
+	UserRepository          repositories.UserRepository
+	CharacterRepository     repositories.CharacterRepository
+	SpellRepository         repositories.SpellRepository
+	ArmorRepository         repositories.ArmorRepository
+	WeaponRepository        repositories.WeaponRepository
+	EquipmentRepository     repositories.EquipmentRepository
+	ShieldRepository        repositories.ShieldRepository
+	PotionRepository        repositories.PotionRepository
+	MagicItemRepository     repositories.MagicItemRepository
+	RingRepository          repositories.RingRepository
+	AmmoRepository          repositories.AmmoRepository
+	SpellScrollRepository   repositories.SpellScrollRepository
+	ContainerRepository     repositories.ContainerRepository
+	TreasureRepository      repositories.TreasureRepository
+	InventoryRepository     repositories.InventoryRepository
+	SpellbookRepository     repositories.SpellbookRepository
+	PreparedSpellRepository repositories.PreparedSpellRepository
 
-	UserController        *controllers.UserController
-	CharacterController   *controllers.CharacterController
-	SpellController       *controllers.SpellController
-	ArmorController       *controllers.ArmorController
-	WeaponController      *controllers.WeaponController
-	EquipmentController   *controllers.EquipmentController
-	ShieldController      *controllers.ShieldController
-	PotionController      *controllers.PotionController
-	MagicItemController   *controllers.MagicItemController
-	RingController        *controllers.RingController
-	AmmoController        *controllers.AmmoController
-	SpellScrollController *controllers.SpellScrollController
-	ContainerController   *controllers.ContainerController
-	AuthController        *controllers.AuthController
-	TreasureController    *controllers.TreasureController
-	InventoryController   *controllers.InventoryController
+	SpellPreparationService *services.SpellPreparationService
+
+	UserController          *controllers.UserController
+	CharacterController     *controllers.CharacterController
+	SpellController         *controllers.SpellController
+	ArmorController         *controllers.ArmorController
+	WeaponController        *controllers.WeaponController
+	EquipmentController     *controllers.EquipmentController
+	ShieldController        *controllers.ShieldController
+	PotionController        *controllers.PotionController
+	MagicItemController     *controllers.MagicItemController
+	RingController          *controllers.RingController
+	AmmoController          *controllers.AmmoController
+	SpellScrollController   *controllers.SpellScrollController
+	ContainerController     *controllers.ContainerController
+	AuthController          *controllers.AuthController
+	TreasureController      *controllers.TreasureController
+	InventoryController     *controllers.InventoryController
+	SpellbookController     *controllers.SpellbookController
+	PreparedSpellController *controllers.PreparedSpellController
 
 	Templates *template.Template
 	JWTSecret string
@@ -69,6 +75,7 @@ func NewApp(dbPath string) (*App, error) {
 		return nil, err
 	}
 	logger.Debug("Database connection established successfully")
+
 	tmplPath := filepath.Join("web", "templates", "*.html")
 	logger.Debug("Loading templates from %s", tmplPath)
 
@@ -109,12 +116,24 @@ func NewApp(dbPath string) (*App, error) {
 	treasureRepo := repositories.NewSQLCTreasureRepository(db)
 	inventoryRepo := repositories.NewSQLCInventoryRepository(db)
 	fighterDataRepo := repositories.NewSQLCFighterDataRepository(db)
+	spellbookRepo := repositories.NewSQLCSpellbookRepository(db)
+	preparedSpellRepo := repositories.NewSQLCPreparedSpellRepository(db)
+	magicianDataRepo := repositories.NewSQLCMagicianRepository(db)
 
 	fighterService := services.NewFighterService(fighterDataRepo)
+	magicianService := services.NewMagicianService(magicianDataRepo)
+	spellPreparationService := services.NewSpellPreparationService(
+		preparedSpellRepo,
+		spellRepo,
+		characterRepo,
+		inventoryRepo,
+		spellbookRepo,
+		magicianService,
+	)
 
 	userController := controllers.NewUserController(userRepo, tmpl)
-	characterController := controllers.NewCharacterController(characterRepo, userRepo, fighterService, tmpl)
-	spellController := controllers.NewSpellController(spellRepo, characterRepo, tmpl)
+	characterController := controllers.NewCharacterController(characterRepo, userRepo, fighterService, magicianService, tmpl)
+	spellController := controllers.NewSpellController(spellRepo, tmpl)
 	armorController := controllers.NewArmorController(armorRepo, tmpl)
 	weaponController := controllers.NewWeaponController(weaponRepo, tmpl)
 	equipmentController := controllers.NewEquipmentController(equipmentRepo, tmpl)
@@ -141,45 +160,57 @@ func NewApp(dbPath string) (*App, error) {
 		containerRepo,
 		equipmentRepo,
 		treasureRepo,
+		spellbookRepo,
+		tmpl,
+	)
+	spellbookController := controllers.NewSpellbookController(spellbookRepo, spellRepo, tmpl)
+	preparedSpellController := controllers.NewPreparedSpellController(
+		spellPreparationService,
 		tmpl,
 	)
 
 	logger.Info("Application initialized successfully")
 
 	return &App{
-		DB:                    db,
-		UserRepository:        userRepo,
-		CharacterRepository:   characterRepo,
-		SpellRepository:       spellRepo,
-		ArmorRepository:       armorRepo,
-		WeaponRepository:      weaponRepo,
-		EquipmentRepository:   equipmentRepo,
-		ShieldRepository:      shieldRepo,
-		PotionRepository:      potionRepo,
-		MagicItemRepository:   magicItemRepo,
-		RingRepository:        ringRepo,
-		AmmoRepository:        ammoRepo,
-		SpellScrollRepository: spellScrollRepo,
-		ContainerRepository:   containerRepo,
-		TreasureRepository:    treasureRepo,
-		InventoryRepository:   inventoryRepo,
+		DB:                      db,
+		UserRepository:          userRepo,
+		CharacterRepository:     characterRepo,
+		SpellRepository:         spellRepo,
+		ArmorRepository:         armorRepo,
+		WeaponRepository:        weaponRepo,
+		EquipmentRepository:     equipmentRepo,
+		ShieldRepository:        shieldRepo,
+		PotionRepository:        potionRepo,
+		MagicItemRepository:     magicItemRepo,
+		RingRepository:          ringRepo,
+		AmmoRepository:          ammoRepo,
+		SpellScrollRepository:   spellScrollRepo,
+		ContainerRepository:     containerRepo,
+		TreasureRepository:      treasureRepo,
+		InventoryRepository:     inventoryRepo,
+		SpellbookRepository:     spellbookRepo,
+		PreparedSpellRepository: preparedSpellRepo,
 
-		UserController:        userController,
-		CharacterController:   characterController,
-		SpellController:       spellController,
-		ArmorController:       armorController,
-		WeaponController:      weaponController,
-		EquipmentController:   equipmentController,
-		ShieldController:      shieldController,
-		PotionController:      potionController,
-		MagicItemController:   magicItemController,
-		RingController:        ringController,
-		AmmoController:        ammoController,
-		SpellScrollController: spellScrollController,
-		ContainerController:   containerController,
-		AuthController:        authController,
-		TreasureController:    treasureController,
-		InventoryController:   inventoryController,
+		SpellPreparationService: spellPreparationService,
+
+		UserController:          userController,
+		CharacterController:     characterController,
+		SpellController:         spellController,
+		ArmorController:         armorController,
+		WeaponController:        weaponController,
+		EquipmentController:     equipmentController,
+		ShieldController:        shieldController,
+		PotionController:        potionController,
+		MagicItemController:     magicItemController,
+		RingController:          ringController,
+		AmmoController:          ammoController,
+		SpellScrollController:   spellScrollController,
+		ContainerController:     containerController,
+		AuthController:          authController,
+		TreasureController:      treasureController,
+		InventoryController:     inventoryController,
+		SpellbookController:     spellbookController,
+		PreparedSpellController: preparedSpellController,
 
 		Templates: tmpl,
 		JWTSecret: jwtSecret,
@@ -200,8 +231,16 @@ func (a *App) SetupRoutes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	r.Get("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))).ServeHTTP)
+	r.Get("/static/*", func(w http.ResponseWriter, r *http.Request) {
+		// Set cache control header for static assets
+		w.Header().Set("Cache-Control", "max-age=3600")
 
+		path := strings.TrimPrefix(r.URL.Path, "/static")
+		if path != r.URL.Path {
+			r.URL.Path = path
+		}
+		middleware.CustomFileServer(http.Dir("./web/static")).ServeHTTP(w, r)
+	})
 	// Health check endpoint
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
@@ -239,9 +278,9 @@ func (a *App) SetupRoutes() http.Handler {
 			r.Get("/{id}", a.CharacterController.GetCharacter)
 			r.Put("/{id}", a.CharacterController.UpdateCharacter)
 			r.Delete("/{id}", a.CharacterController.DeleteCharacter)
-			r.Get("/{id}/spells", a.SpellController.GetSpellsByCharacter)
 			r.Patch("/{id}/hp", a.CharacterController.UpdateCharacterHP)
 			r.Patch("/{id}/xp", a.CharacterController.UpdateCharacterXP)
+			r.Get("/{id}/class-data", a.CharacterController.GetCharacterClassData)
 		})
 
 		r.Route("/spells", func(r chi.Router) {
@@ -352,6 +391,25 @@ func (a *App) SetupRoutes() http.Handler {
 			r.Put("/{id}/items/{itemId}", a.InventoryController.UpdateInventoryItem)
 			r.Delete("/{id}/items/{itemId}", a.InventoryController.RemoveInventoryItem)
 			r.Get("/character/{characterId}", a.InventoryController.GetInventoryByCharacter)
+		})
+
+		r.Route("/spellbooks", func(r chi.Router) {
+			r.Get("/", a.SpellbookController.ListSpellbooks)
+			r.Post("/", a.SpellbookController.CreateSpellbook)
+			r.Get("/{id}", a.SpellbookController.GetSpellbook)
+			r.Put("/{id}", a.SpellbookController.UpdateSpellbook)
+			r.Delete("/{id}", a.SpellbookController.DeleteSpellbook)
+			r.Post("/{id}/spells", a.SpellbookController.AddSpellToSpellbook)
+			r.Get("/{id}/spells", a.SpellbookController.GetSpellsInSpellbook)
+			r.Delete("/{id}/spells/{spellId}", a.SpellbookController.RemoveSpellFromSpellbook)
+		})
+
+		r.Route("/characters/{characterId}/prepared-spells", func(r chi.Router) {
+			r.Get("/", a.PreparedSpellController.GetPreparedSpells)
+			r.Post("/", a.PreparedSpellController.PrepareSpell)
+			r.Delete("/{spellId}", a.PreparedSpellController.UnprepareSpell)
+			r.Delete("/", a.PreparedSpellController.ClearPreparedSpells)
+			r.Get("/slots", a.PreparedSpellController.GetAvailableSpellSlots)
 		})
 	})
 

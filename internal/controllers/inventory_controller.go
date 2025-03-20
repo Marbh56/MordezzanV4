@@ -31,6 +31,7 @@ type InventoryController struct {
 	containerRepo   repositories.ContainerRepository
 	equipmentRepo   repositories.EquipmentRepository
 	treasureRepo    repositories.TreasureRepository
+	spellbookRepo   repositories.SpellbookRepository
 	tmpl            *template.Template
 }
 
@@ -60,6 +61,7 @@ func NewInventoryController(
 	containerRepo repositories.ContainerRepository,
 	equipmentRepo repositories.EquipmentRepository,
 	treasureRepo repositories.TreasureRepository,
+	spellbookRepo repositories.SpellbookRepository,
 	tmpl *template.Template,
 ) *InventoryController {
 	return &InventoryController{
@@ -76,6 +78,7 @@ func NewInventoryController(
 		containerRepo:   containerRepo,
 		equipmentRepo:   equipmentRepo,
 		treasureRepo:    treasureRepo,
+		spellbookRepo:   spellbookRepo,
 		tmpl:            tmpl,
 	}
 }
@@ -356,12 +359,25 @@ func (c *InventoryController) AddInventoryItem(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// Add the item to inventory
 	id, err := c.inventoryRepo.AddInventoryItem(r.Context(), inventoryID, &input)
 	if err != nil {
 		apperrors.HandleError(w, err)
 		return
 	}
 
+	// Recalculate inventory weight
+	if err := c.inventoryRepo.RecalculateInventoryWeight(r.Context(), inventoryID); err != nil {
+		logger.Error("Failed to recalculate inventory weight: %v", err)
+	}
+
+	// Get updated inventory
+	updatedInventory, err := c.inventoryRepo.GetInventory(r.Context(), inventoryID)
+	if err != nil {
+		logger.Error("Failed to get updated inventory: %v", err)
+	}
+
+	// Get the item
 	item, err := c.inventoryRepo.GetInventoryItem(r.Context(), id)
 	if err != nil {
 		apperrors.HandleError(w, err)
@@ -374,9 +390,22 @@ func (c *InventoryController) AddInventoryItem(w http.ResponseWriter, r *http.Re
 		logger.Error("Failed to enrich inventory item: %v", err)
 	}
 
+	// Include weight information in the response
+	response := struct {
+		Item           EnrichedInventoryItem `json:"item"`
+		TotalWeight    float64               `json:"total_weight"`
+		WeightCapacity float64               `json:"weight_capacity"`
+		IsOverweight   bool                  `json:"is_overweight"`
+	}{
+		Item:           enrichedItem,
+		TotalWeight:    updatedInventory.CurrentWeight,
+		WeightCapacity: updatedInventory.MaxWeight,
+		IsOverweight:   updatedInventory.CurrentWeight > updatedInventory.MaxWeight,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(enrichedItem); err != nil {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 	}
 }
@@ -407,11 +436,31 @@ func (c *InventoryController) UpdateInventoryItem(w http.ResponseWriter, r *http
 		return
 	}
 
+	// Get the existing item to find its inventory ID
+	existingItem, err := c.inventoryRepo.GetInventoryItem(r.Context(), itemID)
+	if err != nil {
+		apperrors.HandleError(w, err)
+		return
+	}
+
+	// Update the item
 	if err := c.inventoryRepo.UpdateInventoryItem(r.Context(), itemID, &input); err != nil {
 		apperrors.HandleError(w, err)
 		return
 	}
 
+	// Recalculate inventory weight
+	if err := c.inventoryRepo.RecalculateInventoryWeight(r.Context(), existingItem.InventoryID); err != nil {
+		logger.Error("Failed to recalculate inventory weight: %v", err)
+	}
+
+	// Get updated inventory
+	inventory, err := c.inventoryRepo.GetInventory(r.Context(), existingItem.InventoryID)
+	if err != nil {
+		logger.Error("Failed to get updated inventory: %v", err)
+	}
+
+	// Get the updated item
 	updatedItem, err := c.inventoryRepo.GetInventoryItem(r.Context(), itemID)
 	if err != nil {
 		apperrors.HandleError(w, err)
@@ -424,8 +473,21 @@ func (c *InventoryController) UpdateInventoryItem(w http.ResponseWriter, r *http
 		logger.Error("Failed to enrich inventory item: %v", err)
 	}
 
+	// Include weight information in the response
+	response := struct {
+		Item           EnrichedInventoryItem `json:"item"`
+		TotalWeight    float64               `json:"total_weight"`
+		WeightCapacity float64               `json:"weight_capacity"`
+		IsOverweight   bool                  `json:"is_overweight"`
+	}{
+		Item:           enrichedItem,
+		TotalWeight:    inventory.CurrentWeight,
+		WeightCapacity: inventory.MaxWeight,
+		IsOverweight:   inventory.CurrentWeight > inventory.MaxWeight,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(enrichedItem); err != nil {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 	}
 }
@@ -437,12 +499,53 @@ func (c *InventoryController) RemoveInventoryItem(w http.ResponseWriter, r *http
 		return
 	}
 
+	// Get the existing item to find its inventory ID
+	existingItem, err := c.inventoryRepo.GetInventoryItem(r.Context(), itemID)
+	if err != nil {
+		apperrors.HandleError(w, err)
+		return
+	}
+
+	// Store the inventory ID before deleting the item
+	inventoryID := existingItem.InventoryID
+
+	// Remove the item
 	if err := c.inventoryRepo.RemoveInventoryItem(r.Context(), itemID); err != nil {
 		apperrors.HandleError(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	// Recalculate inventory weight
+	if err := c.inventoryRepo.RecalculateInventoryWeight(r.Context(), inventoryID); err != nil {
+		logger.Error("Failed to recalculate inventory weight: %v", err)
+	}
+
+	// Get updated inventory
+	inventory, err := c.inventoryRepo.GetInventory(r.Context(), inventoryID)
+	if err != nil {
+		logger.Error("Failed to get updated inventory: %v", err)
+	}
+
+	// Return success response with updated weight info
+	response := struct {
+		Success        bool    `json:"success"`
+		ItemID         int64   `json:"item_id"`
+		TotalWeight    float64 `json:"total_weight"`
+		WeightCapacity float64 `json:"weight_capacity"`
+		IsOverweight   bool    `json:"is_overweight"`
+	}{
+		Success:        true,
+		ItemID:         itemID,
+		TotalWeight:    inventory.CurrentWeight,
+		WeightCapacity: inventory.MaxWeight,
+		IsOverweight:   inventory.CurrentWeight > inventory.MaxWeight,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+	}
 }
 
 // Helper methods
@@ -505,6 +608,12 @@ func (c *InventoryController) validateItemExists(ctx context.Context, itemType s
 	case "equipment":
 		if c.equipmentRepo != nil {
 			if _, err := c.equipmentRepo.GetEquipment(ctx, itemID); err != nil {
+				return err
+			}
+		}
+	case "spellbook":
+		if c.spellbookRepo != nil {
+			if _, err := c.spellbookRepo.GetSpellbook(ctx, itemID); err != nil {
 				return err
 			}
 		}
@@ -584,6 +693,10 @@ func (c *InventoryController) enrichInventoryItem(ctx context.Context, item mode
 	case "equipment":
 		if c.equipmentRepo != nil {
 			details, err = c.equipmentRepo.GetEquipment(ctx, item.ItemID)
+		}
+	case "spellbook":
+		if c.spellbookRepo != nil {
+			details, err = c.spellbookRepo.GetSpellbook(ctx, item.ItemID)
 		}
 	default:
 		return EnrichedInventoryItem{}, apperrors.NewBadRequest("Invalid item type: " + item.ItemType)

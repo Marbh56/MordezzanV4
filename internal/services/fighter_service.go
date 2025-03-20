@@ -18,23 +18,30 @@ func NewFighterService(fighterDataRepo repositories.FighterDataRepository) *Figh
 	}
 }
 
-// EnrichCharacterWithFighterData adds fighter-specific data to a character based on level
 func (s *FighterService) EnrichCharacterWithFighterData(ctx context.Context, character *models.Character) error {
-	// Only process fighter class characters
 	if character.Class != "Fighter" {
 		return nil
 	}
 
-	// Get fighter data for the character's level
 	fighterData, err := s.fighterDataRepo.GetFighterClassData(ctx, character.Level)
 	if err != nil {
 		return err
 	}
 
-	// Set fighter-specific attributes
+	// First calculate derived stats from ability scores
+	character.CalculateDerivedStats()
+
+	// THEN set class data that should override basic calculations
 	character.HitDice = fighterData.HitDice
 	character.SavingThrow = fighterData.SavingThrow
 	character.FightingAbility = fighterData.FightingAbility
+
+	// Set Fighter-specific save bonuses AFTER calculating derived stats
+	character.DeathSaveBonus = 2
+	character.TransformationSaveBonus = 2
+	character.DeviceSaveBonus = 0
+	character.SorcerySaveBonus = 0
+	character.AvoidanceSaveBonus = 0
 
 	character.Abilities = s.GetAvailableFighterAbilities(character.Level)
 
