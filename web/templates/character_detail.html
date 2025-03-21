@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/static/css/character_ability_scores.css">
     <link rel="stylesheet" href="/static/css/character_tabs.css">
     <link rel="stylesheet" href="/static/css/inventory_tab.css">
+    <link rel="stylesheet" href="/static/css/combat_tab.css">
 </head>
 
 <body>
@@ -22,40 +23,16 @@
         </div>
     </div>
 
-    <!-- Load scripts in the correct order -->
+    <!-- Core scripts -->
     <script src="/static/js/character_data.js"></script>
     <script src="/static/js/character_tabs.js"></script>
     <script src="/static/js/character_detail.js"></script>
+
+    <!-- Tab-specific scripts -->
     <script src="/static/js/inventory_tab.js"></script>
+    <script src="/static/js/inventory_edit.js"></script>
     <script src="/static/js/notes_tab.js"></script>
-    <script>
-        // This helps detect any script loading issues
-        console.log('All scripts loaded successfully');
-
-        // Add a debugging function to check if important DOM elements exist
-        function checkDOMElements() {
-            const elements = [
-                'character-tab',
-                'spells-tab',
-                'inventory-tab',
-                'notes-tab',
-                'inventory-table',
-                'inventory-items',
-                'inventory-loading',
-                'inventory-empty',
-                'btn-add-item'
-            ];
-
-            console.log('DOM Element Check:');
-            elements.forEach(id => {
-                const element = document.getElementById(id);
-                console.log(`${id}: ${element ? 'Found' : 'Missing'}`);
-            });
-        }
-
-        // Run the check when everything is fully loaded
-        window.addEventListener('load', checkDOMElements);
-    </script>
+    <script src="/static/js/combat_tab.js"></script>
 </body>
 
 </html>

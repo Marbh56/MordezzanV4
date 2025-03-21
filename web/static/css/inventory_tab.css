@@ -165,3 +165,126 @@
     gap: 15px;
     margin-top: 30px;
 }
+
+.encumbrance-container {
+    margin-top: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #f8f9fa;
+}
+
+.encumbrance-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.encumbrance-status {
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.encumbrance-status.unencumbered {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.encumbrance-status.encumbered {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.encumbrance-status.heavily-encumbered {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.encumbrance-status.overloaded {
+    background-color: #721c24;
+    color: white;
+}
+
+.encumbrance-weight {
+    font-size: 14px;
+    color: #495057;
+}
+
+.encumbrance-progress {
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.encumbrance-progress-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.encumbrance-progress-bar.unencumbered {
+    background-color: #28a745;
+}
+
+.encumbrance-progress-bar.encumbered {
+    background-color: #ffc107;
+}
+
+.encumbrance-progress-bar.heavily-encumbered {
+    background-color: #dc3545;
+}
+
+.encumbrance-progress-bar.overloaded {
+    background-color: #6f1d1b;
+}
+
+/* Add styles for penalized stats in combat tab */
+.stat-penalized {
+    color: #dc3545;
+    position: relative;
+}
+
+.stat-penalized::after {
+    content: attr(data-original) " (" attr(data-penalty) ")";
+    position: absolute;
+    font-size: 10px;
+    bottom: -16px;
+    left: 0;
+    white-space: nowrap;
+    color: #6c757d;
+}
+
+/* Style for encumbrance warnings in inventory table */
+.inventory-table tr.item-heavy {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.inventory-table tr.item-very-heavy {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Style for weight threshold indicators */
+.weight-thresholds {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.threshold-mark {
+    position: relative;
+}
+
+.threshold-mark::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 4px;
+    background-color: #6c757d;
+}

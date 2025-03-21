@@ -2,6 +2,7 @@
 <div class="tabs-container">
     <div class="tabs-nav">
         <div class="tab-item active" data-tab="character-tab">Character</div>
+        <div class="tab-item" data-tab="combat-tab">Combat</div>
         <div class="tab-item" data-tab="spells-tab" id="spells-tab-nav">Spells</div>
         <div class="tab-item" data-tab="inventory-tab">Inventory</div>
         <div class="tab-item" data-tab="notes-tab">Notes</div>
@@ -10,6 +11,10 @@
     <!-- Tab content containers - each will be filled with its specific content -->
     <div class="tab-content active" id="character-tab">
         {{template "character_tab_content.html" .}}
+    </div>
+
+    <div class="tab-content" id="combat-tab">
+        {{template "combat_tab_content.html" .}}
     </div>
 
     <div class="tab-content" id="spells-tab">

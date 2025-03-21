@@ -1,0 +1,87 @@
+.combat-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-item {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.stat-label {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.combat-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+.combat-table th,
+.combat-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.combat-table th {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+.combat-matrix-container {
+    overflow-x: auto;
+    margin-bottom: 15px;
+}
+
+.combat-matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.combat-matrix th,
+.combat-matrix td {
+    padding: 6px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.combat-matrix th {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+.combat-matrix td.highlight {
+    background-color: #e3f2fd;
+    font-weight: bold;
+}
+
+.matrix-note {
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+    .combat-stats {
+        grid-template-columns: 1fr;
+    }
+}

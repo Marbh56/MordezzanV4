@@ -72,7 +72,6 @@ async function fetchInventory(characterId = null) {
     }
 }
 
-// Render the inventory items in the table
 function renderInventoryItems() {
     const inventoryTable = document.getElementById('inventory-table');
     const inventoryItems = document.getElementById('inventory-items');
@@ -95,7 +94,6 @@ function renderInventoryItems() {
     
     if (inventoryItems) {
         inventoryItems.innerHTML = '';
-        
         // Add each item to the table
         inventoryState.items.forEach(item => {
             const details = item.item_details || {};
@@ -103,13 +101,22 @@ function renderInventoryItems() {
             const weight = details.weight || 0;
             const weightStr = weight > 0 ? `${weight} lbs` : 'N/A';
             
+            // Add an equipped status toggle
+            const equippedStatus = item.is_equipped ? 'Equipped' : 'Not equipped';
+            const equippedButtonText = item.is_equipped ? 'Unequip' : 'Equip';
+            const equippedButtonClass = item.is_equipped ? 'btn-unequip' : 'btn-equip';
+            
             row.innerHTML = `
                 <td>${details.name || 'Unknown'}</td>
                 <td>${formatItemType(item.item_type)}</td>
                 <td>${item.quantity}</td>
                 <td>${weightStr}</td>
+                <td>${equippedStatus}</td>
                 <td>${item.notes || ''}</td>
                 <td class="item-actions">
+                    <button class="btn ${equippedButtonClass}" data-id="${item.id}" data-equipped="${item.is_equipped}">
+                        ${equippedButtonText}
+                    </button>
                     <button class="btn btn-item-edit" data-id="${item.id}">Edit</button>
                     <button class="btn btn-item-delete" data-id="${item.id}">Delete</button>
                 </td>
@@ -117,8 +124,6 @@ function renderInventoryItems() {
             
             inventoryItems.appendChild(row);
         });
-        
-        addItemActionListeners();
     }
     
     if (inventoryTable) {
@@ -126,6 +131,51 @@ function renderInventoryItems() {
     }
     if (inventoryEmpty) {
         inventoryEmpty.style.display = 'none';
+    }
+    
+    // Add event listeners for all buttons
+    addInventoryButtonListeners();
+}
+
+async function toggleEquippedStatus(itemId, currentStatus) {
+    try {
+        const token = localStorage.getItem('authToken');
+        const characterId = getCharacterIdFromURL();
+        const inventoryID = inventoryState.inventory ? inventoryState.inventory.id : null;
+        
+        if (!inventoryID) {
+            throw new Error('Could not find inventory');
+        }
+        
+        console.log(`Toggling equipped status for item ${itemId}: ${currentStatus} → ${!currentStatus}`);
+        
+        const response = await fetch(`/api/inventories/${inventoryID}/items/${itemId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                is_equipped: !currentStatus
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to update item equipped status');
+        }
+        
+        // Refresh the inventory display
+        await fetchInventory(characterId);
+        
+        // If the combat tab exists and is active, refresh that too
+        const combatTab = document.getElementById('combat-tab');
+        if (combatTab && combatTab.classList.contains('active') && typeof loadCombatData === 'function') {
+            loadCombatData();
+        }
+        
+    } catch (error) {
+        console.error('Error toggling equipped status:', error);
+        alert('Failed to update item: ' + error.message);
     }
 }
 
@@ -140,6 +190,16 @@ function formatItemType(type) {
 
 // Add event listeners to the edit and delete buttons
 function addItemActionListeners() {
+    // Add listeners for equip/unequip buttons
+    document.querySelectorAll('.btn-equip, .btn-unequip').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.getAttribute('data-id');
+            const isEquipped = this.getAttribute('data-equipped') === 'true';
+            toggleEquippedStatus(itemId, isEquipped);
+        });
+    });
+    
+    // Existing code for edit buttons
     document.querySelectorAll('.btn-item-edit').forEach(btn => {
         btn.addEventListener('click', function() {
             const itemId = this.getAttribute('data-id');
@@ -147,6 +207,7 @@ function addItemActionListeners() {
         });
     });
     
+    // Existing code for delete buttons
     document.querySelectorAll('.btn-item-delete').forEach(btn => {
         btn.addEventListener('click', function() {
             const itemId = this.getAttribute('data-id');
@@ -540,6 +601,44 @@ function initInventory() {
     }
     
     fetchInventory(characterId);
+}
+
+async function toggleEquippedStatus(itemId, currentStatus) {
+    try {
+        const token = localStorage.getItem('authToken');
+        const inventoryID = await getInventoryID();
+        
+        if (!inventoryID) {
+            throw new Error('Could not find inventory');
+        }
+        
+        const response = await fetch(`/api/inventories/${inventoryID}/items/${itemId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                is_equipped: !currentStatus
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to update item equipped status');
+        }
+        
+        // Refresh the inventory display
+        fetchInventory();
+        
+        // If we're on the combat tab, refresh that too
+        if (document.getElementById('combat-tab').classList.contains('active')) {
+            loadCombatData();
+        }
+        
+    } catch (error) {
+        console.error('Error toggling equipped status:', error);
+        alert('Failed to update item: ' + error.message);
+    }
 }
 
 // Call this when the inventory tab is clicked

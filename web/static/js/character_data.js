@@ -37,6 +37,8 @@ function displayCharacterDetails(character) {
     document.getElementById('info-level').textContent = character.level;
     document.getElementById('info-hit-dice').textContent = character.hit_dice || '-';
 
+    window.characterData = character;
+
     // Update global variables for current character state
     currentHP = character.hit_points;
     currentXP = character.experience_points || 0;
