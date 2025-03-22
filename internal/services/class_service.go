@@ -27,6 +27,100 @@ func NewClassService(
 	}
 }
 
+func (s *ClassService) applyAgileBonus(ctx context.Context, character *models.Character) error {
+	// Only proceed if we have the necessary services
+	if s.encumbranceService == nil || s.inventoryRepo == nil {
+		return nil
+	}
+
+	// Get encumbrance details
+	encumbranceDetails, err := s.encumbranceService.GetCharacterEncumbrance(ctx, character.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get encumbrance details: %v", err)
+	}
+
+	// Get inventory to check armor
+	inventory, err := s.inventoryRepo.GetInventoryByCharacter(ctx, character.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get character inventory: %v", err)
+	}
+
+	// Check if wearing armor
+	wearingArmor := false
+	for _, item := range inventory.Items {
+		if item.ItemType == "armor" && item.IsEquipped {
+			wearingArmor = true
+			break
+		}
+	}
+
+	// Apply Agile bonus if unarmored and not heavily encumbered
+	// Shield is allowed per the ability description
+	if !wearingArmor && !encumbranceDetails.Status.HeavyEncumbered {
+		character.DefenceAdjustment += 1
+	}
+
+	return nil
+}
+
+func (s *ClassService) applyRunAbility(ctx context.Context, character *models.Character) error {
+	// Only proceed if we have the necessary services
+	if s.inventoryRepo == nil {
+		return nil
+	}
+
+	// Get inventory to check armor
+	inventory, err := s.inventoryRepo.GetInventoryByCharacter(ctx, character.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get character inventory: %v", err)
+	}
+
+	// Check if wearing heavy/medium armor
+	wearingHeavyArmor := false
+	for _, item := range inventory.Items {
+		if item.ItemType == "armor" && item.IsEquipped {
+			// Check armor weight class
+			if s.armorRepo != nil {
+				armor, armorErr := s.armorRepo.GetArmor(ctx, item.ItemID)
+				if armorErr == nil {
+					if armor.WeightClass == "Heavy" || armor.WeightClass == "Medium" {
+						wearingHeavyArmor = true
+						break
+					}
+				}
+			}
+		}
+	}
+
+	// Apply RUN ability - base 50 MV when lightly armored or unarmored
+	if !wearingHeavyArmor {
+		character.MovementRate = 50
+	}
+
+	return nil
+}
+
+func (s *ClassService) applyExtraStr(ctx context.Context, character *models.Character) error {
+	// Parse the current percentage value
+	var currentPercent int
+	n, err := fmt.Sscanf(character.ExtraStrengthFeat, "%d%%", &currentPercent)
+
+	// Check for scanning errors
+	if err != nil {
+		return fmt.Errorf("failed to parse strength feat percentage: %v", err)
+	}
+
+	// Check if we scanned the expected number of items
+	if n != 1 {
+		return fmt.Errorf("unexpected format for strength feat: %s", character.ExtraStrengthFeat)
+	}
+
+	// Apply the 8% bonus
+	character.ExtraStrengthFeat = fmt.Sprintf("%d%%", currentPercent+8)
+
+	return nil
+}
+
 // EnrichCharacterWithClassData applies class-specific data to a character
 func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, character *models.Character) error {
 	// Get class data for this character's class and level
@@ -62,13 +156,10 @@ func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, charact
 		character.DeviceSaveBonus = 0
 		character.SorcerySaveBonus = 0
 		character.AvoidanceSaveBonus = 0
-
-		// Parse the current percentage value
-		var currentPercent int
-		fmt.Sscanf(character.ExtraStrengthFeat, "%d%%", &currentPercent)
-
-		// Apply the 8% bonus
-		character.ExtraStrengthFeat = fmt.Sprintf("%d%%", currentPercent+8)
+		if err := s.applyAgileBonus(ctx, character); err != nil {
+			// Log error but continue
+			fmt.Printf("failed to apply agile bonus: %v\n", err)
+		}
 
 	case "Barbarian":
 		// Barbarian-specific save bonuses
@@ -79,54 +170,20 @@ func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, charact
 		character.TransformationSaveBonus = 2
 		character.SurpriseChance = 1
 
-		// Parse the current percentage value
-		var currentPercent int
-		fmt.Sscanf(character.ExtraStrengthFeat, "%d%%", &currentPercent)
+		if err := s.applyExtraStr(ctx, character); err != nil {
+			// Log error but continue
+			fmt.Printf("failed to apply extra strength feat: %v\n", err)
+		}
 
-		// Apply the 8% bonus
-		character.ExtraStrengthFeat = fmt.Sprintf("%d%%", currentPercent+8)
+		if err := s.applyAgileBonus(ctx, character); err != nil {
+			// Log error but continue
+			fmt.Printf("failed to apply agile bonus: %v\n", err)
+		}
 
-		// Check for Agile ability and RUN ability
-		if s.encumbranceService != nil && s.inventoryRepo != nil {
-			// Get encumbrance details
-			encumbranceDetails, err := s.encumbranceService.GetCharacterEncumbrance(ctx, character.ID)
-			if err == nil {
-				// Get inventory to check armor
-				inventory, err := s.inventoryRepo.GetInventoryByCharacter(ctx, character.ID)
-				if err == nil {
-					// Check if wearing armor and what type
-					wearingArmor := false
-					wearingHeavyArmor := false
-
-					for _, item := range inventory.Items {
-						if item.ItemType == "armor" && item.IsEquipped {
-							wearingArmor = true
-
-							// Check armor weight class
-							if s.armorRepo != nil {
-								armor, armorErr := s.armorRepo.GetArmor(ctx, item.ItemID)
-								if armorErr == nil {
-									if armor.WeightClass == "Heavy" || armor.WeightClass == "Medium" {
-										wearingHeavyArmor = true
-										break
-									}
-								}
-							}
-						}
-					}
-
-					// Apply Agile bonus if unarmored and not heavily encumbered
-					// Shield is allowed per the requirement
-					if !wearingArmor && !encumbranceDetails.Status.HeavyEncumbered {
-						character.DefenceAdjustment += 1
-					}
-
-					// Apply RUN ability - base 50 MV when lightly armored or unarmored
-					if !wearingHeavyArmor {
-						character.MovementRate = 50
-					}
-				}
-			}
+		// Apply RUN ability - base 50 MV when lightly armored or unarmored
+		if err := s.applyRunAbility(ctx, character); err != nil {
+			// Log error but continue
+			fmt.Printf("failed to apply run ability: %v\n", err)
 		}
 
 	case "Berserker":
@@ -278,6 +335,10 @@ func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, charact
 	case "Thief":
 		character.DeviceSaveBonus = 2
 		character.AvoidanceSaveBonus = 2
+		if err := s.applyAgileBonus(ctx, character); err != nil {
+			// log error but continue
+			fmt.Printf("failed to apply agile bonus: %v\n", err)
+		}
 
 	case "Assassin":
 		character.DeathSaveBonus = 2
