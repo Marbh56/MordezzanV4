@@ -21,38 +21,37 @@ type ClericAbility struct {
 	MinLevel    int    `json:"min_level"`
 }
 
-// GetClericAbilities returns the predefined cleric abilities
 func GetClericAbilities() []*ClericAbility {
 	return []*ClericAbility{
 		{
 			ID:          1,
-			Name:        "Turn Undead",
-			Description: "The ability to repel and destroy undead creatures by channeling divine energy. The effectiveness increases with the cleric's level and is affected by Charisma.",
+			Name:        "Scroll Use",
+			Description: "The ability to decipher and invoke scrolls with spells from the Cleric Spell List, unless the scroll was created by a thaumaturgical sorcerer (one who casts magician or magician subclass spells).",
 			MinLevel:    1,
 		},
 		{
 			ID:          2,
-			Name:        "Divine Spellcasting",
-			Description: "Starting at 2nd level, clerics can cast divine spells. The number of spells available increases with level, and additional spells may be granted based on high Wisdom scores.",
-			MinLevel:    2,
+			Name:        "Scroll Writing",
+			Description: "To scribe a known spell onto a scroll, creating a single-use magical device at a cost of 500 gp + 100 gp per spell level. Materials vary: Some clerics engrave thin tablets of stone, whereas others use vellum or parchment, a fine quill, and sorcerer's ink, such as sepia. This involved process requires one week per spell level and must be completed on consecrated ground, such as a shrine, fane, or temple.",
+			MinLevel:    1,
 		},
 		{
 			ID:          3,
-			Name:        "Healing Hands",
-			Description: "Once per day per three levels (rounded up), the cleric can heal 1d6+1 hit points with a touch. This healing increases to 2d6+2 at 6th level and 3d6+3 at 9th level.",
-			MinLevel:    3,
+			Name:        "Sorcery",
+			Description: "Clerics memorize and cast spells without maintaining spell books; they might bear scriptures in prayer books, sacred scrolls, or graven tablets. Clerics begin with three level 1 spells from the Cleric Spell List, revealed through initiation. They gain three new spells at each level, of castable levels, through spiritual revelation, otherworldly favor, or theological study. These are learned automatically without qualification rolls. Additional spells may be learned outside level training through more arduous processes.",
+			MinLevel:    1,
 		},
 		{
 			ID:          4,
-			Name:        "Divine Blessing",
-			Description: "At 6th level, the cleric can bestow a blessing on a person or object once per day. This blessing grants a +1 bonus to saves, attacks, or defense for 1 hour.",
-			MinLevel:    6,
+			Name:        "Turn Undead",
+			Description: "Clerics can exert control over undead and some dæmonic beings within 30 feet by displaying a holy symbol and speaking a commandment. Evil clerics can instead compel their service. Success is determined by cross-referencing the cleric's turning ability (TA) with the Undead Type on a d12 roll. Results: T (turned): 2d6 undead cower/flee for 1 turn; D (destroyed): 2d6 undead are exorcized; UD (ultimate destruction): 1d6+6 undead are exorcized. Clerics with 15+ charisma gain +1 on turning rolls. This ability can be used daily a number of times equal to the character's TA, with one attempt per encounter.",
+			MinLevel:    1,
 		},
 		{
 			ID:          5,
-			Name:        "Divine Intervention",
-			Description: "At 9th level, once per week, the cleric may call upon their deity for direct intervention in dire circumstances. Success is determined by the Referee based on the situation and the cleric's devotion.",
-			MinLevel:    9,
+			Name:        "New Weapon Skill",
+			Description: "At 4th, 8th, and 12th levels, become skilled in a new weapon that is not included in the favoured weapons list. This new proficiency is dependent upon training and practice.",
+			MinLevel:    4,
 		},
 	}
 }

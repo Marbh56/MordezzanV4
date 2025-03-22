@@ -213,6 +213,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getNextMagicianLevelStmt, err = db.PrepareContext(ctx, getNextMagicianLevel); err != nil {
 		return nil, fmt.Errorf("error preparing query GetNextMagicianLevel: %w", err)
 	}
+	if q.getNextThiefLevelStmt, err = db.PrepareContext(ctx, getNextThiefLevel); err != nil {
+		return nil, fmt.Errorf("error preparing query GetNextThiefLevel: %w", err)
+	}
 	if q.getPotionStmt, err = db.PrepareContext(ctx, getPotion); err != nil {
 		return nil, fmt.Errorf("error preparing query GetPotion: %w", err)
 	}
@@ -257,6 +260,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getSpellsInSpellbookStmt, err = db.PrepareContext(ctx, getSpellsInSpellbook); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSpellsInSpellbook: %w", err)
+	}
+	if q.getThiefClassDataStmt, err = db.PrepareContext(ctx, getThiefClassData); err != nil {
+		return nil, fmt.Errorf("error preparing query GetThiefClassData: %w", err)
 	}
 	if q.getTreasureStmt, err = db.PrepareContext(ctx, getTreasure); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTreasure: %w", err)
@@ -323,6 +329,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.listSpellsStmt, err = db.PrepareContext(ctx, listSpells); err != nil {
 		return nil, fmt.Errorf("error preparing query ListSpells: %w", err)
+	}
+	if q.listThiefClassDataStmt, err = db.PrepareContext(ctx, listThiefClassData); err != nil {
+		return nil, fmt.Errorf("error preparing query ListThiefClassData: %w", err)
 	}
 	if q.listTreasuresStmt, err = db.PrepareContext(ctx, listTreasures); err != nil {
 		return nil, fmt.Errorf("error preparing query ListTreasures: %w", err)
@@ -728,6 +737,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getNextMagicianLevelStmt: %w", cerr)
 		}
 	}
+	if q.getNextThiefLevelStmt != nil {
+		if cerr := q.getNextThiefLevelStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getNextThiefLevelStmt: %w", cerr)
+		}
+	}
 	if q.getPotionStmt != nil {
 		if cerr := q.getPotionStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getPotionStmt: %w", cerr)
@@ -801,6 +815,11 @@ func (q *Queries) Close() error {
 	if q.getSpellsInSpellbookStmt != nil {
 		if cerr := q.getSpellsInSpellbookStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getSpellsInSpellbookStmt: %w", cerr)
+		}
+	}
+	if q.getThiefClassDataStmt != nil {
+		if cerr := q.getThiefClassDataStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getThiefClassDataStmt: %w", cerr)
 		}
 	}
 	if q.getTreasureStmt != nil {
@@ -911,6 +930,11 @@ func (q *Queries) Close() error {
 	if q.listSpellsStmt != nil {
 		if cerr := q.listSpellsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listSpellsStmt: %w", cerr)
+		}
+	}
+	if q.listThiefClassDataStmt != nil {
+		if cerr := q.listThiefClassDataStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listThiefClassDataStmt: %w", cerr)
 		}
 	}
 	if q.listTreasuresStmt != nil {
@@ -1155,6 +1179,7 @@ type Queries struct {
 	getNextClericLevelStmt              *sql.Stmt
 	getNextFighterLevelStmt             *sql.Stmt
 	getNextMagicianLevelStmt            *sql.Stmt
+	getNextThiefLevelStmt               *sql.Stmt
 	getPotionStmt                       *sql.Stmt
 	getPotionByNameStmt                 *sql.Stmt
 	getPreparedSpellStmt                *sql.Stmt
@@ -1170,6 +1195,7 @@ type Queries struct {
 	getSpellbookStmt                    *sql.Stmt
 	getSpellbookByNameStmt              *sql.Stmt
 	getSpellsInSpellbookStmt            *sql.Stmt
+	getThiefClassDataStmt               *sql.Stmt
 	getTreasureStmt                     *sql.Stmt
 	getTreasureByCharacterStmt          *sql.Stmt
 	getUserStmt                         *sql.Stmt
@@ -1192,6 +1218,7 @@ type Queries struct {
 	listSpellScrollsStmt                *sql.Stmt
 	listSpellbooksStmt                  *sql.Stmt
 	listSpellsStmt                      *sql.Stmt
+	listThiefClassDataStmt              *sql.Stmt
 	listTreasuresStmt                   *sql.Stmt
 	listUsersStmt                       *sql.Stmt
 	listWeaponsStmt                     *sql.Stmt
@@ -1289,6 +1316,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getNextClericLevelStmt:              q.getNextClericLevelStmt,
 		getNextFighterLevelStmt:             q.getNextFighterLevelStmt,
 		getNextMagicianLevelStmt:            q.getNextMagicianLevelStmt,
+		getNextThiefLevelStmt:               q.getNextThiefLevelStmt,
 		getPotionStmt:                       q.getPotionStmt,
 		getPotionByNameStmt:                 q.getPotionByNameStmt,
 		getPreparedSpellStmt:                q.getPreparedSpellStmt,
@@ -1304,6 +1332,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getSpellbookStmt:                    q.getSpellbookStmt,
 		getSpellbookByNameStmt:              q.getSpellbookByNameStmt,
 		getSpellsInSpellbookStmt:            q.getSpellsInSpellbookStmt,
+		getThiefClassDataStmt:               q.getThiefClassDataStmt,
 		getTreasureStmt:                     q.getTreasureStmt,
 		getTreasureByCharacterStmt:          q.getTreasureByCharacterStmt,
 		getUserStmt:                         q.getUserStmt,
@@ -1326,6 +1355,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		listSpellScrollsStmt:                q.listSpellScrollsStmt,
 		listSpellbooksStmt:                  q.listSpellbooksStmt,
 		listSpellsStmt:                      q.listSpellsStmt,
+		listThiefClassDataStmt:              q.listThiefClassDataStmt,
 		listTreasuresStmt:                   q.listTreasuresStmt,
 		listUsersStmt:                       q.listUsersStmt,
 		listWeaponsStmt:                     q.listWeaponsStmt,

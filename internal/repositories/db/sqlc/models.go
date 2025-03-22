@@ -234,6 +234,14 @@ type SpellbookSpell struct {
 	PagesUsed      int64
 }
 
+type ThiefClassDatum struct {
+	Level            int64
+	ExperiencePoints int64
+	HitDice          string
+	SavingThrow      int64
+	FightingAbility  int64
+}
+
 type Treasure struct {
 	ID             int64
 	CharacterID    sql.NullInt64
