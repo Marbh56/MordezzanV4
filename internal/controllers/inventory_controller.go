@@ -15,24 +15,26 @@ import (
 	"mordezzanV4/internal/logger"
 	"mordezzanV4/internal/models"
 	"mordezzanV4/internal/repositories"
+	"mordezzanV4/internal/services"
 )
 
 type InventoryController struct {
-	inventoryRepo   repositories.InventoryRepository
-	characterRepo   repositories.CharacterRepository
-	weaponRepo      repositories.WeaponRepository
-	armorRepo       repositories.ArmorRepository
-	shieldRepo      repositories.ShieldRepository
-	potionRepo      repositories.PotionRepository
-	magicItemRepo   repositories.MagicItemRepository
-	ringRepo        repositories.RingRepository
-	ammoRepo        repositories.AmmoRepository
-	spellScrollRepo repositories.SpellScrollRepository
-	containerRepo   repositories.ContainerRepository
-	equipmentRepo   repositories.EquipmentRepository
-	treasureRepo    repositories.TreasureRepository
-	spellbookRepo   repositories.SpellbookRepository
-	tmpl            *template.Template
+	inventoryRepo      repositories.InventoryRepository
+	characterRepo      repositories.CharacterRepository
+	weaponRepo         repositories.WeaponRepository
+	armorRepo          repositories.ArmorRepository
+	shieldRepo         repositories.ShieldRepository
+	potionRepo         repositories.PotionRepository
+	magicItemRepo      repositories.MagicItemRepository
+	ringRepo           repositories.RingRepository
+	ammoRepo           repositories.AmmoRepository
+	spellScrollRepo    repositories.SpellScrollRepository
+	containerRepo      repositories.ContainerRepository
+	equipmentRepo      repositories.EquipmentRepository
+	treasureRepo       repositories.TreasureRepository
+	spellbookRepo      repositories.SpellbookRepository
+	encumbranceService *services.EncumbranceService
+	tmpl               *template.Template
 }
 
 // EnrichedInventoryItem contains detailed item information
@@ -62,24 +64,26 @@ func NewInventoryController(
 	equipmentRepo repositories.EquipmentRepository,
 	treasureRepo repositories.TreasureRepository,
 	spellbookRepo repositories.SpellbookRepository,
+	encumbranceService *services.EncumbranceService,
 	tmpl *template.Template,
 ) *InventoryController {
 	return &InventoryController{
-		inventoryRepo:   inventoryRepo,
-		characterRepo:   characterRepo,
-		weaponRepo:      weaponRepo,
-		armorRepo:       armorRepo,
-		shieldRepo:      shieldRepo,
-		potionRepo:      potionRepo,
-		magicItemRepo:   magicItemRepo,
-		ringRepo:        ringRepo,
-		ammoRepo:        ammoRepo,
-		spellScrollRepo: spellScrollRepo,
-		containerRepo:   containerRepo,
-		equipmentRepo:   equipmentRepo,
-		treasureRepo:    treasureRepo,
-		spellbookRepo:   spellbookRepo,
-		tmpl:            tmpl,
+		inventoryRepo:      inventoryRepo,
+		characterRepo:      characterRepo,
+		weaponRepo:         weaponRepo,
+		armorRepo:          armorRepo,
+		shieldRepo:         shieldRepo,
+		potionRepo:         potionRepo,
+		magicItemRepo:      magicItemRepo,
+		ringRepo:           ringRepo,
+		ammoRepo:           ammoRepo,
+		spellScrollRepo:    spellScrollRepo,
+		containerRepo:      containerRepo,
+		equipmentRepo:      equipmentRepo,
+		treasureRepo:       treasureRepo,
+		spellbookRepo:      spellbookRepo,
+		encumbranceService: encumbranceService, // Add to the struct
+		tmpl:               tmpl,
 	}
 }
 
@@ -119,12 +123,10 @@ func (c *InventoryController) GetInventoryByCharacter(w http.ResponseWriter, r *
 	}
 
 	// Check if character exists
-	if c.characterRepo != nil {
-		_, err := c.characterRepo.GetCharacter(r.Context(), characterID)
-		if err != nil {
-			apperrors.HandleError(w, err)
-			return
-		}
+	_, err = c.characterRepo.GetCharacter(r.Context(), characterID)
+	if err != nil {
+		apperrors.HandleError(w, err)
+		return
 	}
 
 	inventory, err := c.inventoryRepo.GetInventoryByCharacter(r.Context(), characterID)
@@ -166,10 +168,36 @@ func (c *InventoryController) GetInventoryByCharacter(w http.ResponseWriter, r *
 		}
 	}
 
+	// Get encumbrance information if service is available
+	var encumbranceDetails *models.InventoryWeightDetails
+	if c.encumbranceService != nil {
+		encumbranceDetails, err = c.encumbranceService.GetCharacterEncumbrance(r.Context(), characterID)
+		if err != nil {
+			logger.Error("Failed to get encumbrance details: %v", err)
+		}
+	}
+
+	// Set inventory max weight based on character's encumbrance thresholds
+	if encumbranceDetails != nil && encumbranceDetails.Thresholds.MaximumCapacity > 0 {
+		maxCapacity := encumbranceDetails.Thresholds.MaximumCapacity
+
+		// Update the inventory's max weight if it differs
+		if inventory.MaxWeight != maxCapacity {
+			updateInput := &models.UpdateInventoryInput{
+				MaxWeight: &maxCapacity,
+			}
+			if err := c.inventoryRepo.UpdateInventory(r.Context(), inventory.ID, updateInput); err != nil {
+				logger.Error("Failed to update inventory max weight: %v", err)
+			}
+			inventory.MaxWeight = maxCapacity
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
-		"inventory": inventory,
-		"items":     enrichedItems,
+		"inventory":   inventory,
+		"items":       enrichedItems,
+		"encumbrance": encumbranceDetails,
 	}); err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 	}
@@ -716,4 +744,123 @@ func (c *InventoryController) enrichInventoryItem(ctx context.Context, item mode
 		IsEquipped:  item.IsEquipped,
 		Notes:       item.Notes,
 	}, nil
+}
+
+func (c *InventoryController) GetEncumbranceStatus(w http.ResponseWriter, r *http.Request) {
+	characterID, err := strconv.ParseInt(chi.URLParam(r, "characterId"), 10, 64)
+	if err != nil {
+		apperrors.HandleError(w, apperrors.NewBadRequest("Invalid character ID format"))
+		return
+	}
+
+	// Check if character exists
+	if c.characterRepo != nil {
+		_, err := c.characterRepo.GetCharacter(r.Context(), characterID)
+		if err != nil {
+			apperrors.HandleError(w, err)
+			return
+		}
+	}
+
+	// Get encumbrance details from service
+	details, err := c.encumbranceService.GetCharacterEncumbrance(r.Context(), characterID)
+	if err != nil {
+		apperrors.HandleError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(details); err != nil {
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+	}
+}
+
+// RecalculateEncumbrance recalculates a character's inventory weights and encumbrance status
+func (c *InventoryController) RecalculateEncumbrance(w http.ResponseWriter, r *http.Request) {
+	characterID, err := strconv.ParseInt(chi.URLParam(r, "characterId"), 10, 64)
+	if err != nil {
+		apperrors.HandleError(w, apperrors.NewBadRequest("Invalid character ID format"))
+		return
+	}
+
+	// Check if character exists
+	if c.characterRepo != nil {
+		_, err := c.characterRepo.GetCharacter(r.Context(), characterID)
+		if err != nil {
+			apperrors.HandleError(w, err)
+			return
+		}
+	}
+
+	// Update inventory weights
+	if err := c.encumbranceService.UpdateInventoryWeights(r.Context(), characterID); err != nil {
+		apperrors.HandleError(w, err)
+		return
+	}
+
+	// Get updated encumbrance details
+	details, err := c.encumbranceService.GetCharacterEncumbrance(r.Context(), characterID)
+	if err != nil {
+		apperrors.HandleError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(details); err != nil {
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+	}
+}
+
+// UpdateInventoryCapacity updates a character's inventory capacity manually
+func (c *InventoryController) UpdateInventoryCapacity(w http.ResponseWriter, r *http.Request) {
+	characterID, err := strconv.ParseInt(chi.URLParam(r, "characterId"), 10, 64)
+	if err != nil {
+		apperrors.HandleError(w, apperrors.NewBadRequest("Invalid character ID format"))
+		return
+	}
+
+	var input struct {
+		MaxWeight float64 `json:"max_weight"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		apperrors.HandleError(w, apperrors.NewBadRequest("Invalid request body format"))
+		return
+	}
+
+	// Validate input
+	if input.MaxWeight < 0 {
+		apperrors.HandleError(w, apperrors.NewBadRequest("Maximum weight cannot be negative"))
+		return
+	}
+
+	// Get inventory for this character
+	inventory, err := c.inventoryRepo.GetInventoryByCharacter(r.Context(), characterID)
+	if err != nil {
+		apperrors.HandleError(w, err)
+		return
+	}
+
+	// Update the max weight
+	maxWeight := input.MaxWeight
+	updateInput := &models.UpdateInventoryInput{
+		MaxWeight: &maxWeight,
+	}
+
+	if err := c.inventoryRepo.UpdateInventory(r.Context(), inventory.ID, updateInput); err != nil {
+		apperrors.HandleError(w, err)
+		return
+	}
+
+	// Get the updated encumbrance details
+	details, err := c.encumbranceService.GetCharacterEncumbrance(r.Context(), characterID)
+	if err != nil {
+		apperrors.HandleError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(details); err != nil {
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+	}
 }

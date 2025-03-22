@@ -10,6 +10,7 @@ type Container struct {
 	MaxWeight    int       `json:"max_weight"`
 	AllowedItems string    `json:"allowed_items"`
 	Cost         float64   `json:"cost"`
+	Weight       int       `json:"weight"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }

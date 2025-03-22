@@ -80,7 +80,7 @@ func (q *Queries) DeleteInventory(ctx context.Context, id int64) error {
 }
 
 const getInventory = `-- name: GetInventory :one
-SELECT id, character_id, max_weight, current_weight, created_at, updated_at FROM inventories
+SELECT id, character_id, max_weight, current_weight, created_at, updated_at, base_encumbered, base_heavy_encumbered, maximum_capacity, is_encumbered, is_heavy_encumbered, is_overloaded FROM inventories
 WHERE id = ? LIMIT 1
 `
 
@@ -94,12 +94,18 @@ func (q *Queries) GetInventory(ctx context.Context, id int64) (Inventory, error)
 		&i.CurrentWeight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.BaseEncumbered,
+		&i.BaseHeavyEncumbered,
+		&i.MaximumCapacity,
+		&i.IsEncumbered,
+		&i.IsHeavyEncumbered,
+		&i.IsOverloaded,
 	)
 	return i, err
 }
 
 const getInventoryByCharacter = `-- name: GetInventoryByCharacter :one
-SELECT id, character_id, max_weight, current_weight, created_at, updated_at FROM inventories
+SELECT id, character_id, max_weight, current_weight, created_at, updated_at, base_encumbered, base_heavy_encumbered, maximum_capacity, is_encumbered, is_heavy_encumbered, is_overloaded FROM inventories
 WHERE character_id = ? LIMIT 1
 `
 
@@ -113,6 +119,12 @@ func (q *Queries) GetInventoryByCharacter(ctx context.Context, characterID int64
 		&i.CurrentWeight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.BaseEncumbered,
+		&i.BaseHeavyEncumbered,
+		&i.MaximumCapacity,
+		&i.IsEncumbered,
+		&i.IsHeavyEncumbered,
+		&i.IsOverloaded,
 	)
 	return i, err
 }
@@ -252,7 +264,7 @@ func (q *Queries) GetInventoryItemsByType(ctx context.Context, arg GetInventoryI
 }
 
 const listInventories = `-- name: ListInventories :many
-SELECT id, character_id, max_weight, current_weight, created_at, updated_at FROM inventories
+SELECT id, character_id, max_weight, current_weight, created_at, updated_at, base_encumbered, base_heavy_encumbered, maximum_capacity, is_encumbered, is_heavy_encumbered, is_overloaded FROM inventories
 ORDER BY id
 `
 
@@ -272,6 +284,12 @@ func (q *Queries) ListInventories(ctx context.Context) ([]Inventory, error) {
 			&i.CurrentWeight,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.BaseEncumbered,
+			&i.BaseHeavyEncumbered,
+			&i.MaximumCapacity,
+			&i.IsEncumbered,
+			&i.IsHeavyEncumbered,
+			&i.IsOverloaded,
 		); err != nil {
 			return nil, err
 		}

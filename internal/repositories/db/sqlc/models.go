@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+type Ability struct {
+	ID          int64
+	Name        string
+	Description string
+}
+
 type Ammo struct {
 	ID        int64
 	Name      string
@@ -32,6 +38,29 @@ type Armor struct {
 	UpdatedAt       time.Time
 }
 
+type BardDruidSpell struct {
+	Level            int64
+	SpellSlotsLevel1 int64
+	SpellSlotsLevel2 int64
+	SpellSlotsLevel3 int64
+	SpellSlotsLevel4 int64
+}
+
+type BardIllusionistSpell struct {
+	Level            int64
+	SpellSlotsLevel1 int64
+	SpellSlotsLevel2 int64
+	SpellSlotsLevel3 int64
+	SpellSlotsLevel4 int64
+}
+
+type BerserkerNaturalAc struct {
+	ID        int64
+	ClassName string
+	Level     int64
+	NaturalAc int64
+}
+
 type Character struct {
 	ID                 int64
 	UserID             int64
@@ -52,20 +81,40 @@ type Character struct {
 	UpdatedAt          time.Time
 }
 
-type ClericClassDatum struct {
+type ClassAbilityMapping struct {
+	ClassName string
+	AbilityID int64
+	MinLevel  int64
+}
+
+type ClassDatum struct {
+	ID               int64
+	ClassName        string
 	Level            int64
 	ExperiencePoints int64
 	HitDice          string
 	SavingThrow      int64
 	FightingAbility  int64
-	TurningAbility   int64
-	CastingAbility   int64
-	SpellSlotLevel1  int64
-	SpellSlotLevel2  int64
-	SpellSlotLevel3  int64
-	SpellSlotLevel4  int64
-	SpellSlotLevel5  int64
-	SpellSlotLevel6  int64
+	CastingAbility   sql.NullInt64
+	SpellSlotsLevel1 sql.NullInt64
+	SpellSlotsLevel2 sql.NullInt64
+	SpellSlotsLevel3 sql.NullInt64
+	SpellSlotsLevel4 sql.NullInt64
+	SpellSlotsLevel5 sql.NullInt64
+	SpellSlotsLevel6 sql.NullInt64
+}
+
+type ClassThiefSkillMapping struct {
+	ID        int64
+	ClassName string
+	SkillID   int64
+}
+
+type ClericTurningAbility struct {
+	ID             int64
+	ClassName      string
+	Level          int64
+	TurningAbility int64
 }
 
 type Container struct {
@@ -74,6 +123,7 @@ type Container struct {
 	MaxWeight    int64
 	AllowedItems string
 	Cost         float64
+	Weight       int64
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -88,21 +138,19 @@ type Equipment struct {
 	UpdatedAt   time.Time
 }
 
-type FighterClassDatum struct {
-	Level            int64
-	ExperiencePoints int64
-	HitDice          string
-	SavingThrow      int64
-	FightingAbility  int64
-}
-
 type Inventory struct {
-	ID            int64
-	CharacterID   int64
-	MaxWeight     float64
-	CurrentWeight float64
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID                  int64
+	CharacterID         int64
+	MaxWeight           float64
+	CurrentWeight       float64
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	BaseEncumbered      float64
+	BaseHeavyEncumbered float64
+	MaximumCapacity     float64
+	IsEncumbered        bool
+	IsHeavyEncumbered   bool
+	IsOverloaded        bool
 }
 
 type InventoryItem struct {
@@ -129,20 +177,27 @@ type MagicItem struct {
 	UpdatedAt   time.Time
 }
 
-type MagicianClassDatum struct {
-	ID               int64
-	Level            int64
-	ExperiencePoints int64
-	HitDice          string
-	SavingThrow      int64
-	FightingAbility  int64
-	CastingAbility   int64
-	SpellSlotsLevel1 int64
-	SpellSlotsLevel2 int64
-	SpellSlotsLevel3 int64
-	SpellSlotsLevel4 int64
-	SpellSlotsLevel5 int64
-	SpellSlotsLevel6 int64
+type MonkAcBonu struct {
+	Level   int64
+	AcBonus int64
+}
+
+type MonkEmptyHandDamage struct {
+	Level  int64
+	Damage string
+}
+
+type NecromancerTurningAbility struct {
+	ClassName      string
+	Level          int64
+	TurningAbility int64
+}
+
+type PaladinTurningAbility struct {
+	ID             int64
+	ClassName      string
+	Level          int64
+	TurningAbility int64
 }
 
 type Potion struct {
@@ -155,12 +210,26 @@ type Potion struct {
 	UpdatedAt   time.Time
 }
 
-type PreparedSpell struct {
-	ID          int64
-	CharacterID int64
-	SpellID     int64
-	SlotLevel   int64
-	PreparedAt  time.Time
+type PriestTurningAbility struct {
+	Level          int64
+	TurningAbility int64
+}
+
+type PurloinerTurningAbility struct {
+	Level          int64
+	TurningAbility int64
+}
+
+type RangerDruidSpellSlot struct {
+	ClassLevel int64
+	SpellLevel int64
+	Slots      int64
+}
+
+type RangerMagicianSpellSlot struct {
+	ClassLevel int64
+	SpellLevel int64
+	Slots      int64
 }
 
 type Ring struct {
@@ -171,6 +240,43 @@ type Ring struct {
 	Weight      int64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type RunesPerDay struct {
+	ID        int64
+	ClassName string
+	Level     int64
+	Level1    sql.NullInt64
+	Level2    sql.NullInt64
+	Level3    sql.NullInt64
+	Level4    sql.NullInt64
+	Level5    sql.NullInt64
+	Level6    sql.NullInt64
+}
+
+type ShamanArcaneSpell struct {
+	Level            int64
+	SpellSlotsLevel1 int64
+	SpellSlotsLevel2 int64
+	SpellSlotsLevel3 int64
+	SpellSlotsLevel4 int64
+	SpellSlotsLevel5 int64
+	SpellSlotsLevel6 int64
+}
+
+type ShamanDivineSpell struct {
+	Level            int64
+	SpellSlotsLevel1 int64
+	SpellSlotsLevel2 int64
+	SpellSlotsLevel3 int64
+	SpellSlotsLevel4 int64
+	SpellSlotsLevel5 int64
+	SpellSlotsLevel6 int64
+}
+
+type ShamanTurningAbility struct {
+	Level          int64
+	TurningAbility int64
 }
 
 type Shield struct {
@@ -234,12 +340,17 @@ type SpellbookSpell struct {
 	PagesUsed      int64
 }
 
-type ThiefClassDatum struct {
-	Level            int64
-	ExperiencePoints int64
-	HitDice          string
-	SavingThrow      int64
-	FightingAbility  int64
+type ThiefSkill struct {
+	ID        int64
+	SkillName string
+	Attribute string
+}
+
+type ThiefSkillProgression struct {
+	ID            int64
+	SkillID       int64
+	LevelRange    string
+	SuccessChance string
 }
 
 type Treasure struct {

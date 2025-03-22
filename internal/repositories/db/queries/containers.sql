@@ -12,9 +12,9 @@ ORDER BY name;
 
 -- name: CreateContainer :execresult
 INSERT INTO containers (
-  name, max_weight, allowed_items, cost
+  name, max_weight, allowed_items, cost, weight
 ) VALUES (
-  ?, ?, ?, ?
+  ?, ?, ?, ?, ?
 );
 
 -- name: UpdateContainer :execresult
@@ -23,6 +23,7 @@ SET name = ?,
     max_weight = ?,
     allowed_items = ?,
     cost = ?,
+    weight = ?,
     updated_at = datetime('now')
 WHERE id = ?;
 

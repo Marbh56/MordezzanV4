@@ -12,9 +12,9 @@ import (
 
 const createContainer = `-- name: CreateContainer :execresult
 INSERT INTO containers (
-  name, max_weight, allowed_items, cost
+  name, max_weight, allowed_items, cost, weight
 ) VALUES (
-  ?, ?, ?, ?
+  ?, ?, ?, ?, ?
 )
 `
 
@@ -23,6 +23,7 @@ type CreateContainerParams struct {
 	MaxWeight    int64
 	AllowedItems string
 	Cost         float64
+	Weight       int64
 }
 
 func (q *Queries) CreateContainer(ctx context.Context, arg CreateContainerParams) (sql.Result, error) {
@@ -31,6 +32,7 @@ func (q *Queries) CreateContainer(ctx context.Context, arg CreateContainerParams
 		arg.MaxWeight,
 		arg.AllowedItems,
 		arg.Cost,
+		arg.Weight,
 	)
 }
 
@@ -44,7 +46,7 @@ func (q *Queries) DeleteContainer(ctx context.Context, id int64) (sql.Result, er
 }
 
 const getContainer = `-- name: GetContainer :one
-SELECT id, name, max_weight, allowed_items, cost, created_at, updated_at FROM containers
+SELECT id, name, max_weight, allowed_items, cost, weight, created_at, updated_at FROM containers
 WHERE id = ? LIMIT 1
 `
 
@@ -57,6 +59,7 @@ func (q *Queries) GetContainer(ctx context.Context, id int64) (Container, error)
 		&i.MaxWeight,
 		&i.AllowedItems,
 		&i.Cost,
+		&i.Weight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -64,7 +67,7 @@ func (q *Queries) GetContainer(ctx context.Context, id int64) (Container, error)
 }
 
 const getContainerByName = `-- name: GetContainerByName :one
-SELECT id, name, max_weight, allowed_items, cost, created_at, updated_at FROM containers
+SELECT id, name, max_weight, allowed_items, cost, weight, created_at, updated_at FROM containers
 WHERE name = ? LIMIT 1
 `
 
@@ -77,6 +80,7 @@ func (q *Queries) GetContainerByName(ctx context.Context, name string) (Containe
 		&i.MaxWeight,
 		&i.AllowedItems,
 		&i.Cost,
+		&i.Weight,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -84,7 +88,7 @@ func (q *Queries) GetContainerByName(ctx context.Context, name string) (Containe
 }
 
 const listContainers = `-- name: ListContainers :many
-SELECT id, name, max_weight, allowed_items, cost, created_at, updated_at FROM containers
+SELECT id, name, max_weight, allowed_items, cost, weight, created_at, updated_at FROM containers
 ORDER BY name
 `
 
@@ -103,6 +107,7 @@ func (q *Queries) ListContainers(ctx context.Context) ([]Container, error) {
 			&i.MaxWeight,
 			&i.AllowedItems,
 			&i.Cost,
+			&i.Weight,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -125,6 +130,7 @@ SET name = ?,
     max_weight = ?,
     allowed_items = ?,
     cost = ?,
+    weight = ?,
     updated_at = datetime('now')
 WHERE id = ?
 `
@@ -134,6 +140,7 @@ type UpdateContainerParams struct {
 	MaxWeight    int64
 	AllowedItems string
 	Cost         float64
+	Weight       int64
 	ID           int64
 }
 
@@ -143,6 +150,7 @@ func (q *Queries) UpdateContainer(ctx context.Context, arg UpdateContainerParams
 		arg.MaxWeight,
 		arg.AllowedItems,
 		arg.Cost,
+		arg.Weight,
 		arg.ID,
 	)
 }

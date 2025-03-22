@@ -19,6 +19,8 @@ type Character struct {
 	Intelligence     int    `json:"intelligence"`
 	Charisma         int    `json:"charisma"`
 
+	SurpriseChance int `json:"surprise_chance,omitempty"`
+
 	MaxHitPoints       int `json:"max_hit_points"`
 	CurrentHitPoints   int `json:"current_hit_points"`
 	TemporaryHitPoints int `json:"temporary_hit_points"`
@@ -40,7 +42,11 @@ type Character struct {
 	AvoidanceSaveBonus      int `json:"avoidance_save_bonus,omitempty"`
 
 	// Class Abilities
-	Abilities interface{} `json:"abilities,omitempty"`
+	Abilities   interface{}       `json:"abilities,omitempty"`
+	ThiefSkills map[string]string `json:"thief_skills,omitempty"`
+
+	//Non Derived Stats
+	MovementRate int `json:"movement_rate,omitempty"`
 
 	// Derived stats
 	// Str
@@ -111,6 +117,13 @@ type UpdateCharacterInput struct {
 	MaxHitPoints       int    `json:"max_hit_points"`
 	CurrentHitPoints   int    `json:"current_hit_points"`
 	TemporaryHitPoints int    `json:"temporary_hit_points"`
+}
+
+type ThiefSkill struct {
+	ID            int64  `json:"id"`
+	Name          string `json:"name"`
+	Attribute     string `json:"attribute"`
+	SuccessChance string `json:"success_chance"`
 }
 
 func (i *CreateCharacterInput) Validate() error {
@@ -219,6 +232,9 @@ func (c *Character) CalculateDerivedStats() {
 	c.calculateIntelligenceModifiers()
 	c.calculateWisdomModifiers()
 	c.calculateCharismaModifiers()
+
+	c.SurpriseChance = 2
+	c.MovementRate = 40
 
 }
 
