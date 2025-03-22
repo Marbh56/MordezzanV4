@@ -18,11 +18,16 @@ type Character struct {
 	Wisdom           int    `json:"wisdom"`
 	Intelligence     int    `json:"intelligence"`
 	Charisma         int    `json:"charisma"`
-	HitPoints        int    `json:"hit_points"`
+
+	MaxHitPoints       int `json:"max_hit_points"`
+	CurrentHitPoints   int `json:"current_hit_points"`
+	TemporaryHitPoints int `json:"temporary_hit_points"`
 
 	HitDice         string `json:"hit_dice,omitempty"`
 	SavingThrow     int    `json:"saving_throw,omitempty"`
 	FightingAbility int    `json:"fighting_ability,omitempty"`
+
+	TurningAbility int `json:"turning_ability,omitempty"`
 
 	CastingAbility int            `json:"casting_ability,omitempty"`
 	SpellSlots     map[string]int `json:"spell_slots,omitempty"`
@@ -86,21 +91,26 @@ type CreateCharacterInput struct {
 	Wisdom           int    `json:"wisdom"`
 	Intelligence     int    `json:"intelligence"`
 	Charisma         int    `json:"charisma"`
-	HitPoints        int    `json:"hit_points"`
+
+	MaxHitPoints       int `json:"max_hit_points"`
+	CurrentHitPoints   int `json:"current_hit_points"`
+	TemporaryHitPoints int `json:"temporary_hit_points"`
 }
 
 type UpdateCharacterInput struct {
-	Name             string `json:"name"`
-	Class            string `json:"class"`
-	Level            int    `json:"level"`
-	ExperiencePoints int    `json:"experience_points"`
-	Strength         int    `json:"strength"`
-	Dexterity        int    `json:"dexterity"`
-	Constitution     int    `json:"constitution"`
-	Wisdom           int    `json:"wisdom"`
-	Intelligence     int    `json:"intelligence"`
-	Charisma         int    `json:"charisma"`
-	HitPoints        int    `json:"hit_points"`
+	Name               string `json:"name"`
+	Class              string `json:"class"`
+	Level              int    `json:"level"`
+	ExperiencePoints   int    `json:"experience_points"`
+	Strength           int    `json:"strength"`
+	Dexterity          int    `json:"dexterity"`
+	Constitution       int    `json:"constitution"`
+	Wisdom             int    `json:"wisdom"`
+	Intelligence       int    `json:"intelligence"`
+	Charisma           int    `json:"charisma"`
+	MaxHitPoints       int    `json:"max_hit_points"`
+	CurrentHitPoints   int    `json:"current_hit_points"`
+	TemporaryHitPoints int    `json:"temporary_hit_points"`
 }
 
 func (i *CreateCharacterInput) Validate() error {
@@ -134,8 +144,14 @@ func (i *CreateCharacterInput) Validate() error {
 	if i.Charisma < 3 || i.Charisma > 18 {
 		return NewValidationError("charisma", "Charisma must be between 3 and 18")
 	}
-	if i.HitPoints < 1 {
-		return NewValidationError("hit_points", "Hit points must be positive")
+	if i.MaxHitPoints < 1 {
+		return NewValidationError("max_hit_points", "Max hit points must be positive")
+	}
+	if i.CurrentHitPoints < -10 {
+		return NewValidationError("current_hit_points", "Current hit points must be -10 or higher")
+	}
+	if i.TemporaryHitPoints < 0 {
+		return NewValidationError("temporary_hit_points", "Temporary hit points cannot be negative")
 	}
 	return nil
 }
@@ -168,8 +184,14 @@ func (i *UpdateCharacterInput) Validate() error {
 	if i.Charisma < 3 || i.Charisma > 18 {
 		return NewValidationError("charisma", "Charisma must be between 3 and 18")
 	}
-	if i.HitPoints < 1 {
-		return NewValidationError("hit_points", "Hit points must be positive")
+	if i.MaxHitPoints < 1 {
+		return NewValidationError("max_hit_points", "Max hit points must be positive")
+	}
+	if i.CurrentHitPoints < -10 {
+		return NewValidationError("current_hit_points", "Current hit points must be -10 or higher")
+	}
+	if i.TemporaryHitPoints < 0 {
+		return NewValidationError("temporary_hit_points", "Temporary hit points cannot be negative")
 	}
 	return nil
 }

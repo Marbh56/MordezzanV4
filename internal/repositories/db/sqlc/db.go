@@ -156,6 +156,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getCharactersByUserStmt, err = db.PrepareContext(ctx, getCharactersByUser); err != nil {
 		return nil, fmt.Errorf("error preparing query GetCharactersByUser: %w", err)
 	}
+	if q.getClericClassDataStmt, err = db.PrepareContext(ctx, getClericClassData); err != nil {
+		return nil, fmt.Errorf("error preparing query GetClericClassData: %w", err)
+	}
 	if q.getContainerStmt, err = db.PrepareContext(ctx, getContainer); err != nil {
 		return nil, fmt.Errorf("error preparing query GetContainer: %w", err)
 	}
@@ -200,6 +203,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getMagicianClassDataStmt, err = db.PrepareContext(ctx, getMagicianClassData); err != nil {
 		return nil, fmt.Errorf("error preparing query GetMagicianClassData: %w", err)
+	}
+	if q.getNextClericLevelStmt, err = db.PrepareContext(ctx, getNextClericLevel); err != nil {
+		return nil, fmt.Errorf("error preparing query GetNextClericLevel: %w", err)
 	}
 	if q.getNextFighterLevelStmt, err = db.PrepareContext(ctx, getNextFighterLevel); err != nil {
 		return nil, fmt.Errorf("error preparing query GetNextFighterLevel: %w", err)
@@ -275,6 +281,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.listCharactersStmt, err = db.PrepareContext(ctx, listCharacters); err != nil {
 		return nil, fmt.Errorf("error preparing query ListCharacters: %w", err)
+	}
+	if q.listClericClassDataStmt, err = db.PrepareContext(ctx, listClericClassData); err != nil {
+		return nil, fmt.Errorf("error preparing query ListClericClassData: %w", err)
 	}
 	if q.listContainersStmt, err = db.PrepareContext(ctx, listContainers); err != nil {
 		return nil, fmt.Errorf("error preparing query ListContainers: %w", err)
@@ -624,6 +633,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getCharactersByUserStmt: %w", cerr)
 		}
 	}
+	if q.getClericClassDataStmt != nil {
+		if cerr := q.getClericClassDataStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getClericClassDataStmt: %w", cerr)
+		}
+	}
 	if q.getContainerStmt != nil {
 		if cerr := q.getContainerStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getContainerStmt: %w", cerr)
@@ -697,6 +711,11 @@ func (q *Queries) Close() error {
 	if q.getMagicianClassDataStmt != nil {
 		if cerr := q.getMagicianClassDataStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getMagicianClassDataStmt: %w", cerr)
+		}
+	}
+	if q.getNextClericLevelStmt != nil {
+		if cerr := q.getNextClericLevelStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getNextClericLevelStmt: %w", cerr)
 		}
 	}
 	if q.getNextFighterLevelStmt != nil {
@@ -822,6 +841,11 @@ func (q *Queries) Close() error {
 	if q.listCharactersStmt != nil {
 		if cerr := q.listCharactersStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listCharactersStmt: %w", cerr)
+		}
+	}
+	if q.listClericClassDataStmt != nil {
+		if cerr := q.listClericClassDataStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listClericClassDataStmt: %w", cerr)
 		}
 	}
 	if q.listContainersStmt != nil {
@@ -1112,6 +1136,7 @@ type Queries struct {
 	getArmorByNameStmt                  *sql.Stmt
 	getCharacterStmt                    *sql.Stmt
 	getCharactersByUserStmt             *sql.Stmt
+	getClericClassDataStmt              *sql.Stmt
 	getContainerStmt                    *sql.Stmt
 	getContainerByNameStmt              *sql.Stmt
 	getEquipmentStmt                    *sql.Stmt
@@ -1127,6 +1152,7 @@ type Queries struct {
 	getMagicItemStmt                    *sql.Stmt
 	getMagicItemByNameStmt              *sql.Stmt
 	getMagicianClassDataStmt            *sql.Stmt
+	getNextClericLevelStmt              *sql.Stmt
 	getNextFighterLevelStmt             *sql.Stmt
 	getNextMagicianLevelStmt            *sql.Stmt
 	getPotionStmt                       *sql.Stmt
@@ -1152,6 +1178,7 @@ type Queries struct {
 	listAmmoStmt                        *sql.Stmt
 	listArmorsStmt                      *sql.Stmt
 	listCharactersStmt                  *sql.Stmt
+	listClericClassDataStmt             *sql.Stmt
 	listContainersStmt                  *sql.Stmt
 	listEquipmentStmt                   *sql.Stmt
 	listFighterClassDataStmt            *sql.Stmt
@@ -1243,6 +1270,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getArmorByNameStmt:                  q.getArmorByNameStmt,
 		getCharacterStmt:                    q.getCharacterStmt,
 		getCharactersByUserStmt:             q.getCharactersByUserStmt,
+		getClericClassDataStmt:              q.getClericClassDataStmt,
 		getContainerStmt:                    q.getContainerStmt,
 		getContainerByNameStmt:              q.getContainerByNameStmt,
 		getEquipmentStmt:                    q.getEquipmentStmt,
@@ -1258,6 +1286,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getMagicItemStmt:                    q.getMagicItemStmt,
 		getMagicItemByNameStmt:              q.getMagicItemByNameStmt,
 		getMagicianClassDataStmt:            q.getMagicianClassDataStmt,
+		getNextClericLevelStmt:              q.getNextClericLevelStmt,
 		getNextFighterLevelStmt:             q.getNextFighterLevelStmt,
 		getNextMagicianLevelStmt:            q.getNextMagicianLevelStmt,
 		getPotionStmt:                       q.getPotionStmt,
@@ -1283,6 +1312,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		listAmmoStmt:                        q.listAmmoStmt,
 		listArmorsStmt:                      q.listArmorsStmt,
 		listCharactersStmt:                  q.listCharactersStmt,
+		listClericClassDataStmt:             q.listClericClassDataStmt,
 		listContainersStmt:                  q.listContainersStmt,
 		listEquipmentStmt:                   q.listEquipmentStmt,
 		listFighterClassDataStmt:            q.listFighterClassDataStmt,

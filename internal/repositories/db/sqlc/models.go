@@ -33,21 +33,39 @@ type Armor struct {
 }
 
 type Character struct {
-	ID               int64
-	UserID           int64
-	Name             string
-	Class            string
+	ID                 int64
+	UserID             int64
+	Name               string
+	Class              string
+	Level              int64
+	ExperiencePoints   int64
+	Strength           int64
+	Dexterity          int64
+	Constitution       int64
+	Wisdom             int64
+	Intelligence       int64
+	Charisma           int64
+	MaxHitPoints       int64
+	CurrentHitPoints   int64
+	TemporaryHitPoints int64
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+}
+
+type ClericClassDatum struct {
 	Level            int64
 	ExperiencePoints int64
-	Strength         int64
-	Dexterity        int64
-	Constitution     int64
-	Wisdom           int64
-	Intelligence     int64
-	Charisma         int64
-	HitPoints        int64
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	HitDice          string
+	SavingThrow      int64
+	FightingAbility  int64
+	TurningAbility   int64
+	CastingAbility   int64
+	SpellSlotLevel1  int64
+	SpellSlotLevel2  int64
+	SpellSlotLevel3  int64
+	SpellSlotLevel4  int64
+	SpellSlotLevel5  int64
+	SpellSlotLevel6  int64
 }
 
 type Container struct {

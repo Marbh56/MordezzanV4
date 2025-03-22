@@ -119,9 +119,11 @@ func NewApp(dbPath string) (*App, error) {
 	spellbookRepo := repositories.NewSQLCSpellbookRepository(db)
 	preparedSpellRepo := repositories.NewSQLCPreparedSpellRepository(db)
 	magicianDataRepo := repositories.NewSQLCMagicianRepository(db)
+	clericDataRepo := repositories.NewSQLCClericRepository(db)
 
 	fighterService := services.NewFighterService(fighterDataRepo)
 	magicianService := services.NewMagicianService(magicianDataRepo)
+	clericService := services.NewClericService(clericDataRepo)
 	spellPreparationService := services.NewSpellPreparationService(
 		preparedSpellRepo,
 		spellRepo,
@@ -132,7 +134,7 @@ func NewApp(dbPath string) (*App, error) {
 	)
 
 	userController := controllers.NewUserController(userRepo, tmpl)
-	characterController := controllers.NewCharacterController(characterRepo, userRepo, fighterService, magicianService, tmpl)
+	characterController := controllers.NewCharacterController(characterRepo, userRepo, fighterService, magicianService, clericService, tmpl)
 	spellController := controllers.NewSpellController(spellRepo, tmpl)
 	armorController := controllers.NewArmorController(armorRepo, tmpl)
 	weaponController := controllers.NewWeaponController(weaponRepo, tmpl)
@@ -279,6 +281,7 @@ func (a *App) SetupRoutes() http.Handler {
 			r.Put("/{id}", a.CharacterController.UpdateCharacter)
 			r.Delete("/{id}", a.CharacterController.DeleteCharacter)
 			r.Patch("/{id}/hp", a.CharacterController.UpdateCharacterHP)
+			r.Post("/{id}/modify-hp", a.CharacterController.ModifyCharacterHP)
 			r.Patch("/{id}/xp", a.CharacterController.UpdateCharacterXP)
 			r.Get("/{id}/class-data", a.CharacterController.GetCharacterClassData)
 		})

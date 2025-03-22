@@ -1,4 +1,3 @@
-// Global state variables
 let currentHP = 0;
 let currentXP = 0;
 let currentClass = '';
@@ -6,9 +5,6 @@ let fighterLevels = [];
 let currentLevel = 1;
 let characterId = '';
 
-// Remove duplicate function definition since it's already defined below
-
-// Main initialization
 document.addEventListener('DOMContentLoaded', function () {
     const token = localStorage.getItem('authToken');
     const userId = localStorage.getItem('userId');
@@ -25,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.removeItem('username');
         window.location.href = '/auth/login-page';
     });
-
     characterId = getCharacterIdFromURL();
     if (characterId) {
         fetchCharacterDetails(characterId).then(() => {
@@ -42,19 +37,16 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         window.location.href = '/';
     }
-    
     setupHPControls();
     setupXPControls();
     setupTabs();
 });
 
-// Helper function to get character ID from URL
 function getCharacterIdFromURL() {
     const pathParts = window.location.pathname.split('/');
     return pathParts[pathParts.length - 1];
 }
 
-// Fetch character details from API
 async function fetchCharacterDetails(charId) {
     try {
         const token = localStorage.getItem('authToken');
@@ -67,7 +59,6 @@ async function fetchCharacterDetails(charId) {
             throw new Error('Failed to fetch character details');
         }
         const character = await response.json();
-        
         displayCharacterDetails(character);
         toggleSpellsTab(character.class);
     } catch (error) {
@@ -76,7 +67,6 @@ async function fetchCharacterDetails(charId) {
     }
 }
 
-// Display character details in the UI
 function displayCharacterDetails(character) {
     document.title = `${character.name} - Mordezzan`;
     document.getElementById('character-name').textContent = character.name;
@@ -85,16 +75,13 @@ function displayCharacterDetails(character) {
     document.getElementById('info-class').textContent = character.class;
     document.getElementById('info-level').textContent = character.level;
     document.getElementById('info-hit-dice').textContent = character.hit_dice || '-';
-    
     currentHP = character.hit_points;
     currentXP = character.experience_points || 0;
     currentClass = character.class;
     currentLevel = character.level;
-    
     updateHPDisplay(character.hit_points);
     document.getElementById('hp-set').value = character.hit_points;
     updateXPDisplay(character.experience_points || 0, character.level, character.class);
-    
     const savingThrowsSection = document.getElementById('saving-throws-section');
     if (character.saving_throw) {
         updateSavingThrows(character);
@@ -102,17 +89,14 @@ function displayCharacterDetails(character) {
     } else {
         savingThrowsSection.style.display = 'none';
     }
-    
     updateAbilityScores(character);
     displayClassAbilities(character);
     setupNotesTab();
-    
     if (character.class === 'Fighter') {
         fetchFighterLevels();
     }
 }
 
-// Update HP display in the UI
 function updateHPDisplay(hp) {
     document.getElementById('info-hp').textContent = hp;
     document.getElementById('hp-set').value = hp;
@@ -157,7 +141,6 @@ function updateXPDisplay(xp, level, characterClass) {
     }
 }
 
-// Fetch fighter class data
 async function fetchFighterLevels() {
     try {
         const token = localStorage.getItem('authToken');
@@ -166,11 +149,9 @@ async function fetchFighterLevels() {
                 'Authorization': `Bearer ${token}`
             }
         });
-        
         if (!response.ok) {
             throw new Error('Failed to fetch fighter levels');
         }
-        
         const data = await response.json();
         if (data.class_type === 'Fighter' && data.level_data) {
             fighterLevels = data.level_data;
@@ -181,7 +162,6 @@ async function fetchFighterLevels() {
     }
 }
 
-// Fetch class-specific data
 async function fetchClassData() {
     try {
         const token = localStorage.getItem('authToken');
@@ -208,7 +188,6 @@ async function fetchClassData() {
     }
 }
 
-// Update UI based on class data
 function updateClassSpecificUI(classData) {
     if (classData.current_level_data) {
         const levelData = classData.current_level_data;
@@ -232,7 +211,6 @@ function updateClassSpecificUI(classData) {
     }
 }
 
-// Update spell slots display
 function updateSpellSlots(spellSlots) {
     const spellSlotsContainer = document.getElementById('spell-slots-container');
     if (!spellSlotsContainer) return;
@@ -253,100 +231,61 @@ function updateSpellSlots(spellSlots) {
     spellSlotsContainer.style.display = 'flex';
 }
 
-// Update saving throws display
 function updateSavingThrows(character) {
     console.log("Updating saving throws for character:", character.name);
-    
-    const baseSaveElement = document.getElementById('base_save');
-    if (baseSaveElement) {
-        const baseSave = character.saving_throw || 15;
-        baseSaveElement.textContent = baseSave;
-    } else {
-        console.warn("Element 'base_save' not found in the DOM");
-    }
-    
-    const saveModifiers = {
-        'death_save_bonus': 'death_save_bonus',
-        'transformation_save_bonus': 'transformation_save_bonus',
-        'device_save_bonus': 'device_save_bonus',
-        'avoidance_save_bonus': 'avoidance_save_bonus',
-        'sorcery_save_bonus': 'sorcery_save_bonus'
-    };
-    
-    for (const [field, elementId] of Object.entries(saveModifiers)) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            const modValue = character[field] || 0;
-            element.textContent = formatModifier(modValue);
-        } else {
-            console.warn(`Element '${elementId}' not found in the DOM`);
-        }
+    const baseSave = character.saving_throw || 15;
+    document.getElementById('base_save').textContent = baseSave;
+    if (character.saving_throw_modifiers) {
+        const mods = character.saving_throw_modifiers;
+        document.getElementById('death-mod').textContent = formatModifier(mods.death || 0);
+        document.getElementById('transform-mod').textContent = formatModifier(mods.transform || 0);
+        document.getElementById('device-mod').textContent = formatModifier(mods.device || 0);
+        document.getElementById('avoidance-mod').textContent = formatModifier(mods.avoidance || 0);
+        document.getElementById('sorcery-mod').textContent = formatModifier(mods.sorcery || 0);
     }
 }
 
-
-// Helper function to format modifiers with + or - sign
-function formatModifier(value) {
-    return value >= 0 ? `+${value}` : value.toString();
-}
-
-// Update ability scores display
 function updateAbilityScores(character) {
-    // Strength
     document.getElementById('ability-str').textContent = character.strength;
     document.getElementById('str-attack-mod').textContent = formatModifier(character.melee_modifier || 0);
     document.getElementById('str-damage-adj').textContent = formatModifier(character.damage_adjustment || 0);
     document.getElementById('str-test').textContent = character.strength_test || '-';
     document.getElementById('str-feat').textContent = character.extra_strength_feat || '-';
-    
-    // Dexterity - Using British spelling (defence)
     document.getElementById('ability-dex').textContent = character.dexterity;
     document.getElementById('dex-ranged-mod').textContent = formatModifier(character.ranged_modifier || 0);
     document.getElementById('dex-defence-adj').textContent = formatModifier(character.defence_adjustment || 0);
     document.getElementById('dex-test').textContent = character.dexterity_test || '-';
     document.getElementById('dex-feat').textContent = character.extra_dexterity_feat || '-';
-    
-    // Constitution
     document.getElementById('ability-con').textContent = character.constitution;
     document.getElementById('con-hp-mod').textContent = formatModifier(character.hp_modifier || 0);
     document.getElementById('con-poison-mod').textContent = formatModifier(character.poison_rad_modifier || 0);
     document.getElementById('con-trauma').textContent = character.trauma_survival || '-';
     document.getElementById('con-test').textContent = character.constitution_test || '-';
-    
-    // Intelligence
     document.getElementById('ability-int').textContent = character.intelligence;
     document.getElementById('int-language').textContent = character.language_modifier || '-';
     document.getElementById('int-magician-bonus').textContent = character.magicians_bonus || '-';
     document.getElementById('int-magician-chance').textContent = character.magicians_chance || '-';
-    
-    // Wisdom
     document.getElementById('ability-wis').textContent = character.wisdom;
     document.getElementById('wis-willpower').textContent = formatModifier(character.willpower_modifier || 0);
     document.getElementById('wis-cleric-bonus').textContent = character.cleric_bonus || '-';
     document.getElementById('wis-cleric-chance').textContent = character.cleric_chance || '-';
-    
-    // Charisma
     document.getElementById('ability-cha').textContent = character.charisma;
     document.getElementById('cha-reaction').textContent = formatModifier(character.reaction_modifier || 0);
     document.getElementById('cha-followers').textContent = character.max_followers || '-';
     document.getElementById('cha-turning').textContent = formatModifier(character.undead_turning_modifier || 0);
 }
 
-// Display class abilities
 function displayClassAbilities(character) {
     const classAbilitiesSection = document.getElementById('class-abilities-section');
     const classAbilitiesTitle = document.getElementById('class-abilities-title');
     const classAbilitiesContainer = document.getElementById('class-abilities-container');
-    
     if (!classAbilitiesSection || !classAbilitiesTitle || !classAbilitiesContainer) {
         console.warn('Class abilities DOM elements not found');
         return;
     }
-    
     if (character.abilities && character.abilities.length > 0) {
         classAbilitiesTitle.textContent = character.class;
         classAbilitiesContainer.innerHTML = '';
-        
         // Add each ability
         character.abilities.forEach(ability => {
             const abilityCard = document.createElement('div');
@@ -359,35 +298,28 @@ function displayClassAbilities(character) {
             `;
             classAbilitiesContainer.appendChild(abilityCard);
         });
-        
         classAbilitiesSection.style.display = 'block';
     } else {
         classAbilitiesSection.style.display = 'none';
     }
 }
 
-// Format modifier for display
 function formatModifier(value) {
     return value >= 0 ? `+${value}` : value.toString();
 }
 
-// Setup HP controls
 function setupHPControls() {
     const hpControl = document.getElementById('hp-control-panel');
     const toggleButton = document.getElementById('toggle-hp-panel');
     const hpHeader = document.querySelector('.hp-header');
-    
     function toggleHPPanel() {
         hpControl.classList.toggle('collapsed');
     }
-    
     toggleButton.addEventListener('click', function (e) {
         e.stopPropagation();
         toggleHPPanel();
     });
-    
     hpHeader.addEventListener('click', toggleHPPanel);
-    
     document.getElementById('btn-damage').addEventListener('click', function (e) {
         e.stopPropagation();
         const damageAmount = parseInt(document.getElementById('hp-change').value) || 0;
@@ -395,7 +327,6 @@ function setupHPControls() {
         const newHP = Math.max(0, currentHP - damageAmount);
         updateCharacterHP(newHP);
     });
-    
     document.getElementById('btn-heal').addEventListener('click', function (e) {
         e.stopPropagation();
         const healAmount = parseInt(document.getElementById('hp-change').value) || 0;
@@ -403,7 +334,6 @@ function setupHPControls() {
         const newHP = currentHP + healAmount;
         updateCharacterHP(newHP);
     });
-    
     document.getElementById('btn-set-hp').addEventListener('click', function (e) {
         e.stopPropagation();
         const newHP = parseInt(document.getElementById('hp-set').value);
@@ -412,7 +342,6 @@ function setupHPControls() {
     });
 }
 
-// Update character HP via API
 async function updateCharacterHP(newHP) {
     try {
         const token = localStorage.getItem('authToken');
@@ -435,23 +364,18 @@ async function updateCharacterHP(newHP) {
     }
 }
 
-// Setup XP controls
 function setupXPControls() {
     const xpControl = document.getElementById('xp-control-panel');
     const toggleButton = document.getElementById('toggle-xp-panel');
     const xpHeader = document.querySelector('.xp-header');
-    
     function toggleXPPanel() {
         xpControl.classList.toggle('collapsed');
     }
-    
     toggleButton.addEventListener('click', function (e) {
         e.stopPropagation();
         toggleXPPanel();
     });
-    
     xpHeader.addEventListener('click', toggleXPPanel);
-    
     document.getElementById('btn-reward').addEventListener('click', function (e) {
         e.stopPropagation();
         const xpAmount = parseInt(document.getElementById('xp-change').value) || 0;
@@ -459,7 +383,6 @@ function setupXPControls() {
         const newXP = currentXP + xpAmount;
         updateCharacterXP(newXP);
     });
-    
     document.getElementById('btn-set-xp').addEventListener('click', function (e) {
         e.stopPropagation();
         const newXP = parseInt(document.getElementById('xp-set').value);
@@ -468,7 +391,6 @@ function setupXPControls() {
     });
 }
 
-// Update character XP via API
 async function updateCharacterXP(newXP) {
     try {
         const token = localStorage.getItem('authToken');
@@ -495,27 +417,21 @@ async function updateCharacterXP(newXP) {
     }
 }
 
-// Setup tabs functionality
 function setupTabs() {
     const tabItems = document.querySelectorAll('.tab-item');
     const tabContents = document.querySelectorAll('.tab-content');
-    
     tabItems.forEach(tab => {
         tab.addEventListener('click', () => {
             tabItems.forEach(item => item.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
-            
             tab.classList.add('active');
             const tabId = tab.getAttribute('data-tab');
             document.getElementById(tabId).classList.add('active');
-            
             if (tabId === 'spells-tab') {
-                // Fetch spells if available
                 if (typeof fetchSpells === 'function') {
                     fetchSpells();
                 }
             } else if (tabId === 'inventory-tab') {
-                // Fetch inventory if available
                 if (typeof fetchInventory === 'function') {
                     fetchInventory();
                 }
@@ -524,11 +440,9 @@ function setupTabs() {
     });
 }
 
-// Toggle spells tab visibility based on character class
 function toggleSpellsTab(characterClass) {
     const spellsTab = document.getElementById('spells-tab-nav');
     if (!spellsTab) return;
-    
     if (['Wizard', 'Magician', 'Cleric', 'Druid', 'Bard', 'Paladin'].includes(characterClass)) {
         spellsTab.style.display = 'block';
     } else {
@@ -536,8 +450,6 @@ function toggleSpellsTab(characterClass) {
     }
 }
 
-// Setup notes tab
 function setupNotesTab() {
-    // Implement if needed
     console.log("Notes tab setup");
 }

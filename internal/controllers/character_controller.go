@@ -20,6 +20,7 @@ type CharacterController struct {
 	userRepo        repositories.UserRepository
 	fighterService  *services.FighterService
 	magicianService *services.MagicianService
+	clericService   *services.ClericService
 	tmpl            *template.Template
 }
 
@@ -28,6 +29,7 @@ func NewCharacterController(
 	userRepo repositories.UserRepository,
 	fighterService *services.FighterService,
 	magicianService *services.MagicianService,
+	clericService *services.ClericService,
 	tmpl *template.Template,
 ) *CharacterController {
 	return &CharacterController{
@@ -35,6 +37,7 @@ func NewCharacterController(
 		userRepo:        userRepo,
 		fighterService:  fighterService,
 		magicianService: magicianService,
+		clericService:   clericService,
 		tmpl:            tmpl,
 	}
 }
@@ -370,11 +373,29 @@ func (c *CharacterController) UpdateCharacterHP(w http.ResponseWriter, r *http.R
 	}
 
 	var input struct {
-		HitPoints int `json:"hit_points"`
+		CurrentHitPoints   int `json:"current_hit_points"`
+		MaxHitPoints       int `json:"max_hit_points,omitempty"`       // Optional, only if changing max HP
+		TemporaryHitPoints int `json:"temporary_hit_points,omitempty"` // Optional, only if changing temp HP
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		apperrors.HandleError(w, apperrors.NewBadRequest("Invalid request body"))
+		return
+	}
+
+	// Validate the new hit points values
+	if input.CurrentHitPoints < -10 {
+		apperrors.HandleError(w, apperrors.NewBadRequest("Current hit points cannot be less than -10"))
+		return
+	}
+
+	if input.MaxHitPoints != 0 && input.MaxHitPoints < 1 {
+		apperrors.HandleError(w, apperrors.NewBadRequest("Max hit points must be positive"))
+		return
+	}
+
+	if input.TemporaryHitPoints < 0 {
+		apperrors.HandleError(w, apperrors.NewBadRequest("Temporary hit points cannot be negative"))
 		return
 	}
 
@@ -389,7 +410,7 @@ func (c *CharacterController) UpdateCharacterHP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Create update input with just the HP changed
+	// Create update input with HP fields changed
 	updateInput := models.UpdateCharacterInput{
 		Name:             existingChar.Name,
 		Class:            existingChar.Class,
@@ -401,7 +422,143 @@ func (c *CharacterController) UpdateCharacterHP(w http.ResponseWriter, r *http.R
 		Wisdom:           existingChar.Wisdom,
 		Intelligence:     existingChar.Intelligence,
 		Charisma:         existingChar.Charisma,
-		HitPoints:        input.HitPoints,
+		CurrentHitPoints: input.CurrentHitPoints,
+		// Only update max_hit_points if it was provided
+		MaxHitPoints: existingChar.MaxHitPoints,
+		// Only update temporary_hit_points if it was provided, otherwise keep existing
+		TemporaryHitPoints: existingChar.TemporaryHitPoints,
+	}
+
+	// Update max hit points if provided
+	if input.MaxHitPoints != 0 {
+		updateInput.MaxHitPoints = input.MaxHitPoints
+	}
+
+	// Update temporary hit points if provided
+	if r.FormValue("temporary_hit_points") != "" || r.ContentLength > 0 {
+		updateInput.TemporaryHitPoints = input.TemporaryHitPoints
+	}
+
+	// Update the character
+	err = c.characterRepo.UpdateCharacter(r.Context(), id, &updateInput)
+	if err != nil {
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+		return
+	}
+
+	// Get the updated character
+	character, err := c.characterRepo.GetCharacter(r.Context(), id)
+	if err != nil {
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(character)
+}
+
+func (c *CharacterController) ModifyCharacterHP(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		apperrors.HandleError(w, apperrors.NewBadRequest(fmt.Sprintf("Invalid character ID: %s", idParam)))
+		return
+	}
+
+	var input struct {
+		DamageAmount    int  `json:"damage_amount,omitempty"`
+		HealAmount      int  `json:"heal_amount,omitempty"`
+		TemporaryHP     int  `json:"temporary_hp,omitempty"`
+		IgnoreTemporary bool `json:"ignore_temporary,omitempty"`
+		MaxHPChange     int  `json:"max_hp_change,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		apperrors.HandleError(w, apperrors.NewBadRequest("Invalid request body"))
+		return
+	}
+
+	// Get existing character
+	existingChar, err := c.characterRepo.GetCharacter(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
+			apperrors.HandleError(w, apperrors.NewNotFound("character", id))
+			return
+		}
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+		return
+	}
+
+	// Create a copy to work with
+	updateInput := models.UpdateCharacterInput{
+		Name:               existingChar.Name,
+		Class:              existingChar.Class,
+		Level:              existingChar.Level,
+		ExperiencePoints:   existingChar.ExperiencePoints,
+		Strength:           existingChar.Strength,
+		Dexterity:          existingChar.Dexterity,
+		Constitution:       existingChar.Constitution,
+		Wisdom:             existingChar.Wisdom,
+		Intelligence:       existingChar.Intelligence,
+		Charisma:           existingChar.Charisma,
+		MaxHitPoints:       existingChar.MaxHitPoints,
+		CurrentHitPoints:   existingChar.CurrentHitPoints,
+		TemporaryHitPoints: existingChar.TemporaryHitPoints,
+	}
+
+	// Apply changes according to the input
+
+	// Handle damage
+	if input.DamageAmount > 0 {
+		// First check if we can absorb damage with temporary HP
+		if existingChar.TemporaryHitPoints > 0 && !input.IgnoreTemporary {
+			if existingChar.TemporaryHitPoints >= input.DamageAmount {
+				// Temp HP can absorb all the damage
+				updateInput.TemporaryHitPoints = existingChar.TemporaryHitPoints - input.DamageAmount
+			} else {
+				// Temp HP absorbs part of the damage
+				remainingDamage := input.DamageAmount - existingChar.TemporaryHitPoints
+				updateInput.TemporaryHitPoints = 0
+				updateInput.CurrentHitPoints = existingChar.CurrentHitPoints - remainingDamage
+			}
+		} else {
+			// No temp HP or ignoring it, apply damage directly to current HP
+			updateInput.CurrentHitPoints = existingChar.CurrentHitPoints - input.DamageAmount
+		}
+	}
+
+	// Handle healing
+	if input.HealAmount > 0 {
+		// Healing applies to current HP, but cannot exceed max HP
+		newHP := existingChar.CurrentHitPoints + input.HealAmount
+		if newHP > existingChar.MaxHitPoints {
+			newHP = existingChar.MaxHitPoints
+		}
+		updateInput.CurrentHitPoints = newHP
+	}
+
+	// Handle temporary HP (overwrites existing temp HP rather than stacking)
+	if input.TemporaryHP > 0 {
+		updateInput.TemporaryHitPoints = input.TemporaryHP
+	}
+
+	// Handle max HP changes
+	if input.MaxHPChange != 0 {
+		newMaxHP := existingChar.MaxHitPoints + input.MaxHPChange
+		if newMaxHP < 1 {
+			newMaxHP = 1 // Ensure max HP doesn't go below 1
+		}
+		updateInput.MaxHitPoints = newMaxHP
+
+		// If current HP is higher than new max HP, reduce it to match
+		if updateInput.CurrentHitPoints > newMaxHP {
+			updateInput.CurrentHitPoints = newMaxHP
+		}
+	}
+
+	// Ensure current HP doesn't go below -10
+	if updateInput.CurrentHitPoints < -10 {
+		updateInput.CurrentHitPoints = -10
 	}
 
 	// Update the character
@@ -474,17 +631,19 @@ func (c *CharacterController) UpdateCharacterXP(w http.ResponseWriter, r *http.R
 
 	// Create update input with updated XP and potentially level
 	updateInput := models.UpdateCharacterInput{
-		Name:             existingChar.Name,
-		Class:            existingChar.Class,
-		Level:            newLevel,
-		ExperiencePoints: input.ExperiencePoints,
-		Strength:         existingChar.Strength,
-		Dexterity:        existingChar.Dexterity,
-		Constitution:     existingChar.Constitution,
-		Wisdom:           existingChar.Wisdom,
-		Intelligence:     existingChar.Intelligence,
-		Charisma:         existingChar.Charisma,
-		HitPoints:        existingChar.HitPoints,
+		Name:               existingChar.Name,
+		Class:              existingChar.Class,
+		Level:              newLevel,
+		ExperiencePoints:   input.ExperiencePoints,
+		Strength:           existingChar.Strength,
+		Dexterity:          existingChar.Dexterity,
+		Constitution:       existingChar.Constitution,
+		Wisdom:             existingChar.Wisdom,
+		Intelligence:       existingChar.Intelligence,
+		Charisma:           existingChar.Charisma,
+		MaxHitPoints:       existingChar.MaxHitPoints,
+		CurrentHitPoints:   existingChar.CurrentHitPoints,
+		TemporaryHitPoints: existingChar.TemporaryHitPoints,
 	}
 
 	// Update the character

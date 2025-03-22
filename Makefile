@@ -91,3 +91,11 @@ repo-inventory-tab:
 repo-combat:
 	repomix --remove-comments --remove-empty-lines \
 		--ignore "**/ammo*,**/armor*,**/treasure*,**/equipment*,**/inventory*,**/spell*,**/magic*,**/potion*,**/ring*,**/container*,**/shield*,**/*test*,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/prepared_spells*,**/spellbook*,**/auth*,**/email*,**/treasure*,**/user*,**/app*,**/logger*,**/errors*,**/contextkeys*,**/migrations/**,**/queries/**,**/sqlc/**,**/api/**,**/docs/**,**/pkg/**,**/cmd/**,**/main.go"
+
+repo-hamburger-menu:
+	repomix --remove-comments --remove-empty-lines \
+		--ignore "**/*_test.go,**/integration_test/**,**/migrations/**,**/sqlc/**,**/bin/**,**/test_logs/**,**/inserts/**,**/*.sql,**/utils/**,**/logger/**,**/errors/**,**/treasure*.go,**/models/**,**/repositories/**,**/services/**,**/pkg/**,**/auth/**,**/contextkeys/**,**/app.go,**/docs/**,**/cmd/**,Makefile,sqlc.yaml,go.sum,go.mod,**/*.db,README.md"
+
+repo-character-stats:
+	repomix --remove-comments --remove-empty-lines \
+		--ignore "**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell_scroll*.go,**/container*.go,**/spell*.go,**/treasure*.go,**/inventory*.go,*test*,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/middlewar*.go,**/errors/**,**/logger/**,**/auth*.go,**/contextkeys/**"

@@ -14,25 +14,27 @@ import (
 const createCharacter = `-- name: CreateCharacter :execresult
 INSERT INTO characters (
   user_id, name, class, level, strength, dexterity, constitution,
-  wisdom, intelligence, charisma, hit_points, experience_points
+  wisdom, intelligence, charisma, max_hit_points, current_hit_points, temporary_hit_points, experience_points
 ) VALUES (
-  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 `
 
 type CreateCharacterParams struct {
-	UserID           int64
-	Name             string
-	Class            string
-	Level            int64
-	Strength         int64
-	Dexterity        int64
-	Constitution     int64
-	Wisdom           int64
-	Intelligence     int64
-	Charisma         int64
-	HitPoints        int64
-	ExperiencePoints int64
+	UserID             int64
+	Name               string
+	Class              string
+	Level              int64
+	Strength           int64
+	Dexterity          int64
+	Constitution       int64
+	Wisdom             int64
+	Intelligence       int64
+	Charisma           int64
+	MaxHitPoints       int64
+	CurrentHitPoints   int64
+	TemporaryHitPoints int64
+	ExperiencePoints   int64
 }
 
 func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams) (sql.Result, error) {
@@ -47,7 +49,9 @@ func (q *Queries) CreateCharacter(ctx context.Context, arg CreateCharacterParams
 		arg.Wisdom,
 		arg.Intelligence,
 		arg.Charisma,
-		arg.HitPoints,
+		arg.MaxHitPoints,
+		arg.CurrentHitPoints,
+		arg.TemporaryHitPoints,
 		arg.ExperiencePoints,
 	)
 }
@@ -63,28 +67,30 @@ func (q *Queries) DeleteCharacter(ctx context.Context, id int64) (sql.Result, er
 
 const getCharacter = `-- name: GetCharacter :one
 SELECT id, user_id, name, class, level, strength, dexterity, constitution,
-       wisdom, intelligence, charisma, hit_points, experience_points,
+       wisdom, intelligence, charisma, max_hit_points, current_hit_points, temporary_hit_points, experience_points,
        created_at, updated_at
 FROM characters
 WHERE id = ? LIMIT 1
 `
 
 type GetCharacterRow struct {
-	ID               int64
-	UserID           int64
-	Name             string
-	Class            string
-	Level            int64
-	Strength         int64
-	Dexterity        int64
-	Constitution     int64
-	Wisdom           int64
-	Intelligence     int64
-	Charisma         int64
-	HitPoints        int64
-	ExperiencePoints int64
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	ID                 int64
+	UserID             int64
+	Name               string
+	Class              string
+	Level              int64
+	Strength           int64
+	Dexterity          int64
+	Constitution       int64
+	Wisdom             int64
+	Intelligence       int64
+	Charisma           int64
+	MaxHitPoints       int64
+	CurrentHitPoints   int64
+	TemporaryHitPoints int64
+	ExperiencePoints   int64
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 func (q *Queries) GetCharacter(ctx context.Context, id int64) (GetCharacterRow, error) {
@@ -102,7 +108,9 @@ func (q *Queries) GetCharacter(ctx context.Context, id int64) (GetCharacterRow, 
 		&i.Wisdom,
 		&i.Intelligence,
 		&i.Charisma,
-		&i.HitPoints,
+		&i.MaxHitPoints,
+		&i.CurrentHitPoints,
+		&i.TemporaryHitPoints,
 		&i.ExperiencePoints,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -112,7 +120,7 @@ func (q *Queries) GetCharacter(ctx context.Context, id int64) (GetCharacterRow, 
 
 const getCharactersByUser = `-- name: GetCharactersByUser :many
 SELECT id, user_id, name, class, level, strength, dexterity, constitution,
-       wisdom, intelligence, charisma, hit_points, experience_points,
+       wisdom, intelligence, charisma, max_hit_points, current_hit_points, temporary_hit_points, experience_points,
        created_at, updated_at
 FROM characters
 WHERE user_id = ?
@@ -120,21 +128,23 @@ ORDER BY name
 `
 
 type GetCharactersByUserRow struct {
-	ID               int64
-	UserID           int64
-	Name             string
-	Class            string
-	Level            int64
-	Strength         int64
-	Dexterity        int64
-	Constitution     int64
-	Wisdom           int64
-	Intelligence     int64
-	Charisma         int64
-	HitPoints        int64
-	ExperiencePoints int64
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	ID                 int64
+	UserID             int64
+	Name               string
+	Class              string
+	Level              int64
+	Strength           int64
+	Dexterity          int64
+	Constitution       int64
+	Wisdom             int64
+	Intelligence       int64
+	Charisma           int64
+	MaxHitPoints       int64
+	CurrentHitPoints   int64
+	TemporaryHitPoints int64
+	ExperiencePoints   int64
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 func (q *Queries) GetCharactersByUser(ctx context.Context, userID int64) ([]GetCharactersByUserRow, error) {
@@ -158,7 +168,9 @@ func (q *Queries) GetCharactersByUser(ctx context.Context, userID int64) ([]GetC
 			&i.Wisdom,
 			&i.Intelligence,
 			&i.Charisma,
-			&i.HitPoints,
+			&i.MaxHitPoints,
+			&i.CurrentHitPoints,
+			&i.TemporaryHitPoints,
 			&i.ExperiencePoints,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -178,28 +190,30 @@ func (q *Queries) GetCharactersByUser(ctx context.Context, userID int64) ([]GetC
 
 const listCharacters = `-- name: ListCharacters :many
 SELECT id, user_id, name, class, level, strength, dexterity, constitution,
-       wisdom, intelligence, charisma, hit_points, experience_points,
+       wisdom, intelligence, charisma, max_hit_points, current_hit_points, temporary_hit_points, experience_points,
        created_at, updated_at
 FROM characters
 ORDER BY name
 `
 
 type ListCharactersRow struct {
-	ID               int64
-	UserID           int64
-	Name             string
-	Class            string
-	Level            int64
-	Strength         int64
-	Dexterity        int64
-	Constitution     int64
-	Wisdom           int64
-	Intelligence     int64
-	Charisma         int64
-	HitPoints        int64
-	ExperiencePoints int64
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	ID                 int64
+	UserID             int64
+	Name               string
+	Class              string
+	Level              int64
+	Strength           int64
+	Dexterity          int64
+	Constitution       int64
+	Wisdom             int64
+	Intelligence       int64
+	Charisma           int64
+	MaxHitPoints       int64
+	CurrentHitPoints   int64
+	TemporaryHitPoints int64
+	ExperiencePoints   int64
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 func (q *Queries) ListCharacters(ctx context.Context) ([]ListCharactersRow, error) {
@@ -223,7 +237,9 @@ func (q *Queries) ListCharacters(ctx context.Context) ([]ListCharactersRow, erro
 			&i.Wisdom,
 			&i.Intelligence,
 			&i.Charisma,
-			&i.HitPoints,
+			&i.MaxHitPoints,
+			&i.CurrentHitPoints,
+			&i.TemporaryHitPoints,
 			&i.ExperiencePoints,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -252,25 +268,29 @@ SET name = ?,
     wisdom = ?,
     intelligence = ?,
     charisma = ?,
-    hit_points = ?,
+    max_hit_points = ?,
+    current_hit_points = ?,
+    temporary_hit_points = ?,
     experience_points = ?,
     updated_at = datetime('now')
 WHERE id = ?
 `
 
 type UpdateCharacterParams struct {
-	Name             string
-	Class            string
-	Level            int64
-	Strength         int64
-	Dexterity        int64
-	Constitution     int64
-	Wisdom           int64
-	Intelligence     int64
-	Charisma         int64
-	HitPoints        int64
-	ExperiencePoints int64
-	ID               int64
+	Name               string
+	Class              string
+	Level              int64
+	Strength           int64
+	Dexterity          int64
+	Constitution       int64
+	Wisdom             int64
+	Intelligence       int64
+	Charisma           int64
+	MaxHitPoints       int64
+	CurrentHitPoints   int64
+	TemporaryHitPoints int64
+	ExperiencePoints   int64
+	ID                 int64
 }
 
 func (q *Queries) UpdateCharacter(ctx context.Context, arg UpdateCharacterParams) (sql.Result, error) {
@@ -284,7 +304,9 @@ func (q *Queries) UpdateCharacter(ctx context.Context, arg UpdateCharacterParams
 		arg.Wisdom,
 		arg.Intelligence,
 		arg.Charisma,
-		arg.HitPoints,
+		arg.MaxHitPoints,
+		arg.CurrentHitPoints,
+		arg.TemporaryHitPoints,
 		arg.ExperiencePoints,
 		arg.ID,
 	)
