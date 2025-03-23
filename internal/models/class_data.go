@@ -21,6 +21,7 @@ type ClassAbility struct {
 	MinLevel    int    `json:"min_level"`
 }
 
+
 type SpellSlots struct {
 	Level1 int `json:"level1"`
 	Level2 int `json:"level2"`

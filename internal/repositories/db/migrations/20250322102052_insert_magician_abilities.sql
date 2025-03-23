@@ -1,73 +1,63 @@
 -- +goose Up
--- Insert Magician abilities
-INSERT INTO abilities (name, description) VALUES
-('Alchemy', 'To practice the sorcery-science of alchemy. Apprentice magicians learn how to identify potions by taste alone; albeit the practice is not always safe. At 7th level, a magician may concoct potions with the assistance of an alchemist. By 11th level, the assistance of an alchemist is no longer required. For more information, refer to Chapter 7: Sorcery, alchemy.'),
-
-('Familiar', 'To summon a small animal (bat, cat, owl, rat, raven, snake, etc.) of 1d3+1 hp to function as a familiar (singular creature with uncanny connexion to the sorcerer). Retaining a familiar provides the following benefits:
-- Within range 120 (feet indoors, yards outdoors), the magician can see and hear through the animal; sight is narrowly focused, sounds reverberate metallically.
-- The hit point total of the familiar is added to the magician''s total.
-- The magician can memorize one extra spell of each available spell level per day (e.g., a 5th-level magician gains bonus level 1, 2, and 3 spells).
-These benefits are lost if the familiar is rendered dead, unconscious, or out of range. The familiar is an extraordinary example of the species, has a perfect morale score (ML 12), and always attends and abides the will of its master. To summon a familiar, the magician must perform a series of rites and rituals for 24 hours. To determine result, roll 2d8 on the Familiars table.
-
-If the familiar dies, the magician also sustains 3d6 hp damage. The magician cannot summon another familiar for 1d4+2 months.'),
-
-('Read Magic', 'To decipher magical writings that otherwise are incomprehensible.'),
-
-('Scroll Use', 'To decipher and invoke scrolls with spells from the Magician Spell List (see Chapter 7: Sorcery, Table 93), unless the scroll was created by an ecclesiastical sorcerer (one who casts cleric or druid spells).'),
-
-('Scroll Writing', 'To scribe a known spell onto a scroll, creating a single-use magical device at a cost of 500 gp + 100 gp per spell level. Materials may include the finest vellum, paper, or papyrus; a fresh quill; and sorcerer''s ink, such as sepia. This involved process requires one week per spell level.'),
-
-('Sorcery', 'Magicians cast spells that they memorize from arcane tomes. The number and levels of spells cast per day are charted in Table 9, though magicians of high intelligence gain bonus spells cast per day (see Chapter 3: Statistics, intelligence); also, magicians who retain a familiar gain bonus spells cast per day. For example, a 4th-level magician with 13 intelligence can cast four level 1 spells and two level 2 spells per day. If the same magician also keeps a familiar, spells cast per day improve to five level 1 spells and three level 2 spells. A magician begins with a spell book that contains three level 1 spells drawn from the Magician Spell List (see Chapter 7: Sorcery, Table 93). Through personal research, magicians develop one new spell at each level gain; this spell is learnt automatically, with no need of a qualification roll, but it must be of a castable level (see Table 9). Additional spells may be learnt outside of level training, but the process is more arduous (see Chapter 7: Sorcery, acquiring new spells).'),
-
-('New Weapon Skill', 'At 4th, 8th, and 12th levels, become skilled in a new weapon that is not included in the favoured weapons list. This new proficiency is dependent upon training and practice (see Chapter 9: Combat, weapon skill).'),
-
-('Enlist Henchmen', 'At 6th level, a magician may seek or be sought out by one or more henchmen, classed individuals (typically of similar class, race, and/or culture) who become loyal followers. For more information, see Chapter 8: Adventure, hirelings and henchmen.'),
-
-('Lordship', 'At 9th level, a magician who builds or assumes control of a stronghold becomes a lord and is eligible to attract troops. More information is presented in Appendix B.');
-
--- Create the Familiar Results table
-CREATE TABLE IF NOT EXISTS familiar_results (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    roll INTEGER NOT NULL,
-    animal_type TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- Create a temporary table to track abilities we need to insert
+CREATE TEMPORARY TABLE IF NOT EXISTS temp_abilities_to_insert (
+    name TEXT,
+    description TEXT
 );
 
--- Insert Familiar Results
-INSERT INTO familiar_results (roll, animal_type) VALUES
-(2, 'Archæopteryx'),
-(3, 'Ice Toad'),
-(4, 'Falcon/Hawk'),
-(5, 'Squirrel'),
-(6, 'Hare'),
-(7, 'Gull'),
-(8, 'Owl'),
-(9, 'Cat'),
-(10, 'Rat'),
-(11, 'Bat'),
-(12, 'Raven'),
-(13, 'Weasel'),
-(14, 'Fox'),
-(15, 'Viper'),
-(16, 'Pegomastax');
+-- Insert abilities into the temporary table
+INSERT INTO temp_abilities_to_insert (name, description) VALUES
+('Sorcery', 'Insight into arcane matters. Secrets of runes, glyphs, sigils, and other symbolic magic are especially interesting to magicians. Magicians have a 4-in-6 chance to understand an unknown nonverbal magical inscription. Furthermore, they can discern the general purpose of unidentified potions and scrolls with a 4-in-6 chance.'),
+('Spell Preparation', 'Prepare magical formulae in accord with the strictures of the class, as described in Chapter 7: Sorcery. Note that a magician''s intelligence statistic score affects extra spell capacity.'),
+('Scroll Use', 'To decipher and invoke scrolls with spells from the Magician Spell List, unless the scroll was created by a thaumaturgical sorcerer (one who casts cleric or cleric subclass spells).'),
+('Spell Book', 'To scribe a tome of magical formulae, allowing the magician to memorize spells for eventual casting, based on the contents of his spellbook. In the case of nonpreparation, the referee may allow a 15% random chance per spell level for the magician to prepare a commonly used spell without recourse to his spellbook. For more information, see Chapter 7: Sorcery.'),
+('Scroll Writing', 'To scribe a known spell onto a scroll, creating a single-use magical device at a cost of 250 gp + 100 gp per spell level. This requires a set of costly pens and inks (e.g., sepia, distilled from ink-devil secretions), typically contained within a portable wooden case. This elaborate process requires one week per spell level, and it is time consuming in nature, requiring delicate, precise penmanhip and notation.'),
+('New Weapon Skill', 'At 4th, 8th, and 12th levels, become skilled in a new weapon that is not included in the favoured weapons list. This new proficiency is dependent upon training and practice.');
 
--- Link Magician abilities at appropriate levels
+-- Insert Magician abilities that don't already exist in the database
+INSERT INTO abilities (name, description)
+SELECT t.name, t.description
+FROM temp_abilities_to_insert t
+WHERE NOT EXISTS (SELECT 1 FROM abilities WHERE name = t.name);
+
+-- Drop the temporary table
+DROP TABLE temp_abilities_to_insert;
+
+-- Link Magician abilities at appropriate levels (1st level abilities)
 INSERT INTO class_ability_mapping (class_name, ability_id, min_level)
 SELECT 'Magician', id, 1 FROM abilities 
-WHERE name IN ('Alchemy', 'Familiar', 'Read Magic', 'Scroll Use', 'Scroll Writing', 'Sorcery');
+WHERE name IN ('Sorcery', 'Spell Preparation', 'Scroll Use', 'Spell Book', 'Scroll Writing')
+AND NOT EXISTS (
+    SELECT 1 FROM class_ability_mapping
+    WHERE class_name = 'Magician' AND ability_id = abilities.id AND min_level = 1
+);
 
+-- Link New Weapon Skill at level 4
 INSERT INTO class_ability_mapping (class_name, ability_id, min_level)
 SELECT 'Magician', id, 4 FROM abilities 
-WHERE name = 'New Weapon Skill';
+WHERE name = 'New Weapon Skill'
+AND NOT EXISTS (
+    SELECT 1 FROM class_ability_mapping
+    WHERE class_name = 'Magician' AND ability_id = abilities.id AND min_level = 4
+);
 
+-- Link Enlist Henchmen at level 6 (reuse existing ability)
 INSERT INTO class_ability_mapping (class_name, ability_id, min_level)
 SELECT 'Magician', id, 6 FROM abilities 
-WHERE name = 'Enlist Henchmen';
+WHERE name = 'Enlist Henchmen'
+AND NOT EXISTS (
+    SELECT 1 FROM class_ability_mapping
+    WHERE class_name = 'Magician' AND ability_id = abilities.id AND min_level = 6
+);
 
+-- Link Lordship at level 9 (reuse existing ability)
 INSERT INTO class_ability_mapping (class_name, ability_id, min_level)
 SELECT 'Magician', id, 9 FROM abilities 
-WHERE name = 'Lordship';
+WHERE name = 'Lordship'
+AND NOT EXISTS (
+    SELECT 1 FROM class_ability_mapping
+    WHERE class_name = 'Magician' AND ability_id = abilities.id AND min_level = 9
+);
 
 -- +goose Down
 -- Remove Magician ability mappings
@@ -75,13 +65,10 @@ DELETE FROM class_ability_mapping
 WHERE class_name = 'Magician' 
 AND ability_id IN (
     SELECT id FROM abilities 
-    WHERE name IN ('Alchemy', 'Familiar', 'Read Magic', 'Scroll Use')
+    WHERE name IN ('Sorcery', 'Spell Preparation', 'Scroll Use', 'Spell Book', 'Scroll Writing', 'New Weapon Skill', 'Enlist Henchmen', 'Lordship')
 );
 
--- Clean up abilities that aren't used by other classes
+-- Clean up any abilities that aren't used by other classes
 DELETE FROM abilities 
-WHERE name IN ('Alchemy', 'Familiar', 'Read Magic', 'Read Scrolls')
+WHERE name IN ('Sorcery', 'Spell Preparation', 'Spell Book')
 AND id NOT IN (SELECT ability_id FROM class_ability_mapping);
-
--- Drop the familiar_results table
-DROP TABLE IF EXISTS familiar_results;

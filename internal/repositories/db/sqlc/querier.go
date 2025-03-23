@@ -11,10 +11,13 @@ import (
 
 type Querier interface {
 	AddInventoryItem(ctx context.Context, arg AddInventoryItemParams) (sql.Result, error)
+	AddKnownSpell(ctx context.Context, arg AddKnownSpellParams) (sql.Result, error)
 	AddSpellToSpellbook(ctx context.Context, arg AddSpellToSpellbookParams) error
 	AddThiefSkill(ctx context.Context, arg AddThiefSkillParams) (sql.Result, error)
 	AddThiefSkillProgression(ctx context.Context, arg AddThiefSkillProgressionParams) error
 	AssignSkillToClass(ctx context.Context, arg AssignSkillToClassParams) error
+	ClearPreparedSpells(ctx context.Context, characterID int64) error
+	CountPreparedSpellsByLevelAndClass(ctx context.Context, arg CountPreparedSpellsByLevelAndClassParams) (int64, error)
 	CreateAmmo(ctx context.Context, arg CreateAmmoParams) (sql.Result, error)
 	CreateArmor(ctx context.Context, arg CreateArmorParams) (sql.Result, error)
 	CreateCharacter(ctx context.Context, arg CreateCharacterParams) (sql.Result, error)
@@ -57,10 +60,12 @@ type Querier interface {
 	GetBardIllusionistSpells(ctx context.Context, level int64) (BardIllusionistSpell, error)
 	GetBerserkerNaturalAC(ctx context.Context, arg GetBerserkerNaturalACParams) (int64, error)
 	GetCharacter(ctx context.Context, id int64) (GetCharacterRow, error)
+	GetCharacterForSpellcasting(ctx context.Context, id int64) (Character, error)
 	GetCharactersByUser(ctx context.Context, userID int64) ([]GetCharactersByUserRow, error)
 	GetClassAbilities(ctx context.Context, className string) ([]GetClassAbilitiesRow, error)
 	GetClassAbilitiesByLevel(ctx context.Context, arg GetClassAbilitiesByLevelParams) ([]GetClassAbilitiesByLevelRow, error)
 	GetClassData(ctx context.Context, arg GetClassDataParams) (ClassDatum, error)
+	GetClassDataForSpellcasting(ctx context.Context, arg GetClassDataForSpellcastingParams) (ClassDatum, error)
 	GetClericTurningAbility(ctx context.Context, level int64) (int64, error)
 	GetContainer(ctx context.Context, id int64) (Container, error)
 	GetContainerByName(ctx context.Context, name string) (Container, error)
@@ -73,15 +78,22 @@ type Querier interface {
 	GetInventoryItemByTypeAndItemID(ctx context.Context, arg GetInventoryItemByTypeAndItemIDParams) (InventoryItem, error)
 	GetInventoryItems(ctx context.Context, inventoryID int64) ([]InventoryItem, error)
 	GetInventoryItemsByType(ctx context.Context, arg GetInventoryItemsByTypeParams) ([]InventoryItem, error)
+	GetKnownSpellByCharacterAndSpell(ctx context.Context, arg GetKnownSpellByCharacterAndSpellParams) (KnownSpell, error)
+	GetKnownSpells(ctx context.Context, characterID int64) ([]KnownSpell, error)
+	GetKnownSpellsByClass(ctx context.Context, arg GetKnownSpellsByClassParams) ([]KnownSpell, error)
 	GetMagicItem(ctx context.Context, id int64) (MagicItem, error)
 	GetMagicItemByName(ctx context.Context, name string) (MagicItem, error)
 	GetMonkACBonus(ctx context.Context, level int64) (int64, error)
 	GetMonkEmptyHandDamage(ctx context.Context, level int64) (string, error)
 	GetNecromancerTurningAbility(ctx context.Context, level int64) (int64, error)
+	GetNextAvailableSlotIndex(ctx context.Context, arg GetNextAvailableSlotIndexParams) (int64, error)
 	GetNextLevelData(ctx context.Context, arg GetNextLevelDataParams) (ClassDatum, error)
 	GetPaladinTurningAbility(ctx context.Context, level int64) (int64, error)
 	GetPotion(ctx context.Context, id int64) (Potion, error)
 	GetPotionByName(ctx context.Context, name string) (Potion, error)
+	GetPreparedSpellByCharacterAndSpell(ctx context.Context, arg GetPreparedSpellByCharacterAndSpellParams) (PreparedSpell, error)
+	GetPreparedSpells(ctx context.Context, characterID int64) ([]PreparedSpell, error)
+	GetPreparedSpellsByClass(ctx context.Context, arg GetPreparedSpellsByClassParams) ([]PreparedSpell, error)
 	GetRangerDruidSpellSlots(ctx context.Context, classLevel int64) ([]GetRangerDruidSpellSlotsRow, error)
 	GetRangerMagicianSpellSlots(ctx context.Context, classLevel int64) ([]GetRangerMagicianSpellSlotsRow, error)
 	GetRing(ctx context.Context, id int64) (Ring, error)
@@ -92,13 +104,17 @@ type Querier interface {
 	GetShield(ctx context.Context, id int64) (Shield, error)
 	GetShieldByName(ctx context.Context, name string) (Shield, error)
 	GetSpell(ctx context.Context, id int64) (Spell, error)
+	GetSpellForSpellcasting(ctx context.Context, id int64) (Spell, error)
 	GetSpellFromSpellbook(ctx context.Context, arg GetSpellFromSpellbookParams) (SpellbookSpell, error)
 	GetSpellScroll(ctx context.Context, id int64) (GetSpellScrollRow, error)
 	GetSpellScrollsBySpell(ctx context.Context, spellID int64) ([]GetSpellScrollsBySpellRow, error)
 	GetSpellbook(ctx context.Context, id int64) (Spellbook, error)
 	GetSpellbookByName(ctx context.Context, name string) (Spellbook, error)
+	GetSpellsByClassLevel(ctx context.Context, arg GetSpellsByClassLevelParams) ([]Spell, error)
 	GetSpellsInSpellbook(ctx context.Context, spellbookID int64) ([]int64, error)
 	GetThiefSkillByName(ctx context.Context, skillName string) (ThiefSkill, error)
+	GetThiefSkillChance(ctx context.Context, arg GetThiefSkillChanceParams) (string, error)
+	GetThiefSkillsByClassName(ctx context.Context, className string) ([]ThiefSkill, error)
 	GetThiefSkillsForCharacter(ctx context.Context, className string) ([]GetThiefSkillsForCharacterRow, error)
 	GetThiefSkillsForClass(ctx context.Context, className string) ([]ThiefSkill, error)
 	GetTreasure(ctx context.Context, id int64) (Treasure, error)
@@ -123,11 +139,17 @@ type Querier interface {
 	ListTreasures(ctx context.Context) ([]Treasure, error)
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
 	ListWeapons(ctx context.Context) ([]Weapon, error)
+	MarkSpellAsMemorized(ctx context.Context, arg MarkSpellAsMemorizedParams) error
+	MarkSpellAsMemorizedBySpellID(ctx context.Context, arg MarkSpellAsMemorizedBySpellIDParams) error
+	PrepareSpell(ctx context.Context, arg PrepareSpellParams) (sql.Result, error)
 	RecalculateInventoryWeight(ctx context.Context, id int64) error
 	RemoveAllInventoryItems(ctx context.Context, inventoryID int64) error
 	RemoveInventoryItem(ctx context.Context, id int64) error
+	RemoveKnownSpell(ctx context.Context, id int64) error
 	RemoveSkillFromClass(ctx context.Context, arg RemoveSkillFromClassParams) error
 	RemoveSpellFromSpellbook(ctx context.Context, arg RemoveSpellFromSpellbookParams) error
+	ResetAllMemorizedSpells(ctx context.Context, characterID int64) error
+	UnprepareSpell(ctx context.Context, id int64) error
 	UpdateAmmo(ctx context.Context, arg UpdateAmmoParams) (sql.Result, error)
 	UpdateArmor(ctx context.Context, arg UpdateArmorParams) (sql.Result, error)
 	UpdateCharacter(ctx context.Context, arg UpdateCharacterParams) (sql.Result, error)

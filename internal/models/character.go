@@ -19,7 +19,8 @@ type Character struct {
 	Intelligence     int    `json:"intelligence"`
 	Charisma         int    `json:"charisma"`
 
-	SurpriseChance int `json:"surprise_chance,omitempty"`
+	SurpriseChance  int `json:"surprise_chance,omitempty"`
+	FindSecretDoors int `json:"find_secret_doors,omitempty"`
 
 	MaxHitPoints       int `json:"max_hit_points"`
 	CurrentHitPoints   int `json:"current_hit_points"`
@@ -42,8 +43,11 @@ type Character struct {
 	AvoidanceSaveBonus      int `json:"avoidance_save_bonus,omitempty"`
 
 	// Class Abilities
-	Abilities   interface{}       `json:"abilities,omitempty"`
-	ThiefSkills map[string]string `json:"thief_skills,omitempty"`
+	Abilities           interface{}       `json:"abilities,omitempty"`
+	ThiefSkills         map[string]string `json:"thief_skills,omitempty"`
+	BackStabMultiplier  int               `json:"back_stab_multiplier,omitempty"`
+	NaturalAC           int               `json:"natural_ac,omitempty"`
+	ThickSkinArmorBonus int               `json:"thick_skin_armor_bonus,omitempty"`
 
 	//Non Derived Stats
 	MovementRate int `json:"movement_rate,omitempty"`
@@ -235,6 +239,7 @@ func (c *Character) CalculateDerivedStats() {
 
 	c.SurpriseChance = 2
 	c.MovementRate = 40
+	c.FindSecretDoors = 2
 
 }
 

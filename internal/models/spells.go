@@ -44,6 +44,66 @@ type CreateSpellInput struct {
 	Description  string `json:"description"`
 }
 
+// KnownSpell represents a spell known by a character
+type KnownSpell struct {
+	ID          int64     `json:"id"`
+	CharacterID int64     `json:"character_id"`
+	SpellID     int64     `json:"spell_id"`
+	SpellName   string    `json:"spell_name"`
+	SpellLevel  int       `json:"spell_level"`
+	SpellClass  string    `json:"spell_class"` // Cleric, Magician, etc.
+	IsMemorized bool      `json:"is_memorized"`
+	Notes       string    `json:"notes,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// PreparedSpell represents a spell that a character has prepared
+type PreparedSpell struct {
+	ID          int64     `json:"id"`
+	CharacterID int64     `json:"character_id"`
+	SpellID     int64     `json:"spell_id"`
+	SpellName   string    `json:"spell_name"`
+	SpellLevel  int       `json:"spell_level"`
+	SpellClass  string    `json:"spell_class"`
+	SlotIndex   int       `json:"slot_index"` // Which slot is this spell prepared in
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// CharacterSpellsInfo contains all spell-related information for a character
+type CharacterSpellsInfo struct {
+	KnownSpells            []KnownSpell                `json:"known_spells"`
+	PreparedSpells         []PreparedSpell             `json:"prepared_spells"`
+	SpellSlots             map[string]int              `json:"spell_slots"`
+	MaxKnownSpells         map[string]int              `json:"max_known_spells"`
+	AvailablePreparedSlots map[string]int              `json:"available_prepared_slots"`
+	BonusSpells            map[string]map[string]int   `json:"bonus_spells"` // Class -> Level -> Count
+	ClassSpellLimits       map[string]map[string][]int `json:"class_spell_limits"`
+}
+
+// AddKnownSpellInput represents the data needed to add a known spell
+type AddKnownSpellInput struct {
+	CharacterID int64  `json:"character_id"`
+	SpellID     int64  `json:"spell_id"`
+	SpellClass  string `json:"spell_class"`
+	Notes       string `json:"notes,omitempty"`
+}
+
+// PrepareSpellInput represents the data needed to prepare a spell
+type PrepareSpellInput struct {
+	CharacterID int64  `json:"character_id"`
+	SpellID     int64  `json:"spell_id"`
+	SpellLevel  int    `json:"spell_level"`
+	SpellClass  string `json:"spell_class"`
+}
+
+// UnprepareSpellInput represents the data needed to unprepare a spell
+type UnprepareSpellInput struct {
+	CharacterID int64 `json:"character_id"`
+	SpellID     int64 `json:"spell_id"`
+}
+
 // Validate checks if the input is valid
 func (i *CreateSpellInput) Validate() error {
 	if i.Name == "" {
@@ -109,6 +169,45 @@ func (i *UpdateSpellInput) Validate() error {
 		return NewValidationError("level", "At least one class level must be specified")
 	}
 
+	return nil
+}
+
+func (i *AddKnownSpellInput) Validate() error {
+	if i.CharacterID <= 0 {
+		return NewValidationError("character_id", "Character ID must be positive")
+	}
+	if i.SpellID <= 0 {
+		return NewValidationError("spell_id", "Spell ID must be positive")
+	}
+	if i.SpellClass == "" {
+		return NewValidationError("spell_class", "Spell class cannot be empty")
+	}
+	return nil
+}
+
+func (i *PrepareSpellInput) Validate() error {
+	if i.CharacterID <= 0 {
+		return NewValidationError("character_id", "Character ID must be positive")
+	}
+	if i.SpellID <= 0 {
+		return NewValidationError("spell_id", "Spell ID must be positive")
+	}
+	if i.SpellLevel <= 0 {
+		return NewValidationError("spell_level", "Spell level must be positive")
+	}
+	if i.SpellClass == "" {
+		return NewValidationError("spell_class", "Spell class cannot be empty")
+	}
+	return nil
+}
+
+func (i *UnprepareSpellInput) Validate() error {
+	if i.CharacterID <= 0 {
+		return NewValidationError("character_id", "Character ID must be positive")
+	}
+	if i.SpellID <= 0 {
+		return NewValidationError("spell_id", "Spell ID must be positive")
+	}
 	return nil
 }
 

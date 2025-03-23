@@ -5,26 +5,36 @@ import (
 	"fmt"
 	"mordezzanV4/internal/models"
 	"mordezzanV4/internal/repositories"
+	"strconv"
+	"strings"
 )
 
-// ClassService handles business logic for character classes
 type ClassService struct {
 	classRepo          repositories.ClassRepository
 	inventoryRepo      repositories.InventoryRepository
+	armorRepo          repositories.ArmorRepository
 	encumbranceService *EncumbranceService
 }
 
-// NewClassService creates a new class service
 func NewClassService(
 	classRepo repositories.ClassRepository,
 	inventoryRepo repositories.InventoryRepository,
-	encumbranceService *EncumbranceService,
+	armorRepo repositories.ArmorRepository,
 ) *ClassService {
 	return &ClassService{
-		classRepo:          classRepo,
-		inventoryRepo:      inventoryRepo,
-		encumbranceService: encumbranceService,
+		classRepo:     classRepo,
+		inventoryRepo: inventoryRepo,
+		armorRepo:     armorRepo,
 	}
+}
+
+func (s *ClassService) GetAllClassLevelData(ctx context.Context, className string) ([]*models.ClassData, error) {
+	// Simply call through to the repository method
+	return s.classRepo.GetAllClassData(ctx, className)
+}
+
+func (s *ClassService) SetEncumbranceService(encumbranceService *EncumbranceService) {
+	s.encumbranceService = encumbranceService
 }
 
 func (s *ClassService) applyAgileBonus(ctx context.Context, character *models.Character) error {
@@ -373,33 +383,98 @@ func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, charact
 	return nil
 }
 
-// GetExperienceForNextLevel returns the experience needed for the next level
-func (s *ClassService) GetExperienceForNextLevel(ctx context.Context, className string, currentLevel int) (int, error) {
-	// Get the next level's data
-	nextLevel, err := s.classRepo.GetNextLevelData(ctx, className, currentLevel)
+// GetExperienceForNextLevel returns the XP needed for the next level
+func (s *ClassService) GetExperienceForNextLevel(ctx context.Context, class string, currentLevel int) (int, error) {
+	// Get all class level data
+	levelData, err := s.classRepo.GetAllClassData(ctx, class)
 	if err != nil {
 		return 0, err
 	}
 
-	return nextLevel.ExperiencePoints, nil
+	// Find the XP for the next level
+	for _, data := range levelData {
+		if data.Level == currentLevel+1 {
+			return data.ExperiencePoints, nil
+		}
+	}
+
+	// If no next level found (max level), return -1
+	return -1, nil
 }
 
-// GetAllClassLevelData returns all level data for a specific class
-func (s *ClassService) GetAllClassLevelData(ctx context.Context, className string) ([]*models.ClassData, error) {
-	return s.classRepo.GetAllClassData(ctx, className)
+func (s *ClassService) GetClassAbilitiesByLevel(ctx context.Context, class string, level int) ([]*models.ClassAbility, error) {
+	return s.classRepo.GetClassAbilitiesByLevel(ctx, class, level)
 }
 
-// GetClassDataByLevel returns class data for a specific class and level
-func (s *ClassService) GetClassDataByLevel(ctx context.Context, className string, level int) (*models.ClassData, error) {
-	return s.classRepo.GetClassData(ctx, className, level)
+// CalculateMaxSpellsPerLevel determines how many spells a character can know per level
+func (s *ClassService) CalculateMaxSpellsPerLevel(ctx context.Context, characterID int64) (map[int]int, error) {
+	// Get character
+	character, err := s.classRepo.GetCharacterClassInfo(ctx, characterID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get casting stat modifier based on class
+	var modifier int
+	switch character.Class {
+	case "Magician", "Illusionist", "Necromancer", "Pyromancer", "Cryo-mancer":
+		// Intelligence-based casters
+		modifier = character.RangedModifier // Use the pre-calculated modifier
+	case "Cleric", "Druid", "Witch":
+		// Wisdom-based casters
+		modifier = character.WillpowerModifier // Use the pre-calculated modifier
+	default:
+		// Non-casting class
+		return make(map[int]int), nil
+	}
+
+	// Get level data to determine base number of spells
+	levelData, err := s.classRepo.GetClassData(ctx, character.Class, character.Level)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate max spell level based on available spell slots
+	maxSpellLevel := 0
+	for level, count := range levelData.SpellSlots {
+		if count > 0 {
+			// Extract level number from key "level1", "level2", etc.
+			levelNum, err := strconv.Atoi(level[5:])
+			if err == nil && levelNum > maxSpellLevel {
+				maxSpellLevel = levelNum
+			}
+		}
+	}
+
+	// Calculate max spells per level
+	result := make(map[int]int)
+	for level := 1; level <= maxSpellLevel; level++ {
+		// Base formula: level + modifier with a minimum of 1 per level
+		maxSpells := level + modifier
+		if maxSpells < 1 {
+			maxSpells = 1
+		}
+		result[level] = maxSpells
+	}
+
+	return result, nil
 }
 
-// GetClassAbilitiesByLevel returns abilities for a class at a specific level
-func (s *ClassService) GetClassAbilitiesByLevel(ctx context.Context, className string, level int) ([]*models.ClassAbility, error) {
-	return s.classRepo.GetClassAbilitiesByLevel(ctx, className, level)
-}
+// ParseSpellSlots converts the spell slots string to a map
+func (s *ClassService) ParseSpellSlots(slotsStr string) (map[string]int, error) {
+	result := make(map[string]int)
+	if slotsStr == "" {
+		return result, nil
+	}
 
-// GetAllClassAbilities returns all abilities for a class
-func (s *ClassService) GetAllClassAbilities(ctx context.Context, className string) ([]*models.ClassAbility, error) {
-	return s.classRepo.GetClassAbilities(ctx, className)
+	slots := strings.Split(slotsStr, ",")
+	for i, slot := range slots {
+		count, err := strconv.Atoi(strings.TrimSpace(slot))
+		if err != nil {
+			return nil, fmt.Errorf("invalid spell slot count: %s", slot)
+		}
+		result[fmt.Sprintf("level_%d", i+1)] = count
+	}
+
+	return result, nil
 }

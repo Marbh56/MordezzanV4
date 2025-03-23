@@ -96,13 +96,13 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *AuthController) RenderLoginPage(w http.ResponseWriter, r *http.Request) {
-	if err := c.tmpl.ExecuteTemplate(w, "login.html", nil); err != nil {
+	if err := c.tmpl.ExecuteTemplate(w, "login", nil); err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 	}
 }
 
 func (c *AuthController) RenderRegisterPage(w http.ResponseWriter, r *http.Request) {
-	if err := c.tmpl.ExecuteTemplate(w, "register.html", nil); err != nil {
+	if err := c.tmpl.ExecuteTemplate(w, "register", nil); err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 	}
 }

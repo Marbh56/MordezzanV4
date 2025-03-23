@@ -161,3 +161,11 @@ func HandleValidationErrors(w http.ResponseWriter, validationErrors map[string]s
 	w.WriteHeader(http.StatusBadRequest)
 	json.NewEncoder(w).Encode(resp)
 }
+
+func NewUnauthorized(msg string) *AppError {
+	return &AppError{
+		Err:     ErrUnauthorized,
+		Message: msg,
+		Code:    http.StatusUnauthorized,
+	}
+}

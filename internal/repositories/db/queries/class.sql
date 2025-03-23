@@ -124,3 +124,14 @@ WHERE class_name = ? AND skill_id = ?;
 SELECT id, skill_name, attribute
 FROM thief_skills
 WHERE skill_name = ?;
+
+-- name: GetThiefSkillsByClassName :many
+SELECT ts.id, ts.skill_name, ts.attribute
+FROM thief_skills ts
+JOIN class_thief_skill_mapping ctsm ON ts.id = ctsm.skill_id
+WHERE ctsm.class_name = ?;
+
+-- name: GetThiefSkillChance :one
+SELECT success_chance
+FROM thief_skill_progression
+WHERE skill_id = ? AND level_range = ?;

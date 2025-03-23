@@ -99,3 +99,7 @@ repo-hamburger-menu:
 repo-character-stats:
 	repomix --remove-comments --remove-empty-lines \
 		--ignore "**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell_scroll*.go,**/container*.go,**/spell*.go,**/treasure*.go,**/inventory*.go,*test*,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/middlewar*.go,**/errors/**,**/logger/**,**/auth*.go,**/contextkeys/**"
+
+repo-settings:
+	repomix --remove-comments --remove-empty-lines \
+		--ignore "**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell_scroll*.go,**/container*.go,**/spell*.go,**/treasure*.go,**/inventory*.go,**/character_controller.go,**/middleware/*.go,**/auth_controller.go,**/models/character.go,**/models/class_data.go,**/models/spells.go,**/test*,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/migrations/**,**/inserts/**,**/queries/**,**/sqlc/**"

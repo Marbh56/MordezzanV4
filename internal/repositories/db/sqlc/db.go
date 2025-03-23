@@ -27,6 +27,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.addInventoryItemStmt, err = db.PrepareContext(ctx, addInventoryItem); err != nil {
 		return nil, fmt.Errorf("error preparing query AddInventoryItem: %w", err)
 	}
+	if q.addKnownSpellStmt, err = db.PrepareContext(ctx, addKnownSpell); err != nil {
+		return nil, fmt.Errorf("error preparing query AddKnownSpell: %w", err)
+	}
 	if q.addSpellToSpellbookStmt, err = db.PrepareContext(ctx, addSpellToSpellbook); err != nil {
 		return nil, fmt.Errorf("error preparing query AddSpellToSpellbook: %w", err)
 	}
@@ -38,6 +41,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.assignSkillToClassStmt, err = db.PrepareContext(ctx, assignSkillToClass); err != nil {
 		return nil, fmt.Errorf("error preparing query AssignSkillToClass: %w", err)
+	}
+	if q.clearPreparedSpellsStmt, err = db.PrepareContext(ctx, clearPreparedSpells); err != nil {
+		return nil, fmt.Errorf("error preparing query ClearPreparedSpells: %w", err)
+	}
+	if q.countPreparedSpellsByLevelAndClassStmt, err = db.PrepareContext(ctx, countPreparedSpellsByLevelAndClass); err != nil {
+		return nil, fmt.Errorf("error preparing query CountPreparedSpellsByLevelAndClass: %w", err)
 	}
 	if q.createAmmoStmt, err = db.PrepareContext(ctx, createAmmo); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateAmmo: %w", err)
@@ -165,6 +174,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getCharacterStmt, err = db.PrepareContext(ctx, getCharacter); err != nil {
 		return nil, fmt.Errorf("error preparing query GetCharacter: %w", err)
 	}
+	if q.getCharacterForSpellcastingStmt, err = db.PrepareContext(ctx, getCharacterForSpellcasting); err != nil {
+		return nil, fmt.Errorf("error preparing query GetCharacterForSpellcasting: %w", err)
+	}
 	if q.getCharactersByUserStmt, err = db.PrepareContext(ctx, getCharactersByUser); err != nil {
 		return nil, fmt.Errorf("error preparing query GetCharactersByUser: %w", err)
 	}
@@ -176,6 +188,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getClassDataStmt, err = db.PrepareContext(ctx, getClassData); err != nil {
 		return nil, fmt.Errorf("error preparing query GetClassData: %w", err)
+	}
+	if q.getClassDataForSpellcastingStmt, err = db.PrepareContext(ctx, getClassDataForSpellcasting); err != nil {
+		return nil, fmt.Errorf("error preparing query GetClassDataForSpellcasting: %w", err)
 	}
 	if q.getClericTurningAbilityStmt, err = db.PrepareContext(ctx, getClericTurningAbility); err != nil {
 		return nil, fmt.Errorf("error preparing query GetClericTurningAbility: %w", err)
@@ -213,6 +228,15 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getInventoryItemsByTypeStmt, err = db.PrepareContext(ctx, getInventoryItemsByType); err != nil {
 		return nil, fmt.Errorf("error preparing query GetInventoryItemsByType: %w", err)
 	}
+	if q.getKnownSpellByCharacterAndSpellStmt, err = db.PrepareContext(ctx, getKnownSpellByCharacterAndSpell); err != nil {
+		return nil, fmt.Errorf("error preparing query GetKnownSpellByCharacterAndSpell: %w", err)
+	}
+	if q.getKnownSpellsStmt, err = db.PrepareContext(ctx, getKnownSpells); err != nil {
+		return nil, fmt.Errorf("error preparing query GetKnownSpells: %w", err)
+	}
+	if q.getKnownSpellsByClassStmt, err = db.PrepareContext(ctx, getKnownSpellsByClass); err != nil {
+		return nil, fmt.Errorf("error preparing query GetKnownSpellsByClass: %w", err)
+	}
 	if q.getMagicItemStmt, err = db.PrepareContext(ctx, getMagicItem); err != nil {
 		return nil, fmt.Errorf("error preparing query GetMagicItem: %w", err)
 	}
@@ -228,6 +252,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getNecromancerTurningAbilityStmt, err = db.PrepareContext(ctx, getNecromancerTurningAbility); err != nil {
 		return nil, fmt.Errorf("error preparing query GetNecromancerTurningAbility: %w", err)
 	}
+	if q.getNextAvailableSlotIndexStmt, err = db.PrepareContext(ctx, getNextAvailableSlotIndex); err != nil {
+		return nil, fmt.Errorf("error preparing query GetNextAvailableSlotIndex: %w", err)
+	}
 	if q.getNextLevelDataStmt, err = db.PrepareContext(ctx, getNextLevelData); err != nil {
 		return nil, fmt.Errorf("error preparing query GetNextLevelData: %w", err)
 	}
@@ -239,6 +266,15 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getPotionByNameStmt, err = db.PrepareContext(ctx, getPotionByName); err != nil {
 		return nil, fmt.Errorf("error preparing query GetPotionByName: %w", err)
+	}
+	if q.getPreparedSpellByCharacterAndSpellStmt, err = db.PrepareContext(ctx, getPreparedSpellByCharacterAndSpell); err != nil {
+		return nil, fmt.Errorf("error preparing query GetPreparedSpellByCharacterAndSpell: %w", err)
+	}
+	if q.getPreparedSpellsStmt, err = db.PrepareContext(ctx, getPreparedSpells); err != nil {
+		return nil, fmt.Errorf("error preparing query GetPreparedSpells: %w", err)
+	}
+	if q.getPreparedSpellsByClassStmt, err = db.PrepareContext(ctx, getPreparedSpellsByClass); err != nil {
+		return nil, fmt.Errorf("error preparing query GetPreparedSpellsByClass: %w", err)
 	}
 	if q.getRangerDruidSpellSlotsStmt, err = db.PrepareContext(ctx, getRangerDruidSpellSlots); err != nil {
 		return nil, fmt.Errorf("error preparing query GetRangerDruidSpellSlots: %w", err)
@@ -270,6 +306,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getSpellStmt, err = db.PrepareContext(ctx, getSpell); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSpell: %w", err)
 	}
+	if q.getSpellForSpellcastingStmt, err = db.PrepareContext(ctx, getSpellForSpellcasting); err != nil {
+		return nil, fmt.Errorf("error preparing query GetSpellForSpellcasting: %w", err)
+	}
 	if q.getSpellFromSpellbookStmt, err = db.PrepareContext(ctx, getSpellFromSpellbook); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSpellFromSpellbook: %w", err)
 	}
@@ -285,11 +324,20 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getSpellbookByNameStmt, err = db.PrepareContext(ctx, getSpellbookByName); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSpellbookByName: %w", err)
 	}
+	if q.getSpellsByClassLevelStmt, err = db.PrepareContext(ctx, getSpellsByClassLevel); err != nil {
+		return nil, fmt.Errorf("error preparing query GetSpellsByClassLevel: %w", err)
+	}
 	if q.getSpellsInSpellbookStmt, err = db.PrepareContext(ctx, getSpellsInSpellbook); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSpellsInSpellbook: %w", err)
 	}
 	if q.getThiefSkillByNameStmt, err = db.PrepareContext(ctx, getThiefSkillByName); err != nil {
 		return nil, fmt.Errorf("error preparing query GetThiefSkillByName: %w", err)
+	}
+	if q.getThiefSkillChanceStmt, err = db.PrepareContext(ctx, getThiefSkillChance); err != nil {
+		return nil, fmt.Errorf("error preparing query GetThiefSkillChance: %w", err)
+	}
+	if q.getThiefSkillsByClassNameStmt, err = db.PrepareContext(ctx, getThiefSkillsByClassName); err != nil {
+		return nil, fmt.Errorf("error preparing query GetThiefSkillsByClassName: %w", err)
 	}
 	if q.getThiefSkillsForCharacterStmt, err = db.PrepareContext(ctx, getThiefSkillsForCharacter); err != nil {
 		return nil, fmt.Errorf("error preparing query GetThiefSkillsForCharacter: %w", err)
@@ -363,6 +411,15 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.listWeaponsStmt, err = db.PrepareContext(ctx, listWeapons); err != nil {
 		return nil, fmt.Errorf("error preparing query ListWeapons: %w", err)
 	}
+	if q.markSpellAsMemorizedStmt, err = db.PrepareContext(ctx, markSpellAsMemorized); err != nil {
+		return nil, fmt.Errorf("error preparing query MarkSpellAsMemorized: %w", err)
+	}
+	if q.markSpellAsMemorizedBySpellIDStmt, err = db.PrepareContext(ctx, markSpellAsMemorizedBySpellID); err != nil {
+		return nil, fmt.Errorf("error preparing query MarkSpellAsMemorizedBySpellID: %w", err)
+	}
+	if q.prepareSpellStmt, err = db.PrepareContext(ctx, prepareSpell); err != nil {
+		return nil, fmt.Errorf("error preparing query PrepareSpell: %w", err)
+	}
 	if q.recalculateInventoryWeightStmt, err = db.PrepareContext(ctx, recalculateInventoryWeight); err != nil {
 		return nil, fmt.Errorf("error preparing query RecalculateInventoryWeight: %w", err)
 	}
@@ -372,11 +429,20 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.removeInventoryItemStmt, err = db.PrepareContext(ctx, removeInventoryItem); err != nil {
 		return nil, fmt.Errorf("error preparing query RemoveInventoryItem: %w", err)
 	}
+	if q.removeKnownSpellStmt, err = db.PrepareContext(ctx, removeKnownSpell); err != nil {
+		return nil, fmt.Errorf("error preparing query RemoveKnownSpell: %w", err)
+	}
 	if q.removeSkillFromClassStmt, err = db.PrepareContext(ctx, removeSkillFromClass); err != nil {
 		return nil, fmt.Errorf("error preparing query RemoveSkillFromClass: %w", err)
 	}
 	if q.removeSpellFromSpellbookStmt, err = db.PrepareContext(ctx, removeSpellFromSpellbook); err != nil {
 		return nil, fmt.Errorf("error preparing query RemoveSpellFromSpellbook: %w", err)
+	}
+	if q.resetAllMemorizedSpellsStmt, err = db.PrepareContext(ctx, resetAllMemorizedSpells); err != nil {
+		return nil, fmt.Errorf("error preparing query ResetAllMemorizedSpells: %w", err)
+	}
+	if q.unprepareSpellStmt, err = db.PrepareContext(ctx, unprepareSpell); err != nil {
+		return nil, fmt.Errorf("error preparing query UnprepareSpell: %w", err)
 	}
 	if q.updateAmmoStmt, err = db.PrepareContext(ctx, updateAmmo); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateAmmo: %w", err)
@@ -445,6 +511,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing addInventoryItemStmt: %w", cerr)
 		}
 	}
+	if q.addKnownSpellStmt != nil {
+		if cerr := q.addKnownSpellStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing addKnownSpellStmt: %w", cerr)
+		}
+	}
 	if q.addSpellToSpellbookStmt != nil {
 		if cerr := q.addSpellToSpellbookStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing addSpellToSpellbookStmt: %w", cerr)
@@ -463,6 +534,16 @@ func (q *Queries) Close() error {
 	if q.assignSkillToClassStmt != nil {
 		if cerr := q.assignSkillToClassStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing assignSkillToClassStmt: %w", cerr)
+		}
+	}
+	if q.clearPreparedSpellsStmt != nil {
+		if cerr := q.clearPreparedSpellsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing clearPreparedSpellsStmt: %w", cerr)
+		}
+	}
+	if q.countPreparedSpellsByLevelAndClassStmt != nil {
+		if cerr := q.countPreparedSpellsByLevelAndClassStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countPreparedSpellsByLevelAndClassStmt: %w", cerr)
 		}
 	}
 	if q.createAmmoStmt != nil {
@@ -675,6 +756,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getCharacterStmt: %w", cerr)
 		}
 	}
+	if q.getCharacterForSpellcastingStmt != nil {
+		if cerr := q.getCharacterForSpellcastingStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getCharacterForSpellcastingStmt: %w", cerr)
+		}
+	}
 	if q.getCharactersByUserStmt != nil {
 		if cerr := q.getCharactersByUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getCharactersByUserStmt: %w", cerr)
@@ -693,6 +779,11 @@ func (q *Queries) Close() error {
 	if q.getClassDataStmt != nil {
 		if cerr := q.getClassDataStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getClassDataStmt: %w", cerr)
+		}
+	}
+	if q.getClassDataForSpellcastingStmt != nil {
+		if cerr := q.getClassDataForSpellcastingStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getClassDataForSpellcastingStmt: %w", cerr)
 		}
 	}
 	if q.getClericTurningAbilityStmt != nil {
@@ -755,6 +846,21 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getInventoryItemsByTypeStmt: %w", cerr)
 		}
 	}
+	if q.getKnownSpellByCharacterAndSpellStmt != nil {
+		if cerr := q.getKnownSpellByCharacterAndSpellStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getKnownSpellByCharacterAndSpellStmt: %w", cerr)
+		}
+	}
+	if q.getKnownSpellsStmt != nil {
+		if cerr := q.getKnownSpellsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getKnownSpellsStmt: %w", cerr)
+		}
+	}
+	if q.getKnownSpellsByClassStmt != nil {
+		if cerr := q.getKnownSpellsByClassStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getKnownSpellsByClassStmt: %w", cerr)
+		}
+	}
 	if q.getMagicItemStmt != nil {
 		if cerr := q.getMagicItemStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getMagicItemStmt: %w", cerr)
@@ -780,6 +886,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getNecromancerTurningAbilityStmt: %w", cerr)
 		}
 	}
+	if q.getNextAvailableSlotIndexStmt != nil {
+		if cerr := q.getNextAvailableSlotIndexStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getNextAvailableSlotIndexStmt: %w", cerr)
+		}
+	}
 	if q.getNextLevelDataStmt != nil {
 		if cerr := q.getNextLevelDataStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getNextLevelDataStmt: %w", cerr)
@@ -798,6 +909,21 @@ func (q *Queries) Close() error {
 	if q.getPotionByNameStmt != nil {
 		if cerr := q.getPotionByNameStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getPotionByNameStmt: %w", cerr)
+		}
+	}
+	if q.getPreparedSpellByCharacterAndSpellStmt != nil {
+		if cerr := q.getPreparedSpellByCharacterAndSpellStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getPreparedSpellByCharacterAndSpellStmt: %w", cerr)
+		}
+	}
+	if q.getPreparedSpellsStmt != nil {
+		if cerr := q.getPreparedSpellsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getPreparedSpellsStmt: %w", cerr)
+		}
+	}
+	if q.getPreparedSpellsByClassStmt != nil {
+		if cerr := q.getPreparedSpellsByClassStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getPreparedSpellsByClassStmt: %w", cerr)
 		}
 	}
 	if q.getRangerDruidSpellSlotsStmt != nil {
@@ -850,6 +976,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getSpellStmt: %w", cerr)
 		}
 	}
+	if q.getSpellForSpellcastingStmt != nil {
+		if cerr := q.getSpellForSpellcastingStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getSpellForSpellcastingStmt: %w", cerr)
+		}
+	}
 	if q.getSpellFromSpellbookStmt != nil {
 		if cerr := q.getSpellFromSpellbookStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getSpellFromSpellbookStmt: %w", cerr)
@@ -875,6 +1006,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getSpellbookByNameStmt: %w", cerr)
 		}
 	}
+	if q.getSpellsByClassLevelStmt != nil {
+		if cerr := q.getSpellsByClassLevelStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getSpellsByClassLevelStmt: %w", cerr)
+		}
+	}
 	if q.getSpellsInSpellbookStmt != nil {
 		if cerr := q.getSpellsInSpellbookStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getSpellsInSpellbookStmt: %w", cerr)
@@ -883,6 +1019,16 @@ func (q *Queries) Close() error {
 	if q.getThiefSkillByNameStmt != nil {
 		if cerr := q.getThiefSkillByNameStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getThiefSkillByNameStmt: %w", cerr)
+		}
+	}
+	if q.getThiefSkillChanceStmt != nil {
+		if cerr := q.getThiefSkillChanceStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getThiefSkillChanceStmt: %w", cerr)
+		}
+	}
+	if q.getThiefSkillsByClassNameStmt != nil {
+		if cerr := q.getThiefSkillsByClassNameStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getThiefSkillsByClassNameStmt: %w", cerr)
 		}
 	}
 	if q.getThiefSkillsForCharacterStmt != nil {
@@ -1005,6 +1151,21 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing listWeaponsStmt: %w", cerr)
 		}
 	}
+	if q.markSpellAsMemorizedStmt != nil {
+		if cerr := q.markSpellAsMemorizedStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing markSpellAsMemorizedStmt: %w", cerr)
+		}
+	}
+	if q.markSpellAsMemorizedBySpellIDStmt != nil {
+		if cerr := q.markSpellAsMemorizedBySpellIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing markSpellAsMemorizedBySpellIDStmt: %w", cerr)
+		}
+	}
+	if q.prepareSpellStmt != nil {
+		if cerr := q.prepareSpellStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing prepareSpellStmt: %w", cerr)
+		}
+	}
 	if q.recalculateInventoryWeightStmt != nil {
 		if cerr := q.recalculateInventoryWeightStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing recalculateInventoryWeightStmt: %w", cerr)
@@ -1020,6 +1181,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing removeInventoryItemStmt: %w", cerr)
 		}
 	}
+	if q.removeKnownSpellStmt != nil {
+		if cerr := q.removeKnownSpellStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing removeKnownSpellStmt: %w", cerr)
+		}
+	}
 	if q.removeSkillFromClassStmt != nil {
 		if cerr := q.removeSkillFromClassStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing removeSkillFromClassStmt: %w", cerr)
@@ -1028,6 +1194,16 @@ func (q *Queries) Close() error {
 	if q.removeSpellFromSpellbookStmt != nil {
 		if cerr := q.removeSpellFromSpellbookStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing removeSpellFromSpellbookStmt: %w", cerr)
+		}
+	}
+	if q.resetAllMemorizedSpellsStmt != nil {
+		if cerr := q.resetAllMemorizedSpellsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing resetAllMemorizedSpellsStmt: %w", cerr)
+		}
+	}
+	if q.unprepareSpellStmt != nil {
+		if cerr := q.unprepareSpellStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing unprepareSpellStmt: %w", cerr)
 		}
 	}
 	if q.updateAmmoStmt != nil {
@@ -1162,287 +1338,331 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                                  DBTX
-	tx                                  *sql.Tx
-	addInventoryItemStmt                *sql.Stmt
-	addSpellToSpellbookStmt             *sql.Stmt
-	addThiefSkillStmt                   *sql.Stmt
-	addThiefSkillProgressionStmt        *sql.Stmt
-	assignSkillToClassStmt              *sql.Stmt
-	createAmmoStmt                      *sql.Stmt
-	createArmorStmt                     *sql.Stmt
-	createCharacterStmt                 *sql.Stmt
-	createContainerStmt                 *sql.Stmt
-	createEquipmentStmt                 *sql.Stmt
-	createInventoryStmt                 *sql.Stmt
-	createMagicItemStmt                 *sql.Stmt
-	createPotionStmt                    *sql.Stmt
-	createRingStmt                      *sql.Stmt
-	createShieldStmt                    *sql.Stmt
-	createSpellStmt                     *sql.Stmt
-	createSpellScrollStmt               *sql.Stmt
-	createSpellbookStmt                 *sql.Stmt
-	createTreasureStmt                  *sql.Stmt
-	createUserStmt                      *sql.Stmt
-	createWeaponStmt                    *sql.Stmt
-	deleteAllSpellsFromSpellbookStmt    *sql.Stmt
-	deleteAmmoStmt                      *sql.Stmt
-	deleteArmorStmt                     *sql.Stmt
-	deleteCharacterStmt                 *sql.Stmt
-	deleteContainerStmt                 *sql.Stmt
-	deleteEquipmentStmt                 *sql.Stmt
-	deleteInventoryStmt                 *sql.Stmt
-	deleteMagicItemStmt                 *sql.Stmt
-	deletePotionStmt                    *sql.Stmt
-	deleteRingStmt                      *sql.Stmt
-	deleteShieldStmt                    *sql.Stmt
-	deleteSpellStmt                     *sql.Stmt
-	deleteSpellScrollStmt               *sql.Stmt
-	deleteSpellbookStmt                 *sql.Stmt
-	deleteTreasureStmt                  *sql.Stmt
-	deleteUserStmt                      *sql.Stmt
-	deleteWeaponStmt                    *sql.Stmt
-	getAllClassDataStmt                 *sql.Stmt
-	getAmmoStmt                         *sql.Stmt
-	getAmmoByNameStmt                   *sql.Stmt
-	getArmorStmt                        *sql.Stmt
-	getArmorByNameStmt                  *sql.Stmt
-	getBardDruidSpellsStmt              *sql.Stmt
-	getBardIllusionistSpellsStmt        *sql.Stmt
-	getBerserkerNaturalACStmt           *sql.Stmt
-	getCharacterStmt                    *sql.Stmt
-	getCharactersByUserStmt             *sql.Stmt
-	getClassAbilitiesStmt               *sql.Stmt
-	getClassAbilitiesByLevelStmt        *sql.Stmt
-	getClassDataStmt                    *sql.Stmt
-	getClericTurningAbilityStmt         *sql.Stmt
-	getContainerStmt                    *sql.Stmt
-	getContainerByNameStmt              *sql.Stmt
-	getEquipmentStmt                    *sql.Stmt
-	getEquipmentByNameStmt              *sql.Stmt
-	getFullUserByEmailStmt              *sql.Stmt
-	getInventoryStmt                    *sql.Stmt
-	getInventoryByCharacterStmt         *sql.Stmt
-	getInventoryItemStmt                *sql.Stmt
-	getInventoryItemByTypeAndItemIDStmt *sql.Stmt
-	getInventoryItemsStmt               *sql.Stmt
-	getInventoryItemsByTypeStmt         *sql.Stmt
-	getMagicItemStmt                    *sql.Stmt
-	getMagicItemByNameStmt              *sql.Stmt
-	getMonkACBonusStmt                  *sql.Stmt
-	getMonkEmptyHandDamageStmt          *sql.Stmt
-	getNecromancerTurningAbilityStmt    *sql.Stmt
-	getNextLevelDataStmt                *sql.Stmt
-	getPaladinTurningAbilityStmt        *sql.Stmt
-	getPotionStmt                       *sql.Stmt
-	getPotionByNameStmt                 *sql.Stmt
-	getRangerDruidSpellSlotsStmt        *sql.Stmt
-	getRangerMagicianSpellSlotsStmt     *sql.Stmt
-	getRingStmt                         *sql.Stmt
-	getRingByNameStmt                   *sql.Stmt
-	getRunesPerDayStmt                  *sql.Stmt
-	getShamanArcaneSpellsStmt           *sql.Stmt
-	getShamanDivineSpellsStmt           *sql.Stmt
-	getShieldStmt                       *sql.Stmt
-	getShieldByNameStmt                 *sql.Stmt
-	getSpellStmt                        *sql.Stmt
-	getSpellFromSpellbookStmt           *sql.Stmt
-	getSpellScrollStmt                  *sql.Stmt
-	getSpellScrollsBySpellStmt          *sql.Stmt
-	getSpellbookStmt                    *sql.Stmt
-	getSpellbookByNameStmt              *sql.Stmt
-	getSpellsInSpellbookStmt            *sql.Stmt
-	getThiefSkillByNameStmt             *sql.Stmt
-	getThiefSkillsForCharacterStmt      *sql.Stmt
-	getThiefSkillsForClassStmt          *sql.Stmt
-	getTreasureStmt                     *sql.Stmt
-	getTreasureByCharacterStmt          *sql.Stmt
-	getUserStmt                         *sql.Stmt
-	getWeaponStmt                       *sql.Stmt
-	getWeaponByNameStmt                 *sql.Stmt
-	listAmmoStmt                        *sql.Stmt
-	listArmorsStmt                      *sql.Stmt
-	listCharactersStmt                  *sql.Stmt
-	listContainersStmt                  *sql.Stmt
-	listEquipmentStmt                   *sql.Stmt
-	listInventoriesStmt                 *sql.Stmt
-	listMagicItemsStmt                  *sql.Stmt
-	listMagicItemsByTypeStmt            *sql.Stmt
-	listPotionsStmt                     *sql.Stmt
-	listRingsStmt                       *sql.Stmt
-	listShieldsStmt                     *sql.Stmt
-	listSpellScrollsStmt                *sql.Stmt
-	listSpellbooksStmt                  *sql.Stmt
-	listSpellsStmt                      *sql.Stmt
-	listTreasuresStmt                   *sql.Stmt
-	listUsersStmt                       *sql.Stmt
-	listWeaponsStmt                     *sql.Stmt
-	recalculateInventoryWeightStmt      *sql.Stmt
-	removeAllInventoryItemsStmt         *sql.Stmt
-	removeInventoryItemStmt             *sql.Stmt
-	removeSkillFromClassStmt            *sql.Stmt
-	removeSpellFromSpellbookStmt        *sql.Stmt
-	updateAmmoStmt                      *sql.Stmt
-	updateArmorStmt                     *sql.Stmt
-	updateCharacterStmt                 *sql.Stmt
-	updateContainerStmt                 *sql.Stmt
-	updateEquipmentStmt                 *sql.Stmt
-	updateInventoryStmt                 *sql.Stmt
-	updateInventoryItemStmt             *sql.Stmt
-	updateInventoryWeightStmt           *sql.Stmt
-	updateMagicItemStmt                 *sql.Stmt
-	updatePotionStmt                    *sql.Stmt
-	updateRingStmt                      *sql.Stmt
-	updateShieldStmt                    *sql.Stmt
-	updateSpellStmt                     *sql.Stmt
-	updateSpellScrollStmt               *sql.Stmt
-	updateSpellbookStmt                 *sql.Stmt
-	updateSpellbookUsedPagesStmt        *sql.Stmt
-	updateTreasureStmt                  *sql.Stmt
-	updateUserStmt                      *sql.Stmt
-	updateWeaponStmt                    *sql.Stmt
+	db                                      DBTX
+	tx                                      *sql.Tx
+	addInventoryItemStmt                    *sql.Stmt
+	addKnownSpellStmt                       *sql.Stmt
+	addSpellToSpellbookStmt                 *sql.Stmt
+	addThiefSkillStmt                       *sql.Stmt
+	addThiefSkillProgressionStmt            *sql.Stmt
+	assignSkillToClassStmt                  *sql.Stmt
+	clearPreparedSpellsStmt                 *sql.Stmt
+	countPreparedSpellsByLevelAndClassStmt  *sql.Stmt
+	createAmmoStmt                          *sql.Stmt
+	createArmorStmt                         *sql.Stmt
+	createCharacterStmt                     *sql.Stmt
+	createContainerStmt                     *sql.Stmt
+	createEquipmentStmt                     *sql.Stmt
+	createInventoryStmt                     *sql.Stmt
+	createMagicItemStmt                     *sql.Stmt
+	createPotionStmt                        *sql.Stmt
+	createRingStmt                          *sql.Stmt
+	createShieldStmt                        *sql.Stmt
+	createSpellStmt                         *sql.Stmt
+	createSpellScrollStmt                   *sql.Stmt
+	createSpellbookStmt                     *sql.Stmt
+	createTreasureStmt                      *sql.Stmt
+	createUserStmt                          *sql.Stmt
+	createWeaponStmt                        *sql.Stmt
+	deleteAllSpellsFromSpellbookStmt        *sql.Stmt
+	deleteAmmoStmt                          *sql.Stmt
+	deleteArmorStmt                         *sql.Stmt
+	deleteCharacterStmt                     *sql.Stmt
+	deleteContainerStmt                     *sql.Stmt
+	deleteEquipmentStmt                     *sql.Stmt
+	deleteInventoryStmt                     *sql.Stmt
+	deleteMagicItemStmt                     *sql.Stmt
+	deletePotionStmt                        *sql.Stmt
+	deleteRingStmt                          *sql.Stmt
+	deleteShieldStmt                        *sql.Stmt
+	deleteSpellStmt                         *sql.Stmt
+	deleteSpellScrollStmt                   *sql.Stmt
+	deleteSpellbookStmt                     *sql.Stmt
+	deleteTreasureStmt                      *sql.Stmt
+	deleteUserStmt                          *sql.Stmt
+	deleteWeaponStmt                        *sql.Stmt
+	getAllClassDataStmt                     *sql.Stmt
+	getAmmoStmt                             *sql.Stmt
+	getAmmoByNameStmt                       *sql.Stmt
+	getArmorStmt                            *sql.Stmt
+	getArmorByNameStmt                      *sql.Stmt
+	getBardDruidSpellsStmt                  *sql.Stmt
+	getBardIllusionistSpellsStmt            *sql.Stmt
+	getBerserkerNaturalACStmt               *sql.Stmt
+	getCharacterStmt                        *sql.Stmt
+	getCharacterForSpellcastingStmt         *sql.Stmt
+	getCharactersByUserStmt                 *sql.Stmt
+	getClassAbilitiesStmt                   *sql.Stmt
+	getClassAbilitiesByLevelStmt            *sql.Stmt
+	getClassDataStmt                        *sql.Stmt
+	getClassDataForSpellcastingStmt         *sql.Stmt
+	getClericTurningAbilityStmt             *sql.Stmt
+	getContainerStmt                        *sql.Stmt
+	getContainerByNameStmt                  *sql.Stmt
+	getEquipmentStmt                        *sql.Stmt
+	getEquipmentByNameStmt                  *sql.Stmt
+	getFullUserByEmailStmt                  *sql.Stmt
+	getInventoryStmt                        *sql.Stmt
+	getInventoryByCharacterStmt             *sql.Stmt
+	getInventoryItemStmt                    *sql.Stmt
+	getInventoryItemByTypeAndItemIDStmt     *sql.Stmt
+	getInventoryItemsStmt                   *sql.Stmt
+	getInventoryItemsByTypeStmt             *sql.Stmt
+	getKnownSpellByCharacterAndSpellStmt    *sql.Stmt
+	getKnownSpellsStmt                      *sql.Stmt
+	getKnownSpellsByClassStmt               *sql.Stmt
+	getMagicItemStmt                        *sql.Stmt
+	getMagicItemByNameStmt                  *sql.Stmt
+	getMonkACBonusStmt                      *sql.Stmt
+	getMonkEmptyHandDamageStmt              *sql.Stmt
+	getNecromancerTurningAbilityStmt        *sql.Stmt
+	getNextAvailableSlotIndexStmt           *sql.Stmt
+	getNextLevelDataStmt                    *sql.Stmt
+	getPaladinTurningAbilityStmt            *sql.Stmt
+	getPotionStmt                           *sql.Stmt
+	getPotionByNameStmt                     *sql.Stmt
+	getPreparedSpellByCharacterAndSpellStmt *sql.Stmt
+	getPreparedSpellsStmt                   *sql.Stmt
+	getPreparedSpellsByClassStmt            *sql.Stmt
+	getRangerDruidSpellSlotsStmt            *sql.Stmt
+	getRangerMagicianSpellSlotsStmt         *sql.Stmt
+	getRingStmt                             *sql.Stmt
+	getRingByNameStmt                       *sql.Stmt
+	getRunesPerDayStmt                      *sql.Stmt
+	getShamanArcaneSpellsStmt               *sql.Stmt
+	getShamanDivineSpellsStmt               *sql.Stmt
+	getShieldStmt                           *sql.Stmt
+	getShieldByNameStmt                     *sql.Stmt
+	getSpellStmt                            *sql.Stmt
+	getSpellForSpellcastingStmt             *sql.Stmt
+	getSpellFromSpellbookStmt               *sql.Stmt
+	getSpellScrollStmt                      *sql.Stmt
+	getSpellScrollsBySpellStmt              *sql.Stmt
+	getSpellbookStmt                        *sql.Stmt
+	getSpellbookByNameStmt                  *sql.Stmt
+	getSpellsByClassLevelStmt               *sql.Stmt
+	getSpellsInSpellbookStmt                *sql.Stmt
+	getThiefSkillByNameStmt                 *sql.Stmt
+	getThiefSkillChanceStmt                 *sql.Stmt
+	getThiefSkillsByClassNameStmt           *sql.Stmt
+	getThiefSkillsForCharacterStmt          *sql.Stmt
+	getThiefSkillsForClassStmt              *sql.Stmt
+	getTreasureStmt                         *sql.Stmt
+	getTreasureByCharacterStmt              *sql.Stmt
+	getUserStmt                             *sql.Stmt
+	getWeaponStmt                           *sql.Stmt
+	getWeaponByNameStmt                     *sql.Stmt
+	listAmmoStmt                            *sql.Stmt
+	listArmorsStmt                          *sql.Stmt
+	listCharactersStmt                      *sql.Stmt
+	listContainersStmt                      *sql.Stmt
+	listEquipmentStmt                       *sql.Stmt
+	listInventoriesStmt                     *sql.Stmt
+	listMagicItemsStmt                      *sql.Stmt
+	listMagicItemsByTypeStmt                *sql.Stmt
+	listPotionsStmt                         *sql.Stmt
+	listRingsStmt                           *sql.Stmt
+	listShieldsStmt                         *sql.Stmt
+	listSpellScrollsStmt                    *sql.Stmt
+	listSpellbooksStmt                      *sql.Stmt
+	listSpellsStmt                          *sql.Stmt
+	listTreasuresStmt                       *sql.Stmt
+	listUsersStmt                           *sql.Stmt
+	listWeaponsStmt                         *sql.Stmt
+	markSpellAsMemorizedStmt                *sql.Stmt
+	markSpellAsMemorizedBySpellIDStmt       *sql.Stmt
+	prepareSpellStmt                        *sql.Stmt
+	recalculateInventoryWeightStmt          *sql.Stmt
+	removeAllInventoryItemsStmt             *sql.Stmt
+	removeInventoryItemStmt                 *sql.Stmt
+	removeKnownSpellStmt                    *sql.Stmt
+	removeSkillFromClassStmt                *sql.Stmt
+	removeSpellFromSpellbookStmt            *sql.Stmt
+	resetAllMemorizedSpellsStmt             *sql.Stmt
+	unprepareSpellStmt                      *sql.Stmt
+	updateAmmoStmt                          *sql.Stmt
+	updateArmorStmt                         *sql.Stmt
+	updateCharacterStmt                     *sql.Stmt
+	updateContainerStmt                     *sql.Stmt
+	updateEquipmentStmt                     *sql.Stmt
+	updateInventoryStmt                     *sql.Stmt
+	updateInventoryItemStmt                 *sql.Stmt
+	updateInventoryWeightStmt               *sql.Stmt
+	updateMagicItemStmt                     *sql.Stmt
+	updatePotionStmt                        *sql.Stmt
+	updateRingStmt                          *sql.Stmt
+	updateShieldStmt                        *sql.Stmt
+	updateSpellStmt                         *sql.Stmt
+	updateSpellScrollStmt                   *sql.Stmt
+	updateSpellbookStmt                     *sql.Stmt
+	updateSpellbookUsedPagesStmt            *sql.Stmt
+	updateTreasureStmt                      *sql.Stmt
+	updateUserStmt                          *sql.Stmt
+	updateWeaponStmt                        *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                                  tx,
-		tx:                                  tx,
-		addInventoryItemStmt:                q.addInventoryItemStmt,
-		addSpellToSpellbookStmt:             q.addSpellToSpellbookStmt,
-		addThiefSkillStmt:                   q.addThiefSkillStmt,
-		addThiefSkillProgressionStmt:        q.addThiefSkillProgressionStmt,
-		assignSkillToClassStmt:              q.assignSkillToClassStmt,
-		createAmmoStmt:                      q.createAmmoStmt,
-		createArmorStmt:                     q.createArmorStmt,
-		createCharacterStmt:                 q.createCharacterStmt,
-		createContainerStmt:                 q.createContainerStmt,
-		createEquipmentStmt:                 q.createEquipmentStmt,
-		createInventoryStmt:                 q.createInventoryStmt,
-		createMagicItemStmt:                 q.createMagicItemStmt,
-		createPotionStmt:                    q.createPotionStmt,
-		createRingStmt:                      q.createRingStmt,
-		createShieldStmt:                    q.createShieldStmt,
-		createSpellStmt:                     q.createSpellStmt,
-		createSpellScrollStmt:               q.createSpellScrollStmt,
-		createSpellbookStmt:                 q.createSpellbookStmt,
-		createTreasureStmt:                  q.createTreasureStmt,
-		createUserStmt:                      q.createUserStmt,
-		createWeaponStmt:                    q.createWeaponStmt,
-		deleteAllSpellsFromSpellbookStmt:    q.deleteAllSpellsFromSpellbookStmt,
-		deleteAmmoStmt:                      q.deleteAmmoStmt,
-		deleteArmorStmt:                     q.deleteArmorStmt,
-		deleteCharacterStmt:                 q.deleteCharacterStmt,
-		deleteContainerStmt:                 q.deleteContainerStmt,
-		deleteEquipmentStmt:                 q.deleteEquipmentStmt,
-		deleteInventoryStmt:                 q.deleteInventoryStmt,
-		deleteMagicItemStmt:                 q.deleteMagicItemStmt,
-		deletePotionStmt:                    q.deletePotionStmt,
-		deleteRingStmt:                      q.deleteRingStmt,
-		deleteShieldStmt:                    q.deleteShieldStmt,
-		deleteSpellStmt:                     q.deleteSpellStmt,
-		deleteSpellScrollStmt:               q.deleteSpellScrollStmt,
-		deleteSpellbookStmt:                 q.deleteSpellbookStmt,
-		deleteTreasureStmt:                  q.deleteTreasureStmt,
-		deleteUserStmt:                      q.deleteUserStmt,
-		deleteWeaponStmt:                    q.deleteWeaponStmt,
-		getAllClassDataStmt:                 q.getAllClassDataStmt,
-		getAmmoStmt:                         q.getAmmoStmt,
-		getAmmoByNameStmt:                   q.getAmmoByNameStmt,
-		getArmorStmt:                        q.getArmorStmt,
-		getArmorByNameStmt:                  q.getArmorByNameStmt,
-		getBardDruidSpellsStmt:              q.getBardDruidSpellsStmt,
-		getBardIllusionistSpellsStmt:        q.getBardIllusionistSpellsStmt,
-		getBerserkerNaturalACStmt:           q.getBerserkerNaturalACStmt,
-		getCharacterStmt:                    q.getCharacterStmt,
-		getCharactersByUserStmt:             q.getCharactersByUserStmt,
-		getClassAbilitiesStmt:               q.getClassAbilitiesStmt,
-		getClassAbilitiesByLevelStmt:        q.getClassAbilitiesByLevelStmt,
-		getClassDataStmt:                    q.getClassDataStmt,
-		getClericTurningAbilityStmt:         q.getClericTurningAbilityStmt,
-		getContainerStmt:                    q.getContainerStmt,
-		getContainerByNameStmt:              q.getContainerByNameStmt,
-		getEquipmentStmt:                    q.getEquipmentStmt,
-		getEquipmentByNameStmt:              q.getEquipmentByNameStmt,
-		getFullUserByEmailStmt:              q.getFullUserByEmailStmt,
-		getInventoryStmt:                    q.getInventoryStmt,
-		getInventoryByCharacterStmt:         q.getInventoryByCharacterStmt,
-		getInventoryItemStmt:                q.getInventoryItemStmt,
-		getInventoryItemByTypeAndItemIDStmt: q.getInventoryItemByTypeAndItemIDStmt,
-		getInventoryItemsStmt:               q.getInventoryItemsStmt,
-		getInventoryItemsByTypeStmt:         q.getInventoryItemsByTypeStmt,
-		getMagicItemStmt:                    q.getMagicItemStmt,
-		getMagicItemByNameStmt:              q.getMagicItemByNameStmt,
-		getMonkACBonusStmt:                  q.getMonkACBonusStmt,
-		getMonkEmptyHandDamageStmt:          q.getMonkEmptyHandDamageStmt,
-		getNecromancerTurningAbilityStmt:    q.getNecromancerTurningAbilityStmt,
-		getNextLevelDataStmt:                q.getNextLevelDataStmt,
-		getPaladinTurningAbilityStmt:        q.getPaladinTurningAbilityStmt,
-		getPotionStmt:                       q.getPotionStmt,
-		getPotionByNameStmt:                 q.getPotionByNameStmt,
-		getRangerDruidSpellSlotsStmt:        q.getRangerDruidSpellSlotsStmt,
-		getRangerMagicianSpellSlotsStmt:     q.getRangerMagicianSpellSlotsStmt,
-		getRingStmt:                         q.getRingStmt,
-		getRingByNameStmt:                   q.getRingByNameStmt,
-		getRunesPerDayStmt:                  q.getRunesPerDayStmt,
-		getShamanArcaneSpellsStmt:           q.getShamanArcaneSpellsStmt,
-		getShamanDivineSpellsStmt:           q.getShamanDivineSpellsStmt,
-		getShieldStmt:                       q.getShieldStmt,
-		getShieldByNameStmt:                 q.getShieldByNameStmt,
-		getSpellStmt:                        q.getSpellStmt,
-		getSpellFromSpellbookStmt:           q.getSpellFromSpellbookStmt,
-		getSpellScrollStmt:                  q.getSpellScrollStmt,
-		getSpellScrollsBySpellStmt:          q.getSpellScrollsBySpellStmt,
-		getSpellbookStmt:                    q.getSpellbookStmt,
-		getSpellbookByNameStmt:              q.getSpellbookByNameStmt,
-		getSpellsInSpellbookStmt:            q.getSpellsInSpellbookStmt,
-		getThiefSkillByNameStmt:             q.getThiefSkillByNameStmt,
-		getThiefSkillsForCharacterStmt:      q.getThiefSkillsForCharacterStmt,
-		getThiefSkillsForClassStmt:          q.getThiefSkillsForClassStmt,
-		getTreasureStmt:                     q.getTreasureStmt,
-		getTreasureByCharacterStmt:          q.getTreasureByCharacterStmt,
-		getUserStmt:                         q.getUserStmt,
-		getWeaponStmt:                       q.getWeaponStmt,
-		getWeaponByNameStmt:                 q.getWeaponByNameStmt,
-		listAmmoStmt:                        q.listAmmoStmt,
-		listArmorsStmt:                      q.listArmorsStmt,
-		listCharactersStmt:                  q.listCharactersStmt,
-		listContainersStmt:                  q.listContainersStmt,
-		listEquipmentStmt:                   q.listEquipmentStmt,
-		listInventoriesStmt:                 q.listInventoriesStmt,
-		listMagicItemsStmt:                  q.listMagicItemsStmt,
-		listMagicItemsByTypeStmt:            q.listMagicItemsByTypeStmt,
-		listPotionsStmt:                     q.listPotionsStmt,
-		listRingsStmt:                       q.listRingsStmt,
-		listShieldsStmt:                     q.listShieldsStmt,
-		listSpellScrollsStmt:                q.listSpellScrollsStmt,
-		listSpellbooksStmt:                  q.listSpellbooksStmt,
-		listSpellsStmt:                      q.listSpellsStmt,
-		listTreasuresStmt:                   q.listTreasuresStmt,
-		listUsersStmt:                       q.listUsersStmt,
-		listWeaponsStmt:                     q.listWeaponsStmt,
-		recalculateInventoryWeightStmt:      q.recalculateInventoryWeightStmt,
-		removeAllInventoryItemsStmt:         q.removeAllInventoryItemsStmt,
-		removeInventoryItemStmt:             q.removeInventoryItemStmt,
-		removeSkillFromClassStmt:            q.removeSkillFromClassStmt,
-		removeSpellFromSpellbookStmt:        q.removeSpellFromSpellbookStmt,
-		updateAmmoStmt:                      q.updateAmmoStmt,
-		updateArmorStmt:                     q.updateArmorStmt,
-		updateCharacterStmt:                 q.updateCharacterStmt,
-		updateContainerStmt:                 q.updateContainerStmt,
-		updateEquipmentStmt:                 q.updateEquipmentStmt,
-		updateInventoryStmt:                 q.updateInventoryStmt,
-		updateInventoryItemStmt:             q.updateInventoryItemStmt,
-		updateInventoryWeightStmt:           q.updateInventoryWeightStmt,
-		updateMagicItemStmt:                 q.updateMagicItemStmt,
-		updatePotionStmt:                    q.updatePotionStmt,
-		updateRingStmt:                      q.updateRingStmt,
-		updateShieldStmt:                    q.updateShieldStmt,
-		updateSpellStmt:                     q.updateSpellStmt,
-		updateSpellScrollStmt:               q.updateSpellScrollStmt,
-		updateSpellbookStmt:                 q.updateSpellbookStmt,
-		updateSpellbookUsedPagesStmt:        q.updateSpellbookUsedPagesStmt,
-		updateTreasureStmt:                  q.updateTreasureStmt,
-		updateUserStmt:                      q.updateUserStmt,
-		updateWeaponStmt:                    q.updateWeaponStmt,
+		db:                                      tx,
+		tx:                                      tx,
+		addInventoryItemStmt:                    q.addInventoryItemStmt,
+		addKnownSpellStmt:                       q.addKnownSpellStmt,
+		addSpellToSpellbookStmt:                 q.addSpellToSpellbookStmt,
+		addThiefSkillStmt:                       q.addThiefSkillStmt,
+		addThiefSkillProgressionStmt:            q.addThiefSkillProgressionStmt,
+		assignSkillToClassStmt:                  q.assignSkillToClassStmt,
+		clearPreparedSpellsStmt:                 q.clearPreparedSpellsStmt,
+		countPreparedSpellsByLevelAndClassStmt:  q.countPreparedSpellsByLevelAndClassStmt,
+		createAmmoStmt:                          q.createAmmoStmt,
+		createArmorStmt:                         q.createArmorStmt,
+		createCharacterStmt:                     q.createCharacterStmt,
+		createContainerStmt:                     q.createContainerStmt,
+		createEquipmentStmt:                     q.createEquipmentStmt,
+		createInventoryStmt:                     q.createInventoryStmt,
+		createMagicItemStmt:                     q.createMagicItemStmt,
+		createPotionStmt:                        q.createPotionStmt,
+		createRingStmt:                          q.createRingStmt,
+		createShieldStmt:                        q.createShieldStmt,
+		createSpellStmt:                         q.createSpellStmt,
+		createSpellScrollStmt:                   q.createSpellScrollStmt,
+		createSpellbookStmt:                     q.createSpellbookStmt,
+		createTreasureStmt:                      q.createTreasureStmt,
+		createUserStmt:                          q.createUserStmt,
+		createWeaponStmt:                        q.createWeaponStmt,
+		deleteAllSpellsFromSpellbookStmt:        q.deleteAllSpellsFromSpellbookStmt,
+		deleteAmmoStmt:                          q.deleteAmmoStmt,
+		deleteArmorStmt:                         q.deleteArmorStmt,
+		deleteCharacterStmt:                     q.deleteCharacterStmt,
+		deleteContainerStmt:                     q.deleteContainerStmt,
+		deleteEquipmentStmt:                     q.deleteEquipmentStmt,
+		deleteInventoryStmt:                     q.deleteInventoryStmt,
+		deleteMagicItemStmt:                     q.deleteMagicItemStmt,
+		deletePotionStmt:                        q.deletePotionStmt,
+		deleteRingStmt:                          q.deleteRingStmt,
+		deleteShieldStmt:                        q.deleteShieldStmt,
+		deleteSpellStmt:                         q.deleteSpellStmt,
+		deleteSpellScrollStmt:                   q.deleteSpellScrollStmt,
+		deleteSpellbookStmt:                     q.deleteSpellbookStmt,
+		deleteTreasureStmt:                      q.deleteTreasureStmt,
+		deleteUserStmt:                          q.deleteUserStmt,
+		deleteWeaponStmt:                        q.deleteWeaponStmt,
+		getAllClassDataStmt:                     q.getAllClassDataStmt,
+		getAmmoStmt:                             q.getAmmoStmt,
+		getAmmoByNameStmt:                       q.getAmmoByNameStmt,
+		getArmorStmt:                            q.getArmorStmt,
+		getArmorByNameStmt:                      q.getArmorByNameStmt,
+		getBardDruidSpellsStmt:                  q.getBardDruidSpellsStmt,
+		getBardIllusionistSpellsStmt:            q.getBardIllusionistSpellsStmt,
+		getBerserkerNaturalACStmt:               q.getBerserkerNaturalACStmt,
+		getCharacterStmt:                        q.getCharacterStmt,
+		getCharacterForSpellcastingStmt:         q.getCharacterForSpellcastingStmt,
+		getCharactersByUserStmt:                 q.getCharactersByUserStmt,
+		getClassAbilitiesStmt:                   q.getClassAbilitiesStmt,
+		getClassAbilitiesByLevelStmt:            q.getClassAbilitiesByLevelStmt,
+		getClassDataStmt:                        q.getClassDataStmt,
+		getClassDataForSpellcastingStmt:         q.getClassDataForSpellcastingStmt,
+		getClericTurningAbilityStmt:             q.getClericTurningAbilityStmt,
+		getContainerStmt:                        q.getContainerStmt,
+		getContainerByNameStmt:                  q.getContainerByNameStmt,
+		getEquipmentStmt:                        q.getEquipmentStmt,
+		getEquipmentByNameStmt:                  q.getEquipmentByNameStmt,
+		getFullUserByEmailStmt:                  q.getFullUserByEmailStmt,
+		getInventoryStmt:                        q.getInventoryStmt,
+		getInventoryByCharacterStmt:             q.getInventoryByCharacterStmt,
+		getInventoryItemStmt:                    q.getInventoryItemStmt,
+		getInventoryItemByTypeAndItemIDStmt:     q.getInventoryItemByTypeAndItemIDStmt,
+		getInventoryItemsStmt:                   q.getInventoryItemsStmt,
+		getInventoryItemsByTypeStmt:             q.getInventoryItemsByTypeStmt,
+		getKnownSpellByCharacterAndSpellStmt:    q.getKnownSpellByCharacterAndSpellStmt,
+		getKnownSpellsStmt:                      q.getKnownSpellsStmt,
+		getKnownSpellsByClassStmt:               q.getKnownSpellsByClassStmt,
+		getMagicItemStmt:                        q.getMagicItemStmt,
+		getMagicItemByNameStmt:                  q.getMagicItemByNameStmt,
+		getMonkACBonusStmt:                      q.getMonkACBonusStmt,
+		getMonkEmptyHandDamageStmt:              q.getMonkEmptyHandDamageStmt,
+		getNecromancerTurningAbilityStmt:        q.getNecromancerTurningAbilityStmt,
+		getNextAvailableSlotIndexStmt:           q.getNextAvailableSlotIndexStmt,
+		getNextLevelDataStmt:                    q.getNextLevelDataStmt,
+		getPaladinTurningAbilityStmt:            q.getPaladinTurningAbilityStmt,
+		getPotionStmt:                           q.getPotionStmt,
+		getPotionByNameStmt:                     q.getPotionByNameStmt,
+		getPreparedSpellByCharacterAndSpellStmt: q.getPreparedSpellByCharacterAndSpellStmt,
+		getPreparedSpellsStmt:                   q.getPreparedSpellsStmt,
+		getPreparedSpellsByClassStmt:            q.getPreparedSpellsByClassStmt,
+		getRangerDruidSpellSlotsStmt:            q.getRangerDruidSpellSlotsStmt,
+		getRangerMagicianSpellSlotsStmt:         q.getRangerMagicianSpellSlotsStmt,
+		getRingStmt:                             q.getRingStmt,
+		getRingByNameStmt:                       q.getRingByNameStmt,
+		getRunesPerDayStmt:                      q.getRunesPerDayStmt,
+		getShamanArcaneSpellsStmt:               q.getShamanArcaneSpellsStmt,
+		getShamanDivineSpellsStmt:               q.getShamanDivineSpellsStmt,
+		getShieldStmt:                           q.getShieldStmt,
+		getShieldByNameStmt:                     q.getShieldByNameStmt,
+		getSpellStmt:                            q.getSpellStmt,
+		getSpellForSpellcastingStmt:             q.getSpellForSpellcastingStmt,
+		getSpellFromSpellbookStmt:               q.getSpellFromSpellbookStmt,
+		getSpellScrollStmt:                      q.getSpellScrollStmt,
+		getSpellScrollsBySpellStmt:              q.getSpellScrollsBySpellStmt,
+		getSpellbookStmt:                        q.getSpellbookStmt,
+		getSpellbookByNameStmt:                  q.getSpellbookByNameStmt,
+		getSpellsByClassLevelStmt:               q.getSpellsByClassLevelStmt,
+		getSpellsInSpellbookStmt:                q.getSpellsInSpellbookStmt,
+		getThiefSkillByNameStmt:                 q.getThiefSkillByNameStmt,
+		getThiefSkillChanceStmt:                 q.getThiefSkillChanceStmt,
+		getThiefSkillsByClassNameStmt:           q.getThiefSkillsByClassNameStmt,
+		getThiefSkillsForCharacterStmt:          q.getThiefSkillsForCharacterStmt,
+		getThiefSkillsForClassStmt:              q.getThiefSkillsForClassStmt,
+		getTreasureStmt:                         q.getTreasureStmt,
+		getTreasureByCharacterStmt:              q.getTreasureByCharacterStmt,
+		getUserStmt:                             q.getUserStmt,
+		getWeaponStmt:                           q.getWeaponStmt,
+		getWeaponByNameStmt:                     q.getWeaponByNameStmt,
+		listAmmoStmt:                            q.listAmmoStmt,
+		listArmorsStmt:                          q.listArmorsStmt,
+		listCharactersStmt:                      q.listCharactersStmt,
+		listContainersStmt:                      q.listContainersStmt,
+		listEquipmentStmt:                       q.listEquipmentStmt,
+		listInventoriesStmt:                     q.listInventoriesStmt,
+		listMagicItemsStmt:                      q.listMagicItemsStmt,
+		listMagicItemsByTypeStmt:                q.listMagicItemsByTypeStmt,
+		listPotionsStmt:                         q.listPotionsStmt,
+		listRingsStmt:                           q.listRingsStmt,
+		listShieldsStmt:                         q.listShieldsStmt,
+		listSpellScrollsStmt:                    q.listSpellScrollsStmt,
+		listSpellbooksStmt:                      q.listSpellbooksStmt,
+		listSpellsStmt:                          q.listSpellsStmt,
+		listTreasuresStmt:                       q.listTreasuresStmt,
+		listUsersStmt:                           q.listUsersStmt,
+		listWeaponsStmt:                         q.listWeaponsStmt,
+		markSpellAsMemorizedStmt:                q.markSpellAsMemorizedStmt,
+		markSpellAsMemorizedBySpellIDStmt:       q.markSpellAsMemorizedBySpellIDStmt,
+		prepareSpellStmt:                        q.prepareSpellStmt,
+		recalculateInventoryWeightStmt:          q.recalculateInventoryWeightStmt,
+		removeAllInventoryItemsStmt:             q.removeAllInventoryItemsStmt,
+		removeInventoryItemStmt:                 q.removeInventoryItemStmt,
+		removeKnownSpellStmt:                    q.removeKnownSpellStmt,
+		removeSkillFromClassStmt:                q.removeSkillFromClassStmt,
+		removeSpellFromSpellbookStmt:            q.removeSpellFromSpellbookStmt,
+		resetAllMemorizedSpellsStmt:             q.resetAllMemorizedSpellsStmt,
+		unprepareSpellStmt:                      q.unprepareSpellStmt,
+		updateAmmoStmt:                          q.updateAmmoStmt,
+		updateArmorStmt:                         q.updateArmorStmt,
+		updateCharacterStmt:                     q.updateCharacterStmt,
+		updateContainerStmt:                     q.updateContainerStmt,
+		updateEquipmentStmt:                     q.updateEquipmentStmt,
+		updateInventoryStmt:                     q.updateInventoryStmt,
+		updateInventoryItemStmt:                 q.updateInventoryItemStmt,
+		updateInventoryWeightStmt:               q.updateInventoryWeightStmt,
+		updateMagicItemStmt:                     q.updateMagicItemStmt,
+		updatePotionStmt:                        q.updatePotionStmt,
+		updateRingStmt:                          q.updateRingStmt,
+		updateShieldStmt:                        q.updateShieldStmt,
+		updateSpellStmt:                         q.updateSpellStmt,
+		updateSpellScrollStmt:                   q.updateSpellScrollStmt,
+		updateSpellbookStmt:                     q.updateSpellbookStmt,
+		updateSpellbookUsedPagesStmt:            q.updateSpellbookUsedPagesStmt,
+		updateTreasureStmt:                      q.updateTreasureStmt,
+		updateUserStmt:                          q.updateUserStmt,
+		updateWeaponStmt:                        q.updateWeaponStmt,
 	}
 }

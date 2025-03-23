@@ -519,6 +519,54 @@ func (q *Queries) GetThiefSkillByName(ctx context.Context, skillName string) (Th
 	return i, err
 }
 
+const getThiefSkillChance = `-- name: GetThiefSkillChance :one
+SELECT success_chance
+FROM thief_skill_progression
+WHERE skill_id = ? AND level_range = ?
+`
+
+type GetThiefSkillChanceParams struct {
+	SkillID    int64
+	LevelRange string
+}
+
+func (q *Queries) GetThiefSkillChance(ctx context.Context, arg GetThiefSkillChanceParams) (string, error) {
+	row := q.queryRow(ctx, q.getThiefSkillChanceStmt, getThiefSkillChance, arg.SkillID, arg.LevelRange)
+	var success_chance string
+	err := row.Scan(&success_chance)
+	return success_chance, err
+}
+
+const getThiefSkillsByClassName = `-- name: GetThiefSkillsByClassName :many
+SELECT ts.id, ts.skill_name, ts.attribute
+FROM thief_skills ts
+JOIN class_thief_skill_mapping ctsm ON ts.id = ctsm.skill_id
+WHERE ctsm.class_name = ?
+`
+
+func (q *Queries) GetThiefSkillsByClassName(ctx context.Context, className string) ([]ThiefSkill, error) {
+	rows, err := q.query(ctx, q.getThiefSkillsByClassNameStmt, getThiefSkillsByClassName, className)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ThiefSkill{}
+	for rows.Next() {
+		var i ThiefSkill
+		if err := rows.Scan(&i.ID, &i.SkillName, &i.Attribute); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getThiefSkillsForCharacter = `-- name: GetThiefSkillsForCharacter :many
 SELECT 
     ts.skill_name, 

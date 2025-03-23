@@ -165,6 +165,19 @@ type InventoryItem struct {
 	UpdatedAt   time.Time
 }
 
+type KnownSpell struct {
+	ID          int64
+	CharacterID int64
+	SpellID     int64
+	SpellName   string
+	SpellLevel  int64
+	SpellClass  string
+	IsMemorized bool
+	Notes       sql.NullString
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 type MagicItem struct {
 	ID          int64
 	Name        string
@@ -206,6 +219,18 @@ type Potion struct {
 	Description string
 	Uses        int64
 	Weight      int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+type PreparedSpell struct {
+	ID          int64
+	CharacterID int64
+	SpellID     int64
+	SpellName   string
+	SpellLevel  int64
+	SpellClass  string
+	SlotIndex   int64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

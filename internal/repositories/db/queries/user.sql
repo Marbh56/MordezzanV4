@@ -25,3 +25,9 @@ WHERE id = ?;
 -- name: DeleteUser :execresult
 DELETE FROM users
 WHERE id = ?;
+
+-- name: UpdateUserPassword :exec
+UPDATE users
+SET password_hash = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?;

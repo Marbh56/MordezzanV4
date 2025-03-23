@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	apperrors "mordezzanV4/internal/errors"
 	"mordezzanV4/internal/models"
 	sqlcdb "mordezzanV4/internal/repositories/db/sqlc"
@@ -16,6 +17,7 @@ type SpellRepository interface {
 	CreateSpell(ctx context.Context, input *models.CreateSpellInput) (int64, error)
 	UpdateSpell(ctx context.Context, id int64, input *models.UpdateSpellInput) error
 	DeleteSpell(ctx context.Context, id int64) error
+	GetSpellsByClass(ctx context.Context, spellClass string) ([]*models.Spell, error)
 }
 
 // SQLCSpellRepository implements SpellRepository using SQLC
@@ -129,6 +131,68 @@ func (r *SQLCSpellRepository) DeleteSpell(ctx context.Context, id int64) error {
 		return apperrors.NewDatabaseError(err)
 	}
 	return nil
+}
+
+func (r *SQLCSpellRepository) GetSpellsByClass(ctx context.Context, spellClass string) ([]*models.Spell, error) {
+	// Determine which level field to use based on the class
+	var levelField string
+	switch spellClass {
+	case "Magician":
+		levelField = "mag_level"
+	case "Cryomancer":
+		levelField = "cry_level"
+	case "Illusionist":
+		levelField = "ill_level"
+	case "Necromancer":
+		levelField = "nec_level"
+	case "Pyromancer":
+		levelField = "pyr_level"
+	case "Witch":
+		levelField = "wch_level"
+	case "Cleric":
+		levelField = "clr_level"
+	case "Druid":
+		levelField = "drd_level"
+	default:
+		return nil, fmt.Errorf("unsupported spell class: %s", spellClass)
+	}
+
+	// Build and execute the query
+	query := fmt.Sprintf(`
+        SELECT * FROM spells 
+        WHERE %s > 0
+        ORDER BY %s, name
+    `, levelField, levelField)
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, apperrors.NewDatabaseError(err)
+	}
+	defer rows.Close()
+
+	var spells []*models.Spell
+	for rows.Next() {
+		var spell models.Spell
+		err := rows.Scan(
+			&spell.ID, &spell.Name,
+			&spell.MagLevel, &spell.CryLevel, &spell.IllLevel,
+			&spell.NecLevel, &spell.PyrLevel, &spell.WchLevel,
+			&spell.ClrLevel, &spell.DrdLevel,
+			&spell.Range, &spell.Duration, &spell.AreaOfEffect,
+			&spell.Components, &spell.Description,
+			&spell.CreatedAt, &spell.UpdatedAt,
+		)
+		if err != nil {
+			return nil, apperrors.NewDatabaseError(err)
+		}
+		spells = append(spells, &spell)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, apperrors.NewDatabaseError(err)
+	}
+
+	return spells, nil
 }
 
 // mapDbSpellToModel converts a database spell to a model spell

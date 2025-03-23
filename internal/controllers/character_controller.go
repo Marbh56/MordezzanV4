@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"mordezzanV4/internal/contextkeys"
 	apperrors "mordezzanV4/internal/errors"
+	"mordezzanV4/internal/logger"
 	"mordezzanV4/internal/models"
 	"mordezzanV4/internal/repositories"
 	"mordezzanV4/internal/services"
@@ -16,23 +18,25 @@ import (
 )
 
 type CharacterController struct {
-	characterRepo repositories.CharacterRepository
+	repo          repositories.CharacterRepository
 	userRepo      repositories.UserRepository
+	characterRepo repositories.CharacterRepository
 	classService  *services.ClassService
-	tmpl          *template.Template
+	Templates     *template.Template
 }
 
-func NewCharacterController(
-	characterRepo repositories.CharacterRepository,
-	userRepo repositories.UserRepository,
-	classService *services.ClassService,
-	tmpl *template.Template,
-) *CharacterController {
+type UpdateHPInput struct {
+	CurrentHitPoints   int `json:"current_hit_points"`
+	MaxHitPoints       int `json:"max_hit_points"`
+	TemporaryHitPoints int `json:"temporary_hit_points"`
+}
+
+func NewCharacterController(repo repositories.CharacterRepository, userRepo repositories.UserRepository, classService *services.ClassService, tmpl *template.Template) *CharacterController {
 	return &CharacterController{
-		characterRepo: characterRepo,
-		userRepo:      userRepo,
-		classService:  classService,
-		tmpl:          tmpl,
+		repo:         repo,
+		userRepo:     userRepo,
+		classService: classService,
+		Templates:    tmpl,
 	}
 }
 
@@ -107,14 +111,14 @@ func (c *CharacterController) RenderCharacterDetail(w http.ResponseWriter, r *ht
 			NextLevelExperience: nextLevelExp,
 			ExperienceNeeded:    nextLevelExp - character.ExperiencePoints,
 		}
-		err = c.tmpl.ExecuteTemplate(w, "character_detail.html", data)
+		err = c.Templates.ExecuteTemplate(w, "character_detail.html", data)
 		if err != nil {
 			apperrors.HandleError(w, apperrors.NewInternalError(err))
 		}
 		return
 	}
 
-	err = c.tmpl.ExecuteTemplate(w, "character_detail.html", character)
+	err = c.Templates.ExecuteTemplate(w, "character_detail.html", character)
 	if err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 	}
@@ -298,16 +302,87 @@ func (c *CharacterController) DeleteCharacter(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (c *CharacterController) handleError(w http.ResponseWriter, err error, statusCode int) {
+	logger.Error("Error in character controller: %v", err)
+
+	// Set content type and status code
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(statusCode)
+
+	// Render error template or default error message
+	errorMsg := err.Error()
+	if statusCode == http.StatusInternalServerError {
+		errorMsg = "An internal server error occurred"
+	}
+
+	// Try to render an error template if it exists
+	if c.Templates != nil {
+		errorData := map[string]interface{}{
+			"Error":  errorMsg,
+			"Status": statusCode,
+			"Title":  "Error",
+		}
+
+		templateErr := c.Templates.ExecuteTemplate(w, "error", errorData)
+		if templateErr == nil {
+			return
+		}
+	}
+
+	// Fallback to plain text response
+	http.Error(w, errorMsg, statusCode)
+}
+
 func (c *CharacterController) RenderDashboard(w http.ResponseWriter, r *http.Request) {
-	err := c.tmpl.ExecuteTemplate(w, "dashboard.html", nil)
+	// Check if user is authenticated
+	userID, ok := r.Context().Value(contextkeys.UserIDKey).(int64)
+
+	// If not authenticated, render the home page instead of dashboard
+	if !ok {
+		data := map[string]interface{}{
+			"IsAuthenticated": false,
+		}
+
+		err := c.Templates.ExecuteTemplate(w, "home", data)
+		if err != nil {
+			c.handleError(w, err, http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
+	// Fetch the user
+	user, err := c.userRepo.GetUser(r.Context(), userID)
 	if err != nil {
-		apperrors.HandleError(w, apperrors.NewInternalError(err))
+		c.handleError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	// Fetch the user's characters
+	characters, err := c.repo.GetCharactersByUser(r.Context(), userID)
+	if err != nil {
+		c.handleError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	// Prepare data for the template
+	data := map[string]interface{}{
+		"IsAuthenticated": true,
+		"User":            user,
+		"Characters":      characters,
+		"Title":           "Dashboard",
+	}
+
+	// Render the dashboard template
+	err = c.Templates.ExecuteTemplate(w, "dashboard", data)
+	if err != nil {
+		c.handleError(w, err, http.StatusInternalServerError)
 		return
 	}
 }
 
 func (c *CharacterController) RenderCreateForm(w http.ResponseWriter, r *http.Request) {
-	err := c.tmpl.ExecuteTemplate(w, "character_create.html", nil)
+	err := c.Templates.ExecuteTemplate(w, "character_create.html", nil)
 	if err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 		return
@@ -334,7 +409,7 @@ func (c *CharacterController) RenderEditForm(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Render the edit form template
-	err = c.tmpl.ExecuteTemplate(w, "character_edit.html", nil)
+	err = c.Templates.ExecuteTemplate(w, "character_edit.html", nil)
 	if err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 		return
@@ -349,13 +424,26 @@ func (c *CharacterController) UpdateCharacterHP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	var input struct {
-		HitPoints int `json:"hit_points"`
-	}
-
+	var input UpdateHPInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		apperrors.HandleError(w, apperrors.NewBadRequest("Invalid request body"))
 		return
+	}
+
+	// Validate input - Max HP must be positive
+	if input.MaxHitPoints <= 0 {
+		apperrors.HandleError(w, apperrors.NewBadRequest("Max hit points must be positive"))
+		return
+	}
+
+	// Current HP cannot be less than -10 (death)
+	if input.CurrentHitPoints < -10 {
+		input.CurrentHitPoints = -10
+	}
+
+	// Temp HP cannot be negative
+	if input.TemporaryHitPoints < 0 {
+		input.TemporaryHitPoints = 0
 	}
 
 	// Get existing character to preserve other fields
@@ -369,7 +457,7 @@ func (c *CharacterController) UpdateCharacterHP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Create update input with just the HP changed
+	// Create update input with just the HP fields changed
 	updateInput := models.UpdateCharacterInput{
 		Name:               existingChar.Name,
 		Class:              existingChar.Class,
@@ -381,9 +469,9 @@ func (c *CharacterController) UpdateCharacterHP(w http.ResponseWriter, r *http.R
 		Wisdom:             existingChar.Wisdom,
 		Intelligence:       existingChar.Intelligence,
 		Charisma:           existingChar.Charisma,
-		MaxHitPoints:       existingChar.MaxHitPoints,
-		CurrentHitPoints:   input.HitPoints,
-		TemporaryHitPoints: existingChar.TemporaryHitPoints,
+		MaxHitPoints:       input.MaxHitPoints,
+		CurrentHitPoints:   input.CurrentHitPoints,
+		TemporaryHitPoints: input.TemporaryHitPoints,
 	}
 
 	// Update the character
@@ -413,7 +501,8 @@ func (c *CharacterController) ModifyCharacterHP(w http.ResponseWriter, r *http.R
 	}
 
 	var input struct {
-		Delta int `json:"delta"` // Positive for healing, negative for damage
+		Delta int  `json:"delta"` // Positive for healing, negative for damage
+		Temp  bool `json:"temp"`  // If true, adds temporary HP instead of healing
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -432,17 +521,45 @@ func (c *CharacterController) ModifyCharacterHP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Calculate new HP value
-	newHP := existingChar.CurrentHitPoints + input.Delta
+	newCurrentHP := existingChar.CurrentHitPoints
+	newTempHP := existingChar.TemporaryHitPoints
 
-	// Cap at maximum HP
-	if newHP > existingChar.MaxHitPoints {
-		newHP = existingChar.MaxHitPoints
-	}
+	if input.Delta < 0 {
+		// Taking damage
+		damageAmount := -input.Delta
 
-	// Floor at -10 (death)
-	if newHP < -10 {
-		newHP = -10
+		// Apply to temp HP first
+		if newTempHP > 0 {
+			if damageAmount <= newTempHP {
+				newTempHP -= damageAmount
+				damageAmount = 0
+			} else {
+				damageAmount -= newTempHP
+				newTempHP = 0
+			}
+		}
+
+		// Apply remaining damage to current HP
+		if damageAmount > 0 {
+			if newCurrentHP-damageAmount < -10 {
+				newCurrentHP = -10
+			} else {
+				newCurrentHP = newCurrentHP - damageAmount
+			}
+		}
+	} else if input.Delta > 0 {
+		// Healing or temp HP
+		if input.Temp {
+			// Adding temporary hit points
+			newTempHP += input.Delta
+		} else {
+			// Regular healing
+			if newCurrentHP+input.Delta > existingChar.MaxHitPoints {
+				newCurrentHP = existingChar.MaxHitPoints
+			} else {
+				newCurrentHP = newCurrentHP + input.Delta
+			}
+		}
 	}
 
 	// Create update input with the new HP value
@@ -458,8 +575,8 @@ func (c *CharacterController) ModifyCharacterHP(w http.ResponseWriter, r *http.R
 		Intelligence:       existingChar.Intelligence,
 		Charisma:           existingChar.Charisma,
 		MaxHitPoints:       existingChar.MaxHitPoints,
-		CurrentHitPoints:   newHP,
-		TemporaryHitPoints: existingChar.TemporaryHitPoints,
+		CurrentHitPoints:   newCurrentHP,
+		TemporaryHitPoints: newTempHP,
 	}
 
 	// Update the character

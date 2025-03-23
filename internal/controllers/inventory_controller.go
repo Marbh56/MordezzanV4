@@ -32,7 +32,6 @@ type InventoryController struct {
 	containerRepo      repositories.ContainerRepository
 	equipmentRepo      repositories.EquipmentRepository
 	treasureRepo       repositories.TreasureRepository
-	spellbookRepo      repositories.SpellbookRepository
 	encumbranceService *services.EncumbranceService
 	tmpl               *template.Template
 }
@@ -63,7 +62,6 @@ func NewInventoryController(
 	containerRepo repositories.ContainerRepository,
 	equipmentRepo repositories.EquipmentRepository,
 	treasureRepo repositories.TreasureRepository,
-	spellbookRepo repositories.SpellbookRepository,
 	encumbranceService *services.EncumbranceService,
 	tmpl *template.Template,
 ) *InventoryController {
@@ -81,8 +79,7 @@ func NewInventoryController(
 		containerRepo:      containerRepo,
 		equipmentRepo:      equipmentRepo,
 		treasureRepo:       treasureRepo,
-		spellbookRepo:      spellbookRepo,
-		encumbranceService: encumbranceService, // Add to the struct
+		encumbranceService: encumbranceService,
 		tmpl:               tmpl,
 	}
 }
@@ -639,12 +636,6 @@ func (c *InventoryController) validateItemExists(ctx context.Context, itemType s
 				return err
 			}
 		}
-	case "spellbook":
-		if c.spellbookRepo != nil {
-			if _, err := c.spellbookRepo.GetSpellbook(ctx, itemID); err != nil {
-				return err
-			}
-		}
 	default:
 		return apperrors.NewBadRequest("Invalid item type: " + itemType)
 	}
@@ -721,10 +712,6 @@ func (c *InventoryController) enrichInventoryItem(ctx context.Context, item mode
 	case "equipment":
 		if c.equipmentRepo != nil {
 			details, err = c.equipmentRepo.GetEquipment(ctx, item.ItemID)
-		}
-	case "spellbook":
-		if c.spellbookRepo != nil {
-			details, err = c.spellbookRepo.GetSpellbook(ctx, item.ItemID)
 		}
 	default:
 		return EnrichedInventoryItem{}, apperrors.NewBadRequest("Invalid item type: " + item.ItemType)
