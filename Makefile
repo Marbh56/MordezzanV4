@@ -44,32 +44,6 @@ clean:
 
 dev-setup: sqlc migrate build
 
-repo:
-	repomix --remove-comments --remove-empty-lines
-
-repo-ignore:
-	repomix --remove-comments --remove-empty-lines --ignore "**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3"
-
-repo-clean:
-	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/*_test.go,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh"
-
-repo-frontend:
-	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/*repository*.go,**/*.sql,**/*.sql.go,**/queries/**,**/*_test.go,**/db/**,**/migrations/**,**/sqlc/**,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/middleware/**,cmd/**,**/logger/**,**/errors/**,**/app/**,**/contextkeys/**"
-
-repo-backend:
-	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/*_test.go,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/web/static/**,**/web/templates/**,**/docs/**,README.md,**/migrations/*.sql,**/queries/*.sql,**/sqlc/models.go,**/sqlc/db.go,**/sqlc/querier.go,**/sqlc/*.sql.go,Makefile,sqlc.yaml,.gitignore,go.mod,**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell_scroll*.go,**/container*.go,**/spell*.go"
-
-repo-dashboard:
-	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/*repository*.go,**/*.sql,**/*.sql.go,**/queries/**,**/*_test.go,**/db/**,**/migrations/**,**/sqlc/**,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell*.go,**/spell_scroll*.go,**/container*.go,**/treasure*.go,**/inventory*.go"
-
-repo-fighter:
-	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/ammo*,**/armor*,**/treasure*,**/weapon*,**/equipment*,**/inventory*,**/shield*,**/spell*,**/magic*,**/potion*,**/ring*,**/container*,*test*,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/auth/**,**/contextkeys/**,**/errors/**,**/logger/**,**/middleware/**"
-
 tree:
 	@if command -v tree > /dev/null; then \
 		tree -I "node_modules|vendor|.git" --dirsfirst -F > project_structure.txt; \
@@ -80,26 +54,6 @@ tree:
 		echo "Project structure saved to project_structure.txt (using find command)"; \
 	fi
 
-repo-character-detail:
+repo-dashboard:
 	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/*repository*.go,**/*.sql,**/*.sql.go,**/queries/**,**/*_test.go,**/db/**,**/migrations/**,**/sqlc/**,**/integration_test/**,**/*test*.go,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/middleware/**,cmd/**,**/logger/**,**/errors/**,**/app/**,**/contextkeys/**,**/auth/**,**/ammo*.*,**/armor*.*,**/shield*.*,**/ring*.*,**/potion*.*,**/weapon*.*,**/equipment*.*,**/magic_item*.*,**/spell_scroll*.*,**/container*.*,**/treasure*.*,**/spell*.*,**/notes*.*,**/inventory*.html,**/login*.html,**/register*.html,**/dashboard*.html,**/navbar*.html,**/user*.html,**/spells_tab*.html"
-
-repo-inventory-tab:
-	repomix --remove-comments --remove-empty-lines \
-	--ignore "**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/fighter*.go,**/magician*.go,**/prepared_spells*.go,**/spellbook*.go,**/spell_scroll*.go,**/treasure*.go,**/magic_item*.go,**/email*.go,**/container*.go,**/equipment*.go,**/weapon*.go,**/*_test.go,**/integration_test/**,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/test_*.*,test-run-script.sh,**/utils/**,**/config/**,**/auth/**,**/contextkeys/**,**/errors/**,**/logger/**,**/middleware/logging.go,**/middleware/recovery.go,**/migrations/**,**/inserts/**,**/user_repository.go,**/user_controller.go,**/web/templates/login.html,**/web/templates/register.html,**/web/templates/ammo.html,**/web/templates/armor.html,**/web/templates/potion.html,**/web/templates/ring.html,**/web/templates/shield.html,**/web/templates/weapon.html,**/web/templates/magic_items.html,**/web/templates/containers.html,**/web/templates/equipment.html,**/web/templates/spell*.html,**/web/static/css/spells_tab.css,**/web/static/js/spells_tab.js,**/web/static/js/notes_tab.js,**/web/static/css/main.css"
-
-repo-combat:
-	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/ammo*,**/armor*,**/treasure*,**/equipment*,**/inventory*,**/spell*,**/magic*,**/potion*,**/ring*,**/container*,**/shield*,**/*test*,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/prepared_spells*,**/spellbook*,**/auth*,**/email*,**/treasure*,**/user*,**/app*,**/logger*,**/errors*,**/contextkeys*,**/migrations/**,**/queries/**,**/sqlc/**,**/api/**,**/docs/**,**/pkg/**,**/cmd/**,**/main.go"
-
-repo-hamburger-menu:
-	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/*_test.go,**/integration_test/**,**/migrations/**,**/sqlc/**,**/bin/**,**/test_logs/**,**/inserts/**,**/*.sql,**/utils/**,**/logger/**,**/errors/**,**/treasure*.go,**/models/**,**/repositories/**,**/services/**,**/pkg/**,**/auth/**,**/contextkeys/**,**/app.go,**/docs/**,**/cmd/**,Makefile,sqlc.yaml,go.sum,go.mod,**/*.db,README.md"
-
-repo-character-stats:
-	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell_scroll*.go,**/container*.go,**/spell*.go,**/treasure*.go,**/inventory*.go,*test*,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/middlewar*.go,**/errors/**,**/logger/**,**/auth*.go,**/contextkeys/**"
-
-repo-settings:
-	repomix --remove-comments --remove-empty-lines \
-		--ignore "**/ammo*.go,**/armor*.go,**/shield*.go,**/ring*.go,**/potion*.go,**/weapon*.go,**/equipment*.go,**/magic_item*.go,**/spell_scroll*.go,**/container*.go,**/spell*.go,**/treasure*.go,**/inventory*.go,**/character_controller.go,**/middleware/*.go,**/auth_controller.go,**/models/character.go,**/models/class_data.go,**/models/spells.go,**/test*,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/migrations/**,**/inserts/**,**/queries/**,**/sqlc/**"
+		--ignore "**/controllers/ammo_controller.go,**/controllers/armor_controller.go,**/controllers/spell_controller.go,**/controllers/shield_controller.go,**/controllers/weapon_controller.go,**/controllers/equipment_controller.go,**/controllers/magic_items_controller.go,**/controllers/potion_controller.go,**/controllers/ring_controller.go,**/controllers/spell_scroll_controller.go,**/controllers/container_controller.go,**/controllers/treasure_controller.go,**/controllers/inventory_controller.go,**/controllers/spell_casting_controller.go,**/controllers/character_controller.go,**/models/ammo.go,**/models/armor.go,**/models/shield.go,**/models/ring.go,**/models/potion.go,**/models/weapon.go,**/models/equipment.go,**/models/magic_items.go,**/models/spell_scrolls.go,**/models/containers.go,**/models/treasure.go,**/models/spell*.go,**/models/class_data.go,**/models/encumbrance.go,**/models/inventory.go,**/models/character.go,**/repositories/ammo_repository.go,**/repositories/armor_repository.go,**/repositories/shield_repository.go,**/repositories/ring_repository.go,**/repositories/potion_repository.go,**/repositories/weapon_repository.go,**/repositories/equipment_repository.go,**/repositories/magic_items_repository.go,**/repositories/spell_scroll_repository.go,**/repositories/container_repository.go,**/repositories/treasure_repository.go,**/repositories/spell_repository.go,**/repositories/character_repository.go,**/repositories/class_repository.go,**/repositories/inventory_repository.go,**/repositories/spell_casting_repository.go,**/services/class_service.go,**/services/encumbrance_service.go,**/services/spell_service.go,**/queries/**,**/*_test.go,**/db/migrations/**,**/db/inserts/**,**/sqlc/**,**/integration_test/**,**/*.log,**/*.db,**/bin/**,**/tmp/**,**/.git/**,**/node_modules/**,**/.DS_Store,**/*.sqlite,**/*.sqlite3,**/test_logs/**,**/web/static/css/spells_tab.css,**/web/static/css/inventory_tab.css,**/web/static/js/spells_tab.js,**/web/static/js/inventory_tab.js,**/web/templates/ammo.html,**/web/templates/armor.html,**/web/templates/potion.html,**/web/templates/ring.html,**/web/templates/shield.html,**/web/templates/weapon.html,**/web/templates/magic_items.html,**/web/templates/containers.html,**/web/templates/equipment.html,**/web/templates/spell*.html,**/web/templates/inventory.html,**/web/templates/character*.html"

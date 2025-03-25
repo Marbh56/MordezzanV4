@@ -9,10 +9,12 @@ import (
 	"mordezzanV4/internal/repositories"
 	"mordezzanV4/internal/services"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/alexedwards/scs/sqlite3store"
+	"github.com/alexedwards/scs/v2"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	_ "github.com/mattn/go-sqlite3"
@@ -60,8 +62,8 @@ type App struct {
 	InventoryController    *controllers.InventoryController
 	SpellCastingController *controllers.SpellCastingController
 
-	Templates *template.Template
-	JWTSecret string
+	Templates      *template.Template
+	SessionManager *scs.SessionManager
 }
 
 func NewApp(dbPath string) (*App, error) {
@@ -100,12 +102,17 @@ func NewApp(dbPath string) (*App, error) {
 	}
 	logger.Debug("Templates loaded successfully")
 
-	// Read JWT secret from environment or use a default for development
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		logger.Warning("JWT_SECRET not set, using default secret for development")
-		jwtSecret = "mordezzan_development_secret_key_not_for_production"
-	}
+	// Set up session manager
+	sessionManager := scs.New()
+	logger.Debug("Setting up session store")
+	sessionManager.Store = sqlite3store.New(db)
+	logger.Debug("Session store initialized")
+	sessionManager.Lifetime = 72 * time.Hour    // 3 days
+	sessionManager.IdleTimeout = 24 * time.Hour // Reset after 1 day of inactivity
+	sessionManager.Cookie.Name = "hyperborea_session"
+	sessionManager.Cookie.HttpOnly = true
+	sessionManager.Cookie.Secure = false // Set to true in production with HTTPS
+	sessionManager.Cookie.SameSite = http.SameSiteLaxMode
 
 	// Initialize repositories
 	userRepo := repositories.NewSQLCUserRepository(db)
@@ -126,8 +133,7 @@ func NewApp(dbPath string) (*App, error) {
 	classRepo := repositories.NewSQLCClassRepository(db)
 	spellCastingRepo := repositories.NewSQLCSpellCastingRepository(db)
 
-	// Initialize services in the correct order to avoid circular dependencies
-
+	// Initialize services
 	classService := services.NewClassService(
 		classRepo,
 		inventoryRepo,
@@ -161,9 +167,10 @@ func NewApp(dbPath string) (*App, error) {
 
 	classService.SetEncumbranceService(encumbranceService)
 
-	// Initialize controllers
+	// Initialize controllers with session manager
+	authController := controllers.NewAuthController(userRepo, tmpl, sessionManager)
 	userController := controllers.NewUserController(userRepo, tmpl)
-	characterController := controllers.NewCharacterController(characterRepo, userRepo, classService, tmpl)
+	characterController := controllers.NewCharacterController(characterRepo, userRepo, classService, tmpl, sessionManager)
 	spellController := controllers.NewSpellController(spellRepo, tmpl)
 	armorController := controllers.NewArmorController(armorRepo, tmpl)
 	weaponController := controllers.NewWeaponController(weaponRepo, tmpl)
@@ -175,7 +182,6 @@ func NewApp(dbPath string) (*App, error) {
 	ammoController := controllers.NewAmmoController(ammoRepo, tmpl)
 	spellScrollController := controllers.NewSpellScrollController(spellScrollRepo, spellRepo, tmpl)
 	containerController := controllers.NewContainerController(containerRepo, tmpl)
-	authController := controllers.NewAuthController(userRepo, tmpl, jwtSecret)
 	treasureController := controllers.NewTreasureController(treasureRepo, characterRepo, tmpl)
 	inventoryController := controllers.NewInventoryController(
 		inventoryRepo,
@@ -220,6 +226,7 @@ func NewApp(dbPath string) (*App, error) {
 
 		ClassService:       classService,
 		EncumbranceService: encumbranceService,
+		SpellService:       spellService,
 
 		UserController:         userController,
 		CharacterController:    characterController,
@@ -239,8 +246,8 @@ func NewApp(dbPath string) (*App, error) {
 		InventoryController:    inventoryController,
 		SpellCastingController: spellCastingController,
 
-		Templates: tmpl,
-		JWTSecret: jwtSecret,
+		Templates:      tmpl,
+		SessionManager: sessionManager,
 	}, nil
 }
 
@@ -248,21 +255,22 @@ func (a *App) SetupRoutes() http.Handler {
 	logger.Debug("Setting up application routes")
 	r := chi.NewRouter()
 
+	// Load and save session data for all routes
+	r.Use(a.SessionManager.LoadAndSave)
+
 	// CORS middleware
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowedHeaders:   []string{"Accept", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
-	// Static files - no auth required
+	// Static files handler
 	r.Get("/static/*", func(w http.ResponseWriter, r *http.Request) {
-		// Set cache control header for static assets
 		w.Header().Set("Cache-Control", "max-age=3600")
-
 		path := strings.TrimPrefix(r.URL.Path, "/static")
 		if path != r.URL.Path {
 			r.URL.Path = path
@@ -270,35 +278,40 @@ func (a *App) SetupRoutes() http.Handler {
 		middleware.CustomFileServer(http.Dir("./web/static")).ServeHTTP(w, r)
 	})
 
-	// Health check endpoint - no auth required
+	// Health check endpoint
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
 
-	// Public routes - no auth required
-	r.Get("/", a.CharacterController.RenderDashboard)
+	// Public routes (no auth required)
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		// If user is authenticated, redirect to dashboard
+		if a.SessionManager.GetBool(r.Context(), "isAuthenticated") {
+			http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+			return
+		}
+		// Otherwise, render the home page
+		a.Templates.ExecuteTemplate(w, "home", nil)
+	})
 
-	// Authentication routes - no auth required
+	// Authentication routes (no auth required)
 	r.Route("/auth", func(r chi.Router) {
 		r.Get("/login-page", a.AuthController.RenderLoginPage)
 		r.Get("/register-page", a.AuthController.RenderRegisterPage)
 		r.Post("/login", a.AuthController.Login)
-		r.Post("/register", a.UserController.CreateUser) // Add route for user registration
+		r.Post("/register", a.AuthController.Register)
+		r.Get("/logout", a.AuthController.Logout)
 	})
 
-	// Configure JWT authentication
-	authConfig := middleware.AuthConfig{
-		JWTSecret: a.JWTSecret,
-		Issuer:    "mordezzanV4",
-	}
-
-	// Create authenticated router for protected routes
+	// Protected routes (auth required)
+	// Create authenticated router group
 	authRouter := chi.NewRouter()
+	authRouter.Use(a.requireAuthentication)
 
-	// Add settings route - ADDED THIS LINE
+	authRouter.Get("/dashboard", a.CharacterController.RenderDashboard)
+
+	// Protected web routes
 	authRouter.Get("/settings", a.UserController.RenderSettingsPage)
-
-	// Protected character view routes
 	authRouter.Get("/characters/create", a.CharacterController.RenderCreateForm)
 	authRouter.Get("/characters/view/{id}", a.CharacterController.RenderCharacterDetail)
 	authRouter.Get("/characters/{id}/edit", a.CharacterController.RenderEditForm)
@@ -315,62 +328,51 @@ func (a *App) SetupRoutes() http.Handler {
 			r.Get("/{id}/characters", a.CharacterController.GetCharactersByUser)
 		})
 
-		// Settings update route - ADDED THIS LINE
+		// Settings route
 		r.Put("/user/settings", a.UserController.UpdateUserSettings)
 
 		// Character routes
 		r.Route("/characters", func(r chi.Router) {
-			// Character collection endpoints
 			r.Get("/", a.CharacterController.ListCharacters)
 			r.Post("/", a.CharacterController.CreateCharacter)
 
-			// Individual character endpoints
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", a.CharacterController.GetCharacter)
 				r.Put("/", a.CharacterController.UpdateCharacter)
 				r.Delete("/", a.CharacterController.DeleteCharacter)
-
-				// Character attribute updates
 				r.Patch("/hp", a.CharacterController.UpdateCharacterHP)
-				r.Post("/modify-hp", a.CharacterController.ModifyCharacterHP) // Used for damage and healing
+				r.Post("/modify-hp", a.CharacterController.ModifyCharacterHP)
 				r.Patch("/xp", a.CharacterController.UpdateCharacterXP)
-
-				// Character data relationships
 				r.Get("/class-data", a.CharacterController.GetCharacterClassData)
 
-				// Encumbrance as a nested resource
+				// Encumbrance routes
 				r.Route("/encumbrance", func(r chi.Router) {
 					r.Get("/", a.InventoryController.GetEncumbranceStatus)
 					r.Post("/recalculate", a.InventoryController.RecalculateEncumbrance)
 					r.Put("/capacity", a.InventoryController.UpdateInventoryCapacity)
 				})
 
-				// Add other character-related resources
+				// Inventory routes
 				r.Route("/inventory", func(r chi.Router) {
 					r.Get("/", a.InventoryController.GetInventoryByCharacter)
 				})
 
+				// Spell routes
 				r.Route("/spells", func(r chi.Router) {
-					// Get all spell info for a character
 					r.Get("/", a.SpellCastingController.GetCharacterSpellsInfo)
-
-					// Known spells management
 					r.Post("/known", a.SpellCastingController.AddKnownSpell)
 					r.Delete("/known/{spellId}", a.SpellCastingController.RemoveKnownSpell)
-
-					// Prepared spells management
 					r.Post("/prepared", a.SpellCastingController.PrepareSpell)
 					r.Delete("/prepared/{spellId}", a.SpellCastingController.UnprepareSpell)
 					r.Delete("/prepared", a.SpellCastingController.ClearPreparedSpells)
 					r.Post("/prepared/all", a.SpellCastingController.PrepareAllSpells)
-
-					// Spell learning
 					r.Get("/learnable", a.SpellCastingController.GetSpellsLearnableOnLevelUp)
 					r.Post("/initial", a.SpellCastingController.AddInitialSpellsForNewCharacter)
 				})
 			})
 		})
 
+		// Game data routes
 		r.Route("/spells", func(r chi.Router) {
 			r.Get("/", a.SpellController.ListSpells)
 			r.Post("/", a.SpellController.CreateSpell)
@@ -482,8 +484,8 @@ func (a *App) SetupRoutes() http.Handler {
 		})
 	})
 
-	// Mount the authenticated router under JWT middleware
-	r.Mount("/", middleware.JWTAuthMiddleware(authConfig)(authRouter))
+	// Mount authenticated router
+	r.Mount("/", authRouter)
 
 	// Apply recovery and logging middleware
 	handler := middleware.RecoveryMiddleware(
@@ -492,6 +494,48 @@ func (a *App) SetupRoutes() http.Handler {
 
 	logger.Info("Routes set up successfully")
 	return handler
+}
+
+// Authentication middleware
+func (a *App) requireAuthentication(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if user is authenticated
+		userID := a.SessionManager.GetInt64(r.Context(), "userID")
+		if userID == 0 {
+			// Check if it's an API request or browser request
+			if strings.HasPrefix(r.URL.Path, "/api/") {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			} else {
+				http.Redirect(w, r, "/auth/login-page", http.StatusSeeOther)
+			}
+			return
+		}
+
+		// Add isAuthenticated flag to the request context for templates
+		ctx := r.Context()
+		a.SessionManager.Put(ctx, "isAuthenticated", true)
+
+		// User is authenticated, continue
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Add context data for templates
+func (a *App) addContextData(r *http.Request) map[string]interface{} {
+	data := make(map[string]interface{})
+	data["IsAuthenticated"] = a.SessionManager.GetBool(r.Context(), "isAuthenticated")
+
+	if data["IsAuthenticated"].(bool) {
+		userID := a.SessionManager.GetInt64(r.Context(), "userID")
+		if userID > 0 {
+			user, err := a.UserRepository.GetUser(r.Context(), userID)
+			if err == nil {
+				data["User"] = user
+			}
+		}
+	}
+
+	return data
 }
 
 func (a *App) Shutdown() {

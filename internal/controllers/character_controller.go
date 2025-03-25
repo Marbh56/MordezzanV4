@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"mordezzanV4/internal/contextkeys"
 	apperrors "mordezzanV4/internal/errors"
 	"mordezzanV4/internal/logger"
 	"mordezzanV4/internal/models"
@@ -14,15 +13,17 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/go-chi/chi"
 )
 
 type CharacterController struct {
-	repo          repositories.CharacterRepository
-	userRepo      repositories.UserRepository
-	characterRepo repositories.CharacterRepository
-	classService  *services.ClassService
-	Templates     *template.Template
+	repo           repositories.CharacterRepository
+	userRepo       repositories.UserRepository
+	characterRepo  repositories.CharacterRepository
+	classService   *services.ClassService
+	Templates      *template.Template
+	sessionManager *scs.SessionManager
 }
 
 type UpdateHPInput struct {
@@ -31,12 +32,13 @@ type UpdateHPInput struct {
 	TemporaryHitPoints int `json:"temporary_hit_points"`
 }
 
-func NewCharacterController(repo repositories.CharacterRepository, userRepo repositories.UserRepository, classService *services.ClassService, tmpl *template.Template) *CharacterController {
+func NewCharacterController(repo repositories.CharacterRepository, userRepo repositories.UserRepository, classService *services.ClassService, tmpl *template.Template, sessionManager *scs.SessionManager) *CharacterController {
 	return &CharacterController{
-		repo:         repo,
-		userRepo:     userRepo,
-		classService: classService,
-		Templates:    tmpl,
+		repo:           repo,
+		userRepo:       userRepo,
+		classService:   classService,
+		Templates:      tmpl,
+		sessionManager: sessionManager,
 	}
 }
 
@@ -334,22 +336,7 @@ func (c *CharacterController) handleError(w http.ResponseWriter, err error, stat
 }
 
 func (c *CharacterController) RenderDashboard(w http.ResponseWriter, r *http.Request) {
-	// Check if user is authenticated
-	userID, ok := r.Context().Value(contextkeys.UserIDKey).(int64)
-
-	// If not authenticated, render the home page instead of dashboard
-	if !ok {
-		data := map[string]interface{}{
-			"IsAuthenticated": false,
-		}
-
-		err := c.Templates.ExecuteTemplate(w, "home", data)
-		if err != nil {
-			c.handleError(w, err, http.StatusInternalServerError)
-			return
-		}
-		return
-	}
+	userID := c.sessionManager.GetInt64(r.Context(), "userID")
 
 	// Fetch the user
 	user, err := c.userRepo.GetUser(r.Context(), userID)

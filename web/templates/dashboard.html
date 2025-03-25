@@ -1,0 +1,75 @@
+{{define "dashboard"}}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperborea - Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <h1>HYPERBOREA</h1>
+            </div>
+            <div class="nav-menu">
+                <span class="welcome-message">Welcome, {{.User.Username}}</span>
+                <a href="/settings" class="nav-link">Settings</a>
+                <a href="/auth/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h2>Your Characters</h2>
+                <a href="/characters/create" class="btn btn-primary">
+                    <span class="icon">+</span> Create Character
+                </a>
+            </div>
+
+            {{if .Characters}}
+            <div class="character-grid">
+                {{range .Characters}}
+                <div class="character-card">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <h3>{{.Name}}</h3>
+                            <span class="level-badge">Level {{.Level}}</span>
+                        </div>
+                        <p class="card-subtitle">{{.Race}} {{.Class}}</p>
+                        <div class="character-stats">
+                            <div class="stat hp">
+                                <span>HP: {{.CurrentHP}}/{{.MaxHP}}</span>
+                            </div>
+                            <div class="stat xp">
+                                <span>XP: {{.XP}}</span>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <a href="/characters/view/{{.ID}}" class="btn btn-link">View Details</a>
+                            <a href="/characters/{{.ID}}/edit" class="btn btn-link">Edit</a>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+            {{else}}
+            <div class="empty-state">
+                <p class="empty-title">You don't have any characters yet.</p>
+                <p class="empty-description">Create your first character to begin your adventure in Hyperborea.</p>
+                <a href="/characters/create" class="btn btn-primary">Create Your First Character</a>
+            </div>
+            {{end}}
+        </div>
+    </main>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+
+</html>
+{{end}}

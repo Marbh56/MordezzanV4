@@ -3,10 +3,10 @@ module mordezzanV4
 go 1.24.0
 
 require (
+	github.com/alexedwards/scs/sqlite3store v0.0.0-20250212122300-421ef1d8611c
+	github.com/alexedwards/scs/v2 v2.8.0
 	github.com/go-chi/chi v1.5.5
 	github.com/go-chi/cors v1.2.1
-	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.24
