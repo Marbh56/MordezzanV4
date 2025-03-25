@@ -18,7 +18,6 @@ import (
 )
 
 type CharacterController struct {
-	repo           repositories.CharacterRepository
 	userRepo       repositories.UserRepository
 	characterRepo  repositories.CharacterRepository
 	classService   *services.ClassService
@@ -34,7 +33,7 @@ type UpdateHPInput struct {
 
 func NewCharacterController(repo repositories.CharacterRepository, userRepo repositories.UserRepository, classService *services.ClassService, tmpl *template.Template, sessionManager *scs.SessionManager) *CharacterController {
 	return &CharacterController{
-		repo:           repo,
+		characterRepo:  repo,
 		userRepo:       userRepo,
 		classService:   classService,
 		Templates:      tmpl,
@@ -113,14 +112,14 @@ func (c *CharacterController) RenderCharacterDetail(w http.ResponseWriter, r *ht
 			NextLevelExperience: nextLevelExp,
 			ExperienceNeeded:    nextLevelExp - character.ExperiencePoints,
 		}
-		err = c.Templates.ExecuteTemplate(w, "character_detail.html", data)
+		err = c.Templates.ExecuteTemplate(w, "character_detail", data)
 		if err != nil {
 			apperrors.HandleError(w, apperrors.NewInternalError(err))
 		}
 		return
 	}
 
-	err = c.Templates.ExecuteTemplate(w, "character_detail.html", character)
+	err = c.Templates.ExecuteTemplate(w, "character_detail", character)
 	if err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 	}
@@ -346,7 +345,7 @@ func (c *CharacterController) RenderDashboard(w http.ResponseWriter, r *http.Req
 	}
 
 	// Fetch the user's characters
-	characters, err := c.repo.GetCharactersByUser(r.Context(), userID)
+	characters, err := c.characterRepo.GetCharactersByUser(r.Context(), userID)
 	if err != nil {
 		c.handleError(w, err, http.StatusInternalServerError)
 		return
@@ -369,7 +368,7 @@ func (c *CharacterController) RenderDashboard(w http.ResponseWriter, r *http.Req
 }
 
 func (c *CharacterController) RenderCreateForm(w http.ResponseWriter, r *http.Request) {
-	err := c.Templates.ExecuteTemplate(w, "character_create.html", nil)
+	err := c.Templates.ExecuteTemplate(w, "character_create", nil)
 	if err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 		return

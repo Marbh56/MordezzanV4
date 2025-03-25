@@ -1,0 +1,446 @@
+{{define "character_detail"}}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Name}} - Hyperborea</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .character-sheet {
+            background-color: var(--card-background);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .character-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .character-name {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .character-meta {
+            font-size: 1.1rem;
+            color: #999;
+        }
+
+        .character-stats {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-block {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-block h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .hp-stat .stat-value {
+            color: #ff7675;
+        }
+
+        .xp-stat .stat-value {
+            color: #74b9ff;
+        }
+
+        .stat-actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-btn {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-background);
+            color: var(--text-color);
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .stat-btn:hover {
+            background-color: var(--primary-color);
+            color: black;
+        }
+
+        .damage-btn {
+            border-color: #ff7675;
+            color: #ff7675;
+        }
+
+        .damage-btn:hover {
+            background-color: #ff7675;
+            color: white;
+        }
+
+        .heal-btn {
+            border-color: #4caf50;
+            color: #4caf50;
+        }
+
+        .heal-btn:hover {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .tabs {
+            margin-top: 2rem;
+        }
+
+        .tab-nav {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            position: relative;
+            font-size: 1rem;
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .attributes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .attribute-block {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .attribute-name {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 0.5rem;
+        }
+
+        .attribute-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .attribute-modifier {
+            font-size: 0.9rem;
+            color: #999;
+            margin-top: 0.25rem;
+        }
+
+        .attribute-test {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 0.25rem;
+            border-top: 1px dotted rgba(255, 255, 255, 0.1);
+            padding-top: 0.25rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-background);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        .modal-form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <div class="container">
+            <h1>Hyperborea</h1>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/settings" class="nav-link">Settings</a>
+                <a href="/auth/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="page-header">
+                <h1>Character Sheet</h1>
+                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+
+            <div class="character-sheet">
+                <div class="character-header">
+                    <div>
+                        <h1 class="character-name">{{.Name}}</h1>
+                        <div class="character-meta">Level {{.Level}} {{.Class}}</div>
+                    </div>
+                    <div>
+                        <a href="/characters/{{.ID}}/edit" class="btn btn-secondary">Edit Character</a>
+                    </div>
+                </div>
+
+                <div class="character-stats">
+                    <div class="stat-block hp-stat">
+                        <h3>Hit Points</h3>
+                        <div class="stat-value">{{.CurrentHitPoints}}/{{.MaxHitPoints}}</div>
+                        {{if gt .TemporaryHitPoints 0}}
+                        <div class="temp-hp">+{{.TemporaryHitPoints}} temp</div>
+                        {{end}}
+                        <div class="stat-actions">
+                            <button class="stat-btn damage-btn" id="takeDamageBtn">-</button>
+                            <button class="stat-btn heal-btn" id="healBtn">+</button>
+                        </div>
+                    </div>
+                    <div class="stat-block xp-stat">
+                        <h3>Experience</h3>
+                        <div class="stat-value">{{.ExperiencePoints}}</div>
+                        {{if .ExperienceNeeded}}
+                        <div>{{.ExperienceNeeded}} to next level</div>
+                        {{end}}
+                        <div class="stat-actions">
+                            <button class="stat-btn" id="addXpBtn">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab-nav">
+                        <button class="tab-button active" data-tab="attributes">Attributes</button>
+                        <button class="tab-button" data-tab="combat">Combat</button>
+                        <button class="tab-button" data-tab="abilities">Abilities</button>
+                    </div>
+
+                    <div id="attributes" class="tab-content active">
+                        <div class="attributes-grid">
+                            <div class="attribute-block">
+                                <div class="attribute-name">Strength</div>
+                                <div class="attribute-value">{{.Strength}}</div>
+                                <div class="attribute-modifier">
+                                    {{if gt .MeleeModifier 0}}+{{end}}{{.MeleeModifier}} to hit /
+                                    {{if gt .DamageAdjustment 0}}+{{end}}{{.DamageAdjustment}} damage
+                                </div>
+                                <div class="attribute-test">
+                                    Test: {{.StrengthTest}} /
+                                    Extraordinary: {{.ExtraStrengthFeat}}
+                                </div>
+                            </div>
+                            <div class="attribute-block">
+                                <div class="attribute-name">Dexterity</div>
+                                <div class="attribute-value">{{.Dexterity}}</div>
+                                <div class="attribute-modifier">
+                                    {{if gt .RangedModifier 0}}+{{end}}{{.RangedModifier}} ranged /
+                                    {{if gt .DefenceAdjustment 0}}+{{end}}{{.DefenceAdjustment}} AC
+                                </div>
+                                <div class="attribute-test">
+                                    Test: {{.DexterityTest}} /
+                                    Extraordinary: {{.ExtraDexterityFeat}}
+                                </div>
+                            </div>
+                            <div class="attribute-block">
+                                <div class="attribute-name">Constitution</div>
+                                <div class="attribute-value">{{.Constitution}}</div>
+                                <div class="attribute-modifier">
+                                    {{if gt .HPModifier 0}}+{{end}}{{.HPModifier}} HP /
+                                    Survival {{.TraumaSurvival}}
+                                </div>
+                                <div class="attribute-test">
+                                    Test: {{.ConstitutionTest}} /
+                                    Extraordinary: {{.ExtraConstitutionFeat}}
+                                </div>
+                            </div>
+                            <div class="attribute-block">
+                                <div class="attribute-name">Intelligence</div>
+                                <div class="attribute-value">{{.Intelligence}}</div>
+                                <div class="attribute-modifier">
+                                    Languages: {{.LanguageModifier}}
+                                </div>
+                                <div class="attribute-test">
+                                    Magician's Bonus: {{.MagiciansBonus}} /
+                                    Chance: {{.MagiciansChance}}
+                                </div>
+                            </div>
+                            <div class="attribute-block">
+                                <div class="attribute-name">Wisdom</div>
+                                <div class="attribute-value">{{.Wisdom}}</div>
+                                <div class="attribute-modifier">
+                                    Willpower: {{if gt .WillpowerModifier 0}}+{{end}}{{.WillpowerModifier}}
+                                </div>
+                                <div class="attribute-test">
+                                    Cleric Bonus: {{.ClericBonus}} /
+                                    Chance: {{.ClericChance}}
+                                </div>
+                            </div>
+                            <div class="attribute-block">
+                                <div class="attribute-name">Charisma</div>
+                                <div class="attribute-value">{{.Charisma}}</div>
+                                <div class="attribute-modifier">
+                                    Reaction: {{if gt .ReactionModifier 0}}+{{end}}{{.ReactionModifier}} /
+                                    Followers: {{.MaxFollowers}}
+                                </div>
+                                <div class="attribute-test">
+                                    Undead Turning: {{if gt .UndeadTurningModifier 0}}+{{end}}{{.UndeadTurningModifier}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="combat" class="tab-content">
+                        <h2>Combat Stats</h2>
+                        <p>Combat tab content will go here.</p>
+                    </div>
+
+                    <div id="abilities" class="tab-content">
+                        <h2>Character Abilities</h2>
+                        <p>Abilities tab content will go here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Damage/Healing Modal -->
+    <div id="hpModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="hpModalTitle">Modify Hit Points</h2>
+            <form id="hpForm">
+                <div class="modal-form-group">
+                    <label for="hpAmount">Amount</label>
+                    <input type="number" id="hpAmount" name="hpAmount" min="1" value="1" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="tempHP">
+                        <input type="checkbox" id="tempHP" name="tempHP">
+                        Apply to temporary HP
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelHpBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="confirmHpBtn">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- XP Modal -->
+    <div id="xpModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">Add Experience Points</h2>
+            <form id="xpForm">
+                <div class="modal-form-group">
+                    <label for="xpAmount">Amount</label>
+                    <input type="number" id="xpAmount" name="xpAmount" min="1" value="100" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelXpBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/character_detail.js"></script>
+</body>
+
+</html>
+{{end}}
