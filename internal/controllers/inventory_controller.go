@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"html/template"
@@ -119,53 +120,64 @@ func (c *InventoryController) GetInventoryByCharacter(w http.ResponseWriter, r *
 		return
 	}
 
-	// Check if character exists
+	// Verify character exists first
 	_, err = c.characterRepo.GetCharacter(r.Context(), characterID)
 	if err != nil {
 		apperrors.HandleError(w, err)
 		return
 	}
 
+	// Try to get inventory
 	inventory, err := c.inventoryRepo.GetInventoryByCharacter(r.Context(), characterID)
 	if err != nil {
-		if apperrors.IsNotFound(err) {
-			// If inventory doesn't exist, create a default one
+		// Log the exact error to help diagnose the issue
+		logger.Debug("GetInventoryByCharacter error: %v (type %T)", err, err)
+
+		// Check for SQL no rows error specifically
+		if errors.Is(err, sql.ErrNoRows) || apperrors.IsNotFound(err) {
+			// Create a new inventory for this character
+			logger.Info("Creating new inventory for character %d", characterID)
 			input := &models.CreateInventoryInput{
 				CharacterID: characterID,
-				MaxWeight:   100.0, // Default max weight
+				MaxWeight:   100.0, // Default capacity
 			}
 			inventoryID, err := c.inventoryRepo.CreateInventory(r.Context(), input)
 			if err != nil {
+				logger.Error("Failed to create inventory: %v", err)
 				apperrors.HandleError(w, err)
 				return
 			}
+
+			// Get the newly created inventory
 			inventory, err = c.inventoryRepo.GetInventory(r.Context(), inventoryID)
 			if err != nil {
+				logger.Error("Failed to retrieve new inventory: %v", err)
 				apperrors.HandleError(w, err)
 				return
 			}
 		} else {
+			// Handle other errors
+			logger.Error("Unexpected error getting inventory: %v", err)
 			apperrors.HandleError(w, err)
 			return
 		}
 	}
 
-	// Enrich inventory items with details
+	// Get inventory items and enrich them
 	enrichedItems, err := c.enrichInventoryItems(r.Context(), inventory.Items)
 	if err != nil {
 		logger.Error("Failed to enrich inventory items: %v", err)
 	}
 
-	// Include any treasure for this character
+	// Get treasure if available
 	if c.treasureRepo != nil {
 		treasure, err := c.treasureRepo.GetTreasureByCharacter(r.Context(), characterID)
 		if err == nil && treasure != nil {
-			// Only add if we successfully found treasure
 			inventory.Treasure = treasure
 		}
 	}
 
-	// Get encumbrance information if service is available
+	// Get encumbrance details if the service is available
 	var encumbranceDetails *models.InventoryWeightDetails
 	if c.encumbranceService != nil {
 		encumbranceDetails, err = c.encumbranceService.GetCharacterEncumbrance(r.Context(), characterID)
@@ -174,11 +186,9 @@ func (c *InventoryController) GetInventoryByCharacter(w http.ResponseWriter, r *
 		}
 	}
 
-	// Set inventory max weight based on character's encumbrance thresholds
+	// Update inventory max weight if encumbrance service provided a capacity
 	if encumbranceDetails != nil && encumbranceDetails.Thresholds.MaximumCapacity > 0 {
 		maxCapacity := encumbranceDetails.Thresholds.MaximumCapacity
-
-		// Update the inventory's max weight if it differs
 		if inventory.MaxWeight != maxCapacity {
 			updateInput := &models.UpdateInventoryInput{
 				MaxWeight: &maxCapacity,
@@ -190,6 +200,7 @@ func (c *InventoryController) GetInventoryByCharacter(w http.ResponseWriter, r *
 		}
 	}
 
+	// Send the response
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"inventory":   inventory,

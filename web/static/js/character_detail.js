@@ -1,27 +1,20 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Tab switching
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
-
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const tabId = button.getAttribute('data-tab');
-            
-            // Remove active class from all buttons and contents
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Add active class to current button and content
             button.classList.add('active');
             document.getElementById(tabId).classList.add('active');
         });
     });
 
-    // Get character ID from the URL
     const pathSegments = window.location.pathname.split('/');
     const characterId = pathSegments[pathSegments.indexOf('view') + 1];
 
-    // HP Modal handling
+    // HP Modal functionality
     const hpModal = document.getElementById('hpModal');
     const takeDamageBtn = document.getElementById('takeDamageBtn');
     const healBtn = document.getElementById('healBtn');
@@ -41,11 +34,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (takeDamageBtn) {
         takeDamageBtn.addEventListener('click', () => openHpModal(false));
     }
-    
+
     if (healBtn) {
         healBtn.addEventListener('click', () => openHpModal(true));
     }
-    
+
     if (cancelHpBtn) {
         cancelHpBtn.addEventListener('click', () => {
             hpModal.style.display = 'none';
@@ -57,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const amount = parseInt(document.getElementById('hpAmount').value);
             const temp = document.getElementById('tempHP').checked;
-            
+
             if (amount <= 0) {
                 alert('Please enter a positive number');
                 return;
@@ -80,10 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 const data = await response.json();
-                // Update the UI with new HP values
+
                 const hpStatValue = document.querySelector('.hp-stat .stat-value');
                 hpStatValue.textContent = `${data.current_hit_points}/${data.max_hit_points}`;
-                
+
                 const tempHpElement = document.querySelector('.temp-hp');
                 if (data.temporary_hit_points > 0) {
                     if (tempHpElement) {
@@ -106,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // XP Modal handling
+    // XP Modal functionality
     const xpModal = document.getElementById('xpModal');
     const addXpBtn = document.getElementById('addXpBtn');
     const cancelXpBtn = document.getElementById('cancelXpBtn');
@@ -128,14 +121,13 @@ document.addEventListener('DOMContentLoaded', function() {
         xpForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseInt(document.getElementById('xpAmount').value);
-            
+
             if (amount <= 0) {
                 alert('Please enter a positive number');
                 return;
             }
 
             try {
-                // Get current XP from the display
                 const xpElement = document.querySelector('.xp-stat .stat-value');
                 const currentXp = parseInt(xpElement.textContent);
                 const newXp = currentXp + amount;
@@ -155,26 +147,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 const data = await response.json();
-                // Update the UI with new XP values
                 xpElement.textContent = data.experience_points;
-                
-                // Check for level up
+
                 const levelElement = document.querySelector('.character-meta');
                 const currentLevel = parseInt(levelElement.textContent.match(/Level (\d+)/)[1]);
-                
+
                 if (data.level > currentLevel) {
                     alert(`Congratulations! You've reached level ${data.level}!`);
-                    // Update level display without reloading
                     levelElement.textContent = levelElement.textContent.replace(
-                        `Level ${currentLevel}`, 
+                        `Level ${currentLevel}`,
                         `Level ${data.level}`
                     );
-                    
-                    // Refresh the page to update all level-dependent abilities
                     location.reload();
                 }
 
-                // Update XP needed for next level if displayed
                 const xpNeededElement = document.querySelector('.xp-stat div:not(.stat-value):not(.stat-actions)');
                 if (xpNeededElement && data.next_level_experience) {
                     const xpNeeded = data.next_level_experience - data.experience_points;
@@ -198,4 +184,78 @@ document.addEventListener('DOMContentLoaded', function() {
             xpModal.style.display = 'none';
         }
     });
+
+    // Class Abilities functionality
+    const fetchAbilities = async () => {
+        const abilitiesTab = document.getElementById('abilities');
+        
+        try {
+            const response = await fetch(`/api/characters/${characterId}/class-data`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch character abilities');
+            }
+            
+            const data = await response.json();
+            renderAbilities(data);
+        } catch (error) {
+            console.error('Error:', error);
+            abilitiesTab.innerHTML = `
+                <div class="error-message">
+                    Failed to load character abilities: ${error.message}
+                </div>
+            `;
+        }
+    };
+    
+    const renderAbilities = (classData) => {
+        const abilitiesTab = document.getElementById('abilities');
+        
+        if (!classData || !classData.current_level_data || !classData.current_level_data.abilities || 
+            classData.current_level_data.abilities.length === 0) {
+            abilitiesTab.innerHTML = `
+                <div class="empty-state">
+                    <h3 class="empty-title">No Abilities Found</h3>
+                    <p class="empty-description">This character class doesn't have any special abilities at the current level.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const abilities = classData.current_level_data.abilities;
+        
+        let abilitiesHTML = `
+            <h2>Class Abilities</h2>
+            <div class="abilities-container">
+        `;
+        
+        abilities.forEach(ability => {
+            abilitiesHTML += `
+                <div class="ability-card">
+                    <h3 class="ability-name">${ability.name}</h3>
+                    <div class="ability-description">${ability.description}</div>
+                    <div class="ability-level">Available from Level ${ability.min_level}</div>
+                </div>
+            `;
+        });
+        
+        abilitiesHTML += `</div>`;
+        abilitiesTab.innerHTML = abilitiesHTML;
+    };
+    
+    // Fetch abilities when abilities tab is clicked
+    const abilitiesButton = document.querySelector('.tab-button[data-tab="abilities"]');
+    if (abilitiesButton) {
+        abilitiesButton.addEventListener('click', () => {
+            // Only fetch if not already loaded
+            const abilitiesTab = document.getElementById('abilities');
+            if (abilitiesTab.querySelector('.loading-container')) {
+                fetchAbilities();
+            }
+        });
+        
+        // Also fetch abilities if it's the initial active tab
+        if (abilitiesButton.classList.contains('active')) {
+            fetchAbilities();
+        }
+    }
 });

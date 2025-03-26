@@ -352,11 +352,6 @@ func (a *App) SetupRoutes() http.Handler {
 					r.Put("/capacity", a.InventoryController.UpdateInventoryCapacity)
 				})
 
-				// Inventory routes
-				r.Route("/inventory", func(r chi.Router) {
-					r.Get("/", a.InventoryController.GetInventoryByCharacter)
-				})
-
 				// Spell routes
 				r.Route("/spells", func(r chi.Router) {
 					r.Get("/", a.SpellCastingController.GetCharacterSpellsInfo)

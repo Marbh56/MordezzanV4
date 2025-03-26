@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Name}} - Hyperborea</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/inventory_tab.css">
     <style>
         .character-sheet {
             background-color: var(--card-background);
@@ -247,6 +248,75 @@
                 opacity: 1;
             }
         }
+
+        .abilities-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .ability-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border-left: 3px solid var(--primary-color);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .ability-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .ability-name {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .ability-description {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        .ability-level {
+            font-size: 0.85rem;
+            color: #999;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 0.75rem;
+        }
+
+        .empty-state {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .empty-title {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-description {
+            color: #999;
+        }
+
+        .error-message {
+            background-color: rgba(255, 77, 77, 0.1);
+            border-left: 3px solid rgba(255, 77, 77, 0.7);
+            padding: 1.5rem;
+            border-radius: 8px;
+            color: #ff6b6b;
+        }
+
+        .temp-hp {
+            font-size: 0.9rem;
+            color: #4caf50;
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 
@@ -261,14 +331,12 @@
             </div>
         </div>
     </div>
-
     <div class="container">
         <div class="main-content">
             <div class="page-header">
                 <h1>Character Sheet</h1>
                 <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
             </div>
-
             <div class="character-sheet">
                 <div class="character-header">
                     <div>
@@ -279,7 +347,6 @@
                         <a href="/characters/{{.ID}}/edit" class="btn btn-secondary">Edit Character</a>
                     </div>
                 </div>
-
                 <div class="character-stats">
                     <div class="stat-block hp-stat">
                         <h3>Hit Points</h3>
@@ -303,14 +370,13 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="tabs">
                     <div class="tab-nav">
                         <button class="tab-button active" data-tab="attributes">Attributes</button>
                         <button class="tab-button" data-tab="combat">Combat</button>
+                        <button class="tab-button" data-tab="inventory">Inventory</button>
                         <button class="tab-button" data-tab="abilities">Abilities</button>
                     </div>
-
                     <div id="attributes" class="tab-content active">
                         <div class="attributes-grid">
                             <div class="attribute-block">
@@ -384,22 +450,24 @@
                             </div>
                         </div>
                     </div>
-
                     <div id="combat" class="tab-content">
                         <h2>Combat Stats</h2>
                         <p>Combat tab content will go here.</p>
                     </div>
-
+                    <div id="inventory" class="tab-content">
+                        <!-- Inventory tab content will be populated by JavaScript -->
+                    </div>
                     <div id="abilities" class="tab-content">
-                        <h2>Character Abilities</h2>
-                        <p>Abilities tab content will go here.</p>
+                        <div class="loading-container">
+                            <div class="loading-spinner"></div>
+                            <p>Loading class abilities...</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Damage/Healing Modal -->
     <div id="hpModal" class="modal">
         <div class="modal-content">
             <h2 class="modal-title" id="hpModalTitle">Modify Hit Points</h2>
@@ -422,7 +490,6 @@
         </div>
     </div>
 
-    <!-- XP Modal -->
     <div id="xpModal" class="modal">
         <div class="modal-content">
             <h2 class="modal-title">Add Experience Points</h2>
@@ -439,7 +506,47 @@
         </div>
     </div>
 
+    <!-- Inventory Modal -->
+    <div id="inventoryModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">Add Item</h2>
+            <form id="inventoryForm">
+                <div class="modal-form-group">
+                    <label for="itemType">Item Type</label>
+                    <select id="itemType" name="itemType" required>
+                        <option value="" disabled selected>Select Item Type</option>
+                        <option value="weapon">Weapon</option>
+                        <option value="armor">Armor</option>
+                        <option value="shield">Shield</option>
+                        <option value="potion">Potion</option>
+                        <option value="magic_item">Magic Item</option>
+                        <option value="ring">Ring</option>
+                        <option value="ammo">Ammunition</option>
+                        <option value="spell_scroll">Spell Scroll</option>
+                        <option value="container">Container</option>
+                        <option value="equipment">Equipment</option>
+                    </select>
+                </div>
+                <div class="modal-form-group">
+                    <label for="itemId">Item</label>
+                    <select id="itemId" name="itemId" required>
+                        <option value="" disabled selected>Select Item Type First</option>
+                    </select>
+                </div>
+                <div class="modal-form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" name="quantity" min="1" value="1" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelInventoryBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/static/js/character_detail.js"></script>
+    <script src="/static/js/inventory_tab.js"></script>
 </body>
 
 </html>

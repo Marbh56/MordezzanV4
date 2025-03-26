@@ -382,9 +382,8 @@ func (c *CharacterController) RenderEditForm(w http.ResponseWriter, r *http.Requ
 		apperrors.HandleError(w, apperrors.NewBadRequest(fmt.Sprintf("Invalid character ID: %s", idParam)))
 		return
 	}
-
-	// Verify the character exists
-	_, err = c.characterRepo.GetCharacter(r.Context(), id)
+	
+	character, err := c.characterRepo.GetCharacter(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
 			http.Error(w, "Character not found", http.StatusNotFound)
@@ -393,9 +392,14 @@ func (c *CharacterController) RenderEditForm(w http.ResponseWriter, r *http.Requ
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 		return
 	}
-
-	// Render the edit form template
-	err = c.Templates.ExecuteTemplate(w, "character_edit.html", nil)
+	
+	// Add user data to the template context
+	data := map[string]interface{}{
+		"Character": character,
+		"IsEdit":    true,
+	}
+	
+	err = c.Templates.ExecuteTemplate(w, "character_create", data)
 	if err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 		return

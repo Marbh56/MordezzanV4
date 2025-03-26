@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Character - Hyperborea</title>
+    <title>{{if .IsEdit}}Edit{{else}}Create{{end}} Character - Hyperborea</title>
     <link rel="stylesheet" href="/static/css/styles.css">
     <style>
         .attributes-grid {
@@ -44,106 +44,130 @@
             </div>
         </div>
     </div>
-
     <div class="container">
         <div class="main-content">
             <div class="page-header">
-                <h1>Create New Character</h1>
+                <h1>{{if .IsEdit}}Edit{{else}}Create New{{end}} Character</h1>
                 <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
             </div>
-
             <div class="card-content">
-                <form id="createCharacterForm" class="character-form">
+                <form id="characterForm" class="character-form">
+                    {{if .IsEdit}}<input type="hidden" id="characterId" value="{{.Character.ID}}">{{end}}
                     <div class="form-group">
                         <label for="name">Character Name</label>
-                        <input type="text" id="name" name="name" required>
+                        <input type="text" id="name" name="name" required
+                            value="{{if .IsEdit}}{{.Character.Name}}{{end}}">
                     </div>
-
                     <div class="form-group">
                         <label for="class">Character Class</label>
                         <select id="class" name="class" required>
-                            <option value="" disabled selected>Select a class</option>
-                            <option value="Fighter">Fighter</option>
-                            <option value="Magician">Magician</option>
-                            <option value="Cleric">Cleric</option>
-                            <option value="Thief">Thief</option>
-                            <option value="Barbarian">Barbarian</option>
-                            <option value="Berserker">Berserker</option>
-                            <option value="Cataphract">Cataphract</option>
-                            <option value="Huntsman">Huntsman</option>
-                            <option value="Paladin">Paladin</option>
-                            <option value="Ranger">Ranger</option>
-                            <option value="Warlock">Warlock</option>
-                            <option value="Cryomancer">Cryomancer</option>
-                            <option value="Illusionist">Illusionist</option>
-                            <option value="Necromancer">Necromancer</option>
-                            <option value="Pyromancer">Pyromancer</option>
-                            <option value="Witch">Witch</option>
-                            <option value="Druid">Druid</option>
-                            <option value="Monk">Monk</option>
-                            <option value="Priest">Priest</option>
-                            <option value="Runegraver">Runegraver</option>
-                            <option value="Shaman">Shaman</option>
-                            <option value="Assassin">Assassin</option>
-                            <option value="Bard">Bard</option>
-                            <option value="Legerdemainist">Legerdemainist</option>
-                            <option value="Purloiner">Purloiner</option>
-                            <option value="Scout">Scout</option>
+                            <option value="" disabled {{if not .IsEdit}}selected{{end}}>Select a class</option>
+                            <option value="Fighter" {{if eq .Character.Class "Fighter" }}selected{{end}}>Fighter
+                            </option>
+                            <option value="Magician" {{if eq .Character.Class "Magician" }}selected{{end}}>Magician
+                            </option>
+                            <option value="Cleric" {{if eq .Character.Class "Cleric" }}selected{{end}}>Cleric</option>
+                            <option value="Thief" {{if eq .Character.Class "Thief" }}selected{{end}}>Thief</option>
+                            <option value="Barbarian" {{if eq .Character.Class "Barbarian" }}selected{{end}}>Barbarian
+                            </option>
+                            <option value="Berserker" {{if eq .Character.Class "Berserker" }}selected{{end}}>Berserker
+                            </option>
+                            <option value="Cataphract" {{if eq .Character.Class "Cataphract" }}selected{{end}}>
+                                Cataphract</option>
+                            <option value="Huntsman" {{if eq .Character.Class "Huntsman" }}selected{{end}}>Huntsman
+                            </option>
+                            <option value="Paladin" {{if eq .Character.Class "Paladin" }}selected{{end}}>Paladin
+                            </option>
+                            <option value="Ranger" {{if eq .Character.Class "Ranger" }}selected{{end}}>Ranger</option>
+                            <option value="Warlock" {{if eq .Character.Class "Warlock" }}selected{{end}}>Warlock
+                            </option>
+                            <option value="Cryomancer" {{if eq .Character.Class "Cryomancer" }}selected{{end}}>
+                                Cryomancer</option>
+                            <option value="Illusionist" {{if eq .Character.Class "Illusionist" }}selected{{end}}>
+                                Illusionist</option>
+                            <option value="Necromancer" {{if eq .Character.Class "Necromancer" }}selected{{end}}>
+                                Necromancer</option>
+                            <option value="Pyromancer" {{if eq .Character.Class "Pyromancer" }}selected{{end}}>
+                                Pyromancer</option>
+                            <option value="Witch" {{if eq .Character.Class "Witch" }}selected{{end}}>Witch</option>
+                            <option value="Druid" {{if eq .Character.Class "Druid" }}selected{{end}}>Druid</option>
+                            <option value="Monk" {{if eq .Character.Class "Monk" }}selected{{end}}>Monk</option>
+                            <option value="Priest" {{if eq .Character.Class "Priest" }}selected{{end}}>Priest</option>
+                            <option value="Runegraver" {{if eq .Character.Class "Runegraver" }}selected{{end}}>
+                                Runegraver</option>
+                            <option value="Shaman" {{if eq .Character.Class "Shaman" }}selected{{end}}>Shaman</option>
+                            <option value="Assassin" {{if eq .Character.Class "Assassin" }}selected{{end}}>Assassin
+                            </option>
+                            <option value="Bard" {{if eq .Character.Class "Bard" }}selected{{end}}>Bard</option>
+                            <option value="Legerdemainist" {{if eq .Character.Class "Legerdemainist" }}selected{{end}}>
+                                Legerdemainist</option>
+                            <option value="Purloiner" {{if eq .Character.Class "Purloiner" }}selected{{end}}>Purloiner
+                            </option>
+                            <option value="Scout" {{if eq .Character.Class "Scout" }}selected{{end}}>Scout</option>
                         </select>
                     </div>
-
                     <div class="attributes-section">
                         <h2>Attributes</h2>
                         <div class="attributes-grid">
                             <div class="form-group">
                                 <label for="level">Level</label>
-                                <input type="number" id="level" name="level" min="1" value="1" required>
+                                <input type="number" id="level" name="level" min="1"
+                                    value="{{if .IsEdit}}{{.Character.Level}}{{else}}1{{end}}" required>
                             </div>
                             <div class="form-group">
                                 <label for="max_hit_points">Hit Points</label>
-                                <input type="number" id="max_hit_points" name="max_hit_points" min="1" value="10"
-                                    required>
+                                <input type="number" id="max_hit_points" name="max_hit_points" min="1"
+                                    value="{{if .IsEdit}}{{.Character.MaxHitPoints}}{{else}}10{{end}}" required>
                             </div>
                             <div class="form-group">
-                                <!-- Empty cell for grid alignment -->
                             </div>
                             <div class="form-group">
                                 <label for="strength">Strength</label>
-                                <input type="number" id="strength" name="strength" min="3" max="18" value="10" required>
+                                <input type="number" id="strength" name="strength" min="3" max="18"
+                                    value="{{if .IsEdit}}{{.Character.Strength}}{{else}}10{{end}}" required>
                             </div>
                             <div class="form-group">
                                 <label for="dexterity">Dexterity</label>
-                                <input type="number" id="dexterity" name="dexterity" min="3" max="18" value="10"
-                                    required>
+                                <input type="number" id="dexterity" name="dexterity" min="3" max="18"
+                                    value="{{if .IsEdit}}{{.Character.Dexterity}}{{else}}10{{end}}" required>
                             </div>
                             <div class="form-group">
                                 <label for="constitution">Constitution</label>
-                                <input type="number" id="constitution" name="constitution" min="3" max="18" value="10"
-                                    required>
+                                <input type="number" id="constitution" name="constitution" min="3" max="18"
+                                    value="{{if .IsEdit}}{{.Character.Constitution}}{{else}}10{{end}}" required>
                             </div>
                             <div class="form-group">
                                 <label for="intelligence">Intelligence</label>
-                                <input type="number" id="intelligence" name="intelligence" min="3" max="18" value="10"
-                                    required>
+                                <input type="number" id="intelligence" name="intelligence" min="3" max="18"
+                                    value="{{if .IsEdit}}{{.Character.Intelligence}}{{else}}10{{end}}" required>
                             </div>
                             <div class="form-group">
                                 <label for="wisdom">Wisdom</label>
-                                <input type="number" id="wisdom" name="wisdom" min="3" max="18" value="10" required>
+                                <input type="number" id="wisdom" name="wisdom" min="3" max="18"
+                                    value="{{if .IsEdit}}{{.Character.Wisdom}}{{else}}10{{end}}" required>
                             </div>
                             <div class="form-group">
                                 <label for="charisma">Charisma</label>
-                                <input type="number" id="charisma" name="charisma" min="3" max="18" value="10" required>
+                                <input type="number" id="charisma" name="charisma" min="3" max="18"
+                                    value="{{if .IsEdit}}{{.Character.Charisma}}{{else}}10{{end}}" required>
                             </div>
                         </div>
-
-                        <!-- Hidden values with defaults -->
+                        {{if not .IsEdit}}
                         <input type="hidden" id="current_hit_points" name="current_hit_points" value="10">
                         <input type="hidden" id="temporary_hit_points" name="temporary_hit_points" value="0">
                         <input type="hidden" id="experience_points" name="experience_points" value="0">
+                        {{else}}
+                        <input type="hidden" id="current_hit_points" name="current_hit_points"
+                            value="{{.Character.CurrentHitPoints}}">
+                        <input type="hidden" id="temporary_hit_points" name="temporary_hit_points"
+                            value="{{.Character.TemporaryHitPoints}}">
+                        <input type="hidden" id="experience_points" name="experience_points"
+                            value="{{.Character.ExperiencePoints}}">
+                        {{end}}
                     </div>
-
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Create Character</button>
+                        <button type="submit" class="btn btn-primary">{{if .IsEdit}}Update{{else}}Create{{end}}
+                            Character</button>
                         <button type="button" class="btn btn-secondary"
                             onclick="location.href='/dashboard'">Cancel</button>
                     </div>
@@ -151,8 +175,7 @@
             </div>
         </div>
     </div>
-
-    <script src="/static/js/create_character.js"></script>
+    <script src="/static/js/create_form.js"></script>
 </body>
 
 </html>

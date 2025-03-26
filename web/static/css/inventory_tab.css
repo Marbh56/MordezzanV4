@@ -1,0 +1,184 @@
+.encumbrance-summary {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.encumbrance-bar {
+    height: 12px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.encumbrance-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.encumbrance-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #999;
+}
+
+.encumbrance-status {
+    color: var(--primary-color);
+}
+
+.encumbrance-penalties {
+    color: #ff6b6b;
+}
+
+.inventory-section {
+    margin-bottom: 2rem;
+}
+
+.inventory-section h3 {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+.inventory-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.inventory-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    position: relative;
+}
+
+.inventory-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.item-name {
+    font-size: 1.1rem;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.item-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+    border-radius: 4px;
+    opacity: 0.6;
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.item-action:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.item-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #999;
+}
+
+.item-details span {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.item-weight, .item-quantity {
+    color: #74b9ff;
+}
+
+.item-cost, .item-value {
+    color: #ffeaa7;
+}
+
+.item-damage {
+    color: #ff7675;
+}
+
+.item-ac, .item-defense {
+    color: #55efc4;
+}
+
+.inventory-actions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.loading-container {
+    text-align: center;
+    padding: 2rem;
+    color: #999;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.item-equipped {
+    border-left: 3px solid var(--primary-color);
+    box-shadow: 0 0 8px rgba(233, 185, 63, 0.2);
+}
+
+.equip-toggle {
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+.toggle-equipped {
+    margin-right: 0.3rem;
+    cursor: pointer;
+}
+
+.toggle-label {
+    font-size: 0.8rem;
+    transition: color 0.2s;
+}
+
+.item-equipped .toggle-label {
+    color: var(--primary-color);
+    font-weight: bold;
+}
