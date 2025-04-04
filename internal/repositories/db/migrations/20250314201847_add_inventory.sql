@@ -17,6 +17,7 @@ CREATE TABLE inventory_items (
     item_id INTEGER NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 1,
     is_equipped BOOLEAN NOT NULL DEFAULT 0,
+    slot TEXT,
     notes TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -27,9 +28,11 @@ CREATE TABLE inventory_items (
 CREATE INDEX idx_inventory_character_id ON inventories(character_id);
 CREATE INDEX idx_inventory_items_inventory_id ON inventory_items(inventory_id);
 CREATE INDEX idx_inventory_items_type_and_id ON inventory_items(item_type, item_id);
+CREATE INDEX idx_inventory_items_slot ON inventory_items(slot);
 
 -- +goose Down
 -- SQL in this section is executed when the migration is rolled back.
+DROP INDEX IF EXISTS idx_inventory_items_slot;
 DROP INDEX IF EXISTS idx_inventory_items_type_and_id;
 DROP INDEX IF EXISTS idx_inventory_items_inventory_id;
 DROP INDEX IF EXISTS idx_inventory_character_id;

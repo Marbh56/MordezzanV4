@@ -30,9 +30,6 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.addKnownSpellStmt, err = db.PrepareContext(ctx, addKnownSpell); err != nil {
 		return nil, fmt.Errorf("error preparing query AddKnownSpell: %w", err)
 	}
-	if q.addSpellToSpellbookStmt, err = db.PrepareContext(ctx, addSpellToSpellbook); err != nil {
-		return nil, fmt.Errorf("error preparing query AddSpellToSpellbook: %w", err)
-	}
 	if q.addThiefSkillStmt, err = db.PrepareContext(ctx, addThiefSkill); err != nil {
 		return nil, fmt.Errorf("error preparing query AddThiefSkill: %w", err)
 	}
@@ -84,9 +81,6 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createSpellScrollStmt, err = db.PrepareContext(ctx, createSpellScroll); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateSpellScroll: %w", err)
 	}
-	if q.createSpellbookStmt, err = db.PrepareContext(ctx, createSpellbook); err != nil {
-		return nil, fmt.Errorf("error preparing query CreateSpellbook: %w", err)
-	}
 	if q.createTreasureStmt, err = db.PrepareContext(ctx, createTreasure); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateTreasure: %w", err)
 	}
@@ -95,9 +89,6 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.createWeaponStmt, err = db.PrepareContext(ctx, createWeapon); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateWeapon: %w", err)
-	}
-	if q.deleteAllSpellsFromSpellbookStmt, err = db.PrepareContext(ctx, deleteAllSpellsFromSpellbook); err != nil {
-		return nil, fmt.Errorf("error preparing query DeleteAllSpellsFromSpellbook: %w", err)
 	}
 	if q.deleteAmmoStmt, err = db.PrepareContext(ctx, deleteAmmo); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteAmmo: %w", err)
@@ -134,9 +125,6 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.deleteSpellScrollStmt, err = db.PrepareContext(ctx, deleteSpellScroll); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteSpellScroll: %w", err)
-	}
-	if q.deleteSpellbookStmt, err = db.PrepareContext(ctx, deleteSpellbook); err != nil {
-		return nil, fmt.Errorf("error preparing query DeleteSpellbook: %w", err)
 	}
 	if q.deleteTreasureStmt, err = db.PrepareContext(ctx, deleteTreasure); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteTreasure: %w", err)
@@ -207,6 +195,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getEquipmentByNameStmt, err = db.PrepareContext(ctx, getEquipmentByName); err != nil {
 		return nil, fmt.Errorf("error preparing query GetEquipmentByName: %w", err)
 	}
+	if q.getEquippedItemsStmt, err = db.PrepareContext(ctx, getEquippedItems); err != nil {
+		return nil, fmt.Errorf("error preparing query GetEquippedItems: %w", err)
+	}
 	if q.getFullUserByEmailStmt, err = db.PrepareContext(ctx, getFullUserByEmail); err != nil {
 		return nil, fmt.Errorf("error preparing query GetFullUserByEmail: %w", err)
 	}
@@ -227,6 +218,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getInventoryItemsByTypeStmt, err = db.PrepareContext(ctx, getInventoryItemsByType); err != nil {
 		return nil, fmt.Errorf("error preparing query GetInventoryItemsByType: %w", err)
+	}
+	if q.getItemsBySlotStmt, err = db.PrepareContext(ctx, getItemsBySlot); err != nil {
+		return nil, fmt.Errorf("error preparing query GetItemsBySlot: %w", err)
 	}
 	if q.getKnownSpellByCharacterAndSpellStmt, err = db.PrepareContext(ctx, getKnownSpellByCharacterAndSpell); err != nil {
 		return nil, fmt.Errorf("error preparing query GetKnownSpellByCharacterAndSpell: %w", err)
@@ -309,26 +303,14 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getSpellForSpellcastingStmt, err = db.PrepareContext(ctx, getSpellForSpellcasting); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSpellForSpellcasting: %w", err)
 	}
-	if q.getSpellFromSpellbookStmt, err = db.PrepareContext(ctx, getSpellFromSpellbook); err != nil {
-		return nil, fmt.Errorf("error preparing query GetSpellFromSpellbook: %w", err)
-	}
 	if q.getSpellScrollStmt, err = db.PrepareContext(ctx, getSpellScroll); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSpellScroll: %w", err)
 	}
 	if q.getSpellScrollsBySpellStmt, err = db.PrepareContext(ctx, getSpellScrollsBySpell); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSpellScrollsBySpell: %w", err)
 	}
-	if q.getSpellbookStmt, err = db.PrepareContext(ctx, getSpellbook); err != nil {
-		return nil, fmt.Errorf("error preparing query GetSpellbook: %w", err)
-	}
-	if q.getSpellbookByNameStmt, err = db.PrepareContext(ctx, getSpellbookByName); err != nil {
-		return nil, fmt.Errorf("error preparing query GetSpellbookByName: %w", err)
-	}
 	if q.getSpellsByClassLevelStmt, err = db.PrepareContext(ctx, getSpellsByClassLevel); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSpellsByClassLevel: %w", err)
-	}
-	if q.getSpellsInSpellbookStmt, err = db.PrepareContext(ctx, getSpellsInSpellbook); err != nil {
-		return nil, fmt.Errorf("error preparing query GetSpellsInSpellbook: %w", err)
 	}
 	if q.getThiefSkillByNameStmt, err = db.PrepareContext(ctx, getThiefSkillByName); err != nil {
 		return nil, fmt.Errorf("error preparing query GetThiefSkillByName: %w", err)
@@ -396,9 +378,6 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.listSpellScrollsStmt, err = db.PrepareContext(ctx, listSpellScrolls); err != nil {
 		return nil, fmt.Errorf("error preparing query ListSpellScrolls: %w", err)
 	}
-	if q.listSpellbooksStmt, err = db.PrepareContext(ctx, listSpellbooks); err != nil {
-		return nil, fmt.Errorf("error preparing query ListSpellbooks: %w", err)
-	}
 	if q.listSpellsStmt, err = db.PrepareContext(ctx, listSpells); err != nil {
 		return nil, fmt.Errorf("error preparing query ListSpells: %w", err)
 	}
@@ -434,9 +413,6 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.removeSkillFromClassStmt, err = db.PrepareContext(ctx, removeSkillFromClass); err != nil {
 		return nil, fmt.Errorf("error preparing query RemoveSkillFromClass: %w", err)
-	}
-	if q.removeSpellFromSpellbookStmt, err = db.PrepareContext(ctx, removeSpellFromSpellbook); err != nil {
-		return nil, fmt.Errorf("error preparing query RemoveSpellFromSpellbook: %w", err)
 	}
 	if q.resetAllMemorizedSpellsStmt, err = db.PrepareContext(ctx, resetAllMemorizedSpells); err != nil {
 		return nil, fmt.Errorf("error preparing query ResetAllMemorizedSpells: %w", err)
@@ -486,17 +462,14 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.updateSpellScrollStmt, err = db.PrepareContext(ctx, updateSpellScroll); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateSpellScroll: %w", err)
 	}
-	if q.updateSpellbookStmt, err = db.PrepareContext(ctx, updateSpellbook); err != nil {
-		return nil, fmt.Errorf("error preparing query UpdateSpellbook: %w", err)
-	}
-	if q.updateSpellbookUsedPagesStmt, err = db.PrepareContext(ctx, updateSpellbookUsedPages); err != nil {
-		return nil, fmt.Errorf("error preparing query UpdateSpellbookUsedPages: %w", err)
-	}
 	if q.updateTreasureStmt, err = db.PrepareContext(ctx, updateTreasure); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateTreasure: %w", err)
 	}
 	if q.updateUserStmt, err = db.PrepareContext(ctx, updateUser); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUser: %w", err)
+	}
+	if q.updateUserPasswordStmt, err = db.PrepareContext(ctx, updateUserPassword); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateUserPassword: %w", err)
 	}
 	if q.updateWeaponStmt, err = db.PrepareContext(ctx, updateWeapon); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateWeapon: %w", err)
@@ -514,11 +487,6 @@ func (q *Queries) Close() error {
 	if q.addKnownSpellStmt != nil {
 		if cerr := q.addKnownSpellStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing addKnownSpellStmt: %w", cerr)
-		}
-	}
-	if q.addSpellToSpellbookStmt != nil {
-		if cerr := q.addSpellToSpellbookStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing addSpellToSpellbookStmt: %w", cerr)
 		}
 	}
 	if q.addThiefSkillStmt != nil {
@@ -606,11 +574,6 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createSpellScrollStmt: %w", cerr)
 		}
 	}
-	if q.createSpellbookStmt != nil {
-		if cerr := q.createSpellbookStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing createSpellbookStmt: %w", cerr)
-		}
-	}
 	if q.createTreasureStmt != nil {
 		if cerr := q.createTreasureStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createTreasureStmt: %w", cerr)
@@ -624,11 +587,6 @@ func (q *Queries) Close() error {
 	if q.createWeaponStmt != nil {
 		if cerr := q.createWeaponStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createWeaponStmt: %w", cerr)
-		}
-	}
-	if q.deleteAllSpellsFromSpellbookStmt != nil {
-		if cerr := q.deleteAllSpellsFromSpellbookStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing deleteAllSpellsFromSpellbookStmt: %w", cerr)
 		}
 	}
 	if q.deleteAmmoStmt != nil {
@@ -689,11 +647,6 @@ func (q *Queries) Close() error {
 	if q.deleteSpellScrollStmt != nil {
 		if cerr := q.deleteSpellScrollStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteSpellScrollStmt: %w", cerr)
-		}
-	}
-	if q.deleteSpellbookStmt != nil {
-		if cerr := q.deleteSpellbookStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing deleteSpellbookStmt: %w", cerr)
 		}
 	}
 	if q.deleteTreasureStmt != nil {
@@ -811,6 +764,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getEquipmentByNameStmt: %w", cerr)
 		}
 	}
+	if q.getEquippedItemsStmt != nil {
+		if cerr := q.getEquippedItemsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getEquippedItemsStmt: %w", cerr)
+		}
+	}
 	if q.getFullUserByEmailStmt != nil {
 		if cerr := q.getFullUserByEmailStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getFullUserByEmailStmt: %w", cerr)
@@ -844,6 +802,11 @@ func (q *Queries) Close() error {
 	if q.getInventoryItemsByTypeStmt != nil {
 		if cerr := q.getInventoryItemsByTypeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getInventoryItemsByTypeStmt: %w", cerr)
+		}
+	}
+	if q.getItemsBySlotStmt != nil {
+		if cerr := q.getItemsBySlotStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getItemsBySlotStmt: %w", cerr)
 		}
 	}
 	if q.getKnownSpellByCharacterAndSpellStmt != nil {
@@ -981,11 +944,6 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getSpellForSpellcastingStmt: %w", cerr)
 		}
 	}
-	if q.getSpellFromSpellbookStmt != nil {
-		if cerr := q.getSpellFromSpellbookStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getSpellFromSpellbookStmt: %w", cerr)
-		}
-	}
 	if q.getSpellScrollStmt != nil {
 		if cerr := q.getSpellScrollStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getSpellScrollStmt: %w", cerr)
@@ -996,24 +954,9 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getSpellScrollsBySpellStmt: %w", cerr)
 		}
 	}
-	if q.getSpellbookStmt != nil {
-		if cerr := q.getSpellbookStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getSpellbookStmt: %w", cerr)
-		}
-	}
-	if q.getSpellbookByNameStmt != nil {
-		if cerr := q.getSpellbookByNameStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getSpellbookByNameStmt: %w", cerr)
-		}
-	}
 	if q.getSpellsByClassLevelStmt != nil {
 		if cerr := q.getSpellsByClassLevelStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getSpellsByClassLevelStmt: %w", cerr)
-		}
-	}
-	if q.getSpellsInSpellbookStmt != nil {
-		if cerr := q.getSpellsInSpellbookStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getSpellsInSpellbookStmt: %w", cerr)
 		}
 	}
 	if q.getThiefSkillByNameStmt != nil {
@@ -1126,11 +1069,6 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing listSpellScrollsStmt: %w", cerr)
 		}
 	}
-	if q.listSpellbooksStmt != nil {
-		if cerr := q.listSpellbooksStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing listSpellbooksStmt: %w", cerr)
-		}
-	}
 	if q.listSpellsStmt != nil {
 		if cerr := q.listSpellsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listSpellsStmt: %w", cerr)
@@ -1189,11 +1127,6 @@ func (q *Queries) Close() error {
 	if q.removeSkillFromClassStmt != nil {
 		if cerr := q.removeSkillFromClassStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing removeSkillFromClassStmt: %w", cerr)
-		}
-	}
-	if q.removeSpellFromSpellbookStmt != nil {
-		if cerr := q.removeSpellFromSpellbookStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing removeSpellFromSpellbookStmt: %w", cerr)
 		}
 	}
 	if q.resetAllMemorizedSpellsStmt != nil {
@@ -1276,16 +1209,6 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing updateSpellScrollStmt: %w", cerr)
 		}
 	}
-	if q.updateSpellbookStmt != nil {
-		if cerr := q.updateSpellbookStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing updateSpellbookStmt: %w", cerr)
-		}
-	}
-	if q.updateSpellbookUsedPagesStmt != nil {
-		if cerr := q.updateSpellbookUsedPagesStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing updateSpellbookUsedPagesStmt: %w", cerr)
-		}
-	}
 	if q.updateTreasureStmt != nil {
 		if cerr := q.updateTreasureStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateTreasureStmt: %w", cerr)
@@ -1294,6 +1217,11 @@ func (q *Queries) Close() error {
 	if q.updateUserStmt != nil {
 		if cerr := q.updateUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateUserStmt: %w", cerr)
+		}
+	}
+	if q.updateUserPasswordStmt != nil {
+		if cerr := q.updateUserPasswordStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateUserPasswordStmt: %w", cerr)
 		}
 	}
 	if q.updateWeaponStmt != nil {
@@ -1342,7 +1270,6 @@ type Queries struct {
 	tx                                      *sql.Tx
 	addInventoryItemStmt                    *sql.Stmt
 	addKnownSpellStmt                       *sql.Stmt
-	addSpellToSpellbookStmt                 *sql.Stmt
 	addThiefSkillStmt                       *sql.Stmt
 	addThiefSkillProgressionStmt            *sql.Stmt
 	assignSkillToClassStmt                  *sql.Stmt
@@ -1360,11 +1287,9 @@ type Queries struct {
 	createShieldStmt                        *sql.Stmt
 	createSpellStmt                         *sql.Stmt
 	createSpellScrollStmt                   *sql.Stmt
-	createSpellbookStmt                     *sql.Stmt
 	createTreasureStmt                      *sql.Stmt
 	createUserStmt                          *sql.Stmt
 	createWeaponStmt                        *sql.Stmt
-	deleteAllSpellsFromSpellbookStmt        *sql.Stmt
 	deleteAmmoStmt                          *sql.Stmt
 	deleteArmorStmt                         *sql.Stmt
 	deleteCharacterStmt                     *sql.Stmt
@@ -1377,7 +1302,6 @@ type Queries struct {
 	deleteShieldStmt                        *sql.Stmt
 	deleteSpellStmt                         *sql.Stmt
 	deleteSpellScrollStmt                   *sql.Stmt
-	deleteSpellbookStmt                     *sql.Stmt
 	deleteTreasureStmt                      *sql.Stmt
 	deleteUserStmt                          *sql.Stmt
 	deleteWeaponStmt                        *sql.Stmt
@@ -1401,6 +1325,7 @@ type Queries struct {
 	getContainerByNameStmt                  *sql.Stmt
 	getEquipmentStmt                        *sql.Stmt
 	getEquipmentByNameStmt                  *sql.Stmt
+	getEquippedItemsStmt                    *sql.Stmt
 	getFullUserByEmailStmt                  *sql.Stmt
 	getInventoryStmt                        *sql.Stmt
 	getInventoryByCharacterStmt             *sql.Stmt
@@ -1408,6 +1333,7 @@ type Queries struct {
 	getInventoryItemByTypeAndItemIDStmt     *sql.Stmt
 	getInventoryItemsStmt                   *sql.Stmt
 	getInventoryItemsByTypeStmt             *sql.Stmt
+	getItemsBySlotStmt                      *sql.Stmt
 	getKnownSpellByCharacterAndSpellStmt    *sql.Stmt
 	getKnownSpellsStmt                      *sql.Stmt
 	getKnownSpellsByClassStmt               *sql.Stmt
@@ -1435,13 +1361,9 @@ type Queries struct {
 	getShieldByNameStmt                     *sql.Stmt
 	getSpellStmt                            *sql.Stmt
 	getSpellForSpellcastingStmt             *sql.Stmt
-	getSpellFromSpellbookStmt               *sql.Stmt
 	getSpellScrollStmt                      *sql.Stmt
 	getSpellScrollsBySpellStmt              *sql.Stmt
-	getSpellbookStmt                        *sql.Stmt
-	getSpellbookByNameStmt                  *sql.Stmt
 	getSpellsByClassLevelStmt               *sql.Stmt
-	getSpellsInSpellbookStmt                *sql.Stmt
 	getThiefSkillByNameStmt                 *sql.Stmt
 	getThiefSkillChanceStmt                 *sql.Stmt
 	getThiefSkillsByClassNameStmt           *sql.Stmt
@@ -1464,7 +1386,6 @@ type Queries struct {
 	listRingsStmt                           *sql.Stmt
 	listShieldsStmt                         *sql.Stmt
 	listSpellScrollsStmt                    *sql.Stmt
-	listSpellbooksStmt                      *sql.Stmt
 	listSpellsStmt                          *sql.Stmt
 	listTreasuresStmt                       *sql.Stmt
 	listUsersStmt                           *sql.Stmt
@@ -1477,7 +1398,6 @@ type Queries struct {
 	removeInventoryItemStmt                 *sql.Stmt
 	removeKnownSpellStmt                    *sql.Stmt
 	removeSkillFromClassStmt                *sql.Stmt
-	removeSpellFromSpellbookStmt            *sql.Stmt
 	resetAllMemorizedSpellsStmt             *sql.Stmt
 	unprepareSpellStmt                      *sql.Stmt
 	updateAmmoStmt                          *sql.Stmt
@@ -1494,10 +1414,9 @@ type Queries struct {
 	updateShieldStmt                        *sql.Stmt
 	updateSpellStmt                         *sql.Stmt
 	updateSpellScrollStmt                   *sql.Stmt
-	updateSpellbookStmt                     *sql.Stmt
-	updateSpellbookUsedPagesStmt            *sql.Stmt
 	updateTreasureStmt                      *sql.Stmt
 	updateUserStmt                          *sql.Stmt
+	updateUserPasswordStmt                  *sql.Stmt
 	updateWeaponStmt                        *sql.Stmt
 }
 
@@ -1507,7 +1426,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		tx:                                      tx,
 		addInventoryItemStmt:                    q.addInventoryItemStmt,
 		addKnownSpellStmt:                       q.addKnownSpellStmt,
-		addSpellToSpellbookStmt:                 q.addSpellToSpellbookStmt,
 		addThiefSkillStmt:                       q.addThiefSkillStmt,
 		addThiefSkillProgressionStmt:            q.addThiefSkillProgressionStmt,
 		assignSkillToClassStmt:                  q.assignSkillToClassStmt,
@@ -1525,11 +1443,9 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createShieldStmt:                        q.createShieldStmt,
 		createSpellStmt:                         q.createSpellStmt,
 		createSpellScrollStmt:                   q.createSpellScrollStmt,
-		createSpellbookStmt:                     q.createSpellbookStmt,
 		createTreasureStmt:                      q.createTreasureStmt,
 		createUserStmt:                          q.createUserStmt,
 		createWeaponStmt:                        q.createWeaponStmt,
-		deleteAllSpellsFromSpellbookStmt:        q.deleteAllSpellsFromSpellbookStmt,
 		deleteAmmoStmt:                          q.deleteAmmoStmt,
 		deleteArmorStmt:                         q.deleteArmorStmt,
 		deleteCharacterStmt:                     q.deleteCharacterStmt,
@@ -1542,7 +1458,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		deleteShieldStmt:                        q.deleteShieldStmt,
 		deleteSpellStmt:                         q.deleteSpellStmt,
 		deleteSpellScrollStmt:                   q.deleteSpellScrollStmt,
-		deleteSpellbookStmt:                     q.deleteSpellbookStmt,
 		deleteTreasureStmt:                      q.deleteTreasureStmt,
 		deleteUserStmt:                          q.deleteUserStmt,
 		deleteWeaponStmt:                        q.deleteWeaponStmt,
@@ -1566,6 +1481,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getContainerByNameStmt:                  q.getContainerByNameStmt,
 		getEquipmentStmt:                        q.getEquipmentStmt,
 		getEquipmentByNameStmt:                  q.getEquipmentByNameStmt,
+		getEquippedItemsStmt:                    q.getEquippedItemsStmt,
 		getFullUserByEmailStmt:                  q.getFullUserByEmailStmt,
 		getInventoryStmt:                        q.getInventoryStmt,
 		getInventoryByCharacterStmt:             q.getInventoryByCharacterStmt,
@@ -1573,6 +1489,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getInventoryItemByTypeAndItemIDStmt:     q.getInventoryItemByTypeAndItemIDStmt,
 		getInventoryItemsStmt:                   q.getInventoryItemsStmt,
 		getInventoryItemsByTypeStmt:             q.getInventoryItemsByTypeStmt,
+		getItemsBySlotStmt:                      q.getItemsBySlotStmt,
 		getKnownSpellByCharacterAndSpellStmt:    q.getKnownSpellByCharacterAndSpellStmt,
 		getKnownSpellsStmt:                      q.getKnownSpellsStmt,
 		getKnownSpellsByClassStmt:               q.getKnownSpellsByClassStmt,
@@ -1600,13 +1517,9 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getShieldByNameStmt:                     q.getShieldByNameStmt,
 		getSpellStmt:                            q.getSpellStmt,
 		getSpellForSpellcastingStmt:             q.getSpellForSpellcastingStmt,
-		getSpellFromSpellbookStmt:               q.getSpellFromSpellbookStmt,
 		getSpellScrollStmt:                      q.getSpellScrollStmt,
 		getSpellScrollsBySpellStmt:              q.getSpellScrollsBySpellStmt,
-		getSpellbookStmt:                        q.getSpellbookStmt,
-		getSpellbookByNameStmt:                  q.getSpellbookByNameStmt,
 		getSpellsByClassLevelStmt:               q.getSpellsByClassLevelStmt,
-		getSpellsInSpellbookStmt:                q.getSpellsInSpellbookStmt,
 		getThiefSkillByNameStmt:                 q.getThiefSkillByNameStmt,
 		getThiefSkillChanceStmt:                 q.getThiefSkillChanceStmt,
 		getThiefSkillsByClassNameStmt:           q.getThiefSkillsByClassNameStmt,
@@ -1629,7 +1542,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		listRingsStmt:                           q.listRingsStmt,
 		listShieldsStmt:                         q.listShieldsStmt,
 		listSpellScrollsStmt:                    q.listSpellScrollsStmt,
-		listSpellbooksStmt:                      q.listSpellbooksStmt,
 		listSpellsStmt:                          q.listSpellsStmt,
 		listTreasuresStmt:                       q.listTreasuresStmt,
 		listUsersStmt:                           q.listUsersStmt,
@@ -1642,7 +1554,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		removeInventoryItemStmt:                 q.removeInventoryItemStmt,
 		removeKnownSpellStmt:                    q.removeKnownSpellStmt,
 		removeSkillFromClassStmt:                q.removeSkillFromClassStmt,
-		removeSpellFromSpellbookStmt:            q.removeSpellFromSpellbookStmt,
 		resetAllMemorizedSpellsStmt:             q.resetAllMemorizedSpellsStmt,
 		unprepareSpellStmt:                      q.unprepareSpellStmt,
 		updateAmmoStmt:                          q.updateAmmoStmt,
@@ -1659,10 +1570,9 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		updateShieldStmt:                        q.updateShieldStmt,
 		updateSpellStmt:                         q.updateSpellStmt,
 		updateSpellScrollStmt:                   q.updateSpellScrollStmt,
-		updateSpellbookStmt:                     q.updateSpellbookStmt,
-		updateSpellbookUsedPagesStmt:            q.updateSpellbookUsedPagesStmt,
 		updateTreasureStmt:                      q.updateTreasureStmt,
 		updateUserStmt:                          q.updateUserStmt,
+		updateUserPasswordStmt:                  q.updateUserPasswordStmt,
 		updateWeaponStmt:                        q.updateWeaponStmt,
 	}
 }

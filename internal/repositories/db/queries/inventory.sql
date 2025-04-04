@@ -58,8 +58,10 @@ INSERT INTO inventory_items (
     item_id,
     quantity,
     is_equipped,
+    slot,
     notes
 ) VALUES (
+    ?,
     ?,
     ?,
     ?,
@@ -71,10 +73,12 @@ INSERT INTO inventory_items (
 -- name: UpdateInventoryItem :execresult
 UPDATE inventory_items
 SET 
-    quantity = COALESCE(sqlc.narg(quantity), quantity),
-    is_equipped = COALESCE(sqlc.narg(is_equipped), is_equipped),
-    notes = COALESCE(sqlc.narg(notes), notes)
-WHERE id = ?;
+    quantity = COALESCE(sqlc.narg('quantity'), quantity),
+    is_equipped = COALESCE(sqlc.narg('is_equipped'), is_equipped),
+    slot = COALESCE(sqlc.narg('slot'), slot),
+    notes = COALESCE(sqlc.narg('notes'), notes),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = sqlc.arg('id');
 
 -- name: RemoveInventoryItem :exec
 DELETE FROM inventory_items
@@ -108,3 +112,13 @@ SET current_weight = (
         END, 0.1)
     ), 0) FROM inventory_items ii WHERE ii.inventory_id = inventories.id)
 WHERE inventories.id = ?;
+
+-- name: GetEquippedItems :many
+SELECT * FROM inventory_items
+WHERE inventory_id = ? AND is_equipped = 1
+ORDER BY id;
+
+-- name: GetItemsBySlot :many
+SELECT * FROM inventory_items
+WHERE inventory_id = ? AND slot = ? AND is_equipped = 1
+ORDER BY id;

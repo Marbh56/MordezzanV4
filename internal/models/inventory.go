@@ -8,10 +8,11 @@ import (
 type InventoryItem struct {
 	ID          int64     `json:"id"`
 	InventoryID int64     `json:"inventory_id"`
-	ItemType    string    `json:"item_type"` // "weapon", "armor", "spell_scroll", etc.
+	ItemType    string    `json:"item_type"`
 	ItemID      int64     `json:"item_id"`
 	Quantity    int       `json:"quantity"`
 	IsEquipped  bool      `json:"is_equipped"`
+	Slot        string    `json:"slot,omitempty"`
 	Notes       string    `json:"notes,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -47,6 +48,7 @@ type AddItemInput struct {
 	ItemID     int64  `json:"item_id"`
 	Quantity   int    `json:"quantity"`
 	IsEquipped bool   `json:"is_equipped"`
+	Slot       string `json:"slot,omitempty"`
 	Notes      string `json:"notes,omitempty"`
 }
 
@@ -54,6 +56,7 @@ type AddItemInput struct {
 type UpdateItemInput struct {
 	Quantity   *int    `json:"quantity,omitempty"`
 	IsEquipped *bool   `json:"is_equipped,omitempty"`
+	Slot       *string `json:"slot,omitempty"`
 	Notes      *string `json:"notes,omitempty"`
 }
 

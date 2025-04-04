@@ -450,10 +450,7 @@
                             </div>
                         </div>
                     </div>
-                    <div id="combat" class="tab-content">
-                        <h2>Combat Stats</h2>
-                        <p>Combat tab content will go here.</p>
-                    </div>
+                    {{template "combat_tab" .}}
                     <div id="inventory" class="tab-content">
                         <!-- Inventory tab content will be populated by JavaScript -->
                     </div>
@@ -547,6 +544,7 @@
 
     <script src="/static/js/character_detail.js"></script>
     <script src="/static/js/inventory_tab.js"></script>
+    <script src="/static/js/combat_tab.js"></script>
 </body>
 
 </html>

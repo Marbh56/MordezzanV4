@@ -43,6 +43,7 @@ type App struct {
 	ClassService       *services.ClassService
 	EncumbranceService *services.EncumbranceService
 	SpellService       *services.SpellService
+	ACService          *services.ACService
 
 	UserController         *controllers.UserController
 	CharacterController    *controllers.CharacterController
@@ -61,6 +62,7 @@ type App struct {
 	TreasureController     *controllers.TreasureController
 	InventoryController    *controllers.InventoryController
 	SpellCastingController *controllers.SpellCastingController
+	ACController           *controllers.ACController
 
 	Templates      *template.Template
 	SessionManager *scs.SessionManager
@@ -164,6 +166,12 @@ func NewApp(dbPath string) (*App, error) {
 		classService,
 		encumbranceService,
 	)
+	acService := services.NewACService(
+		inventoryRepo,
+		characterRepo,
+		armorRepo,
+		shieldRepo,
+	)
 
 	classService.SetEncumbranceService(encumbranceService)
 
@@ -201,6 +209,7 @@ func NewApp(dbPath string) (*App, error) {
 		tmpl,
 	)
 	spellCastingController := controllers.NewSpellCastingController(spellService)
+	acController := controllers.NewACController(acService)
 
 	logger.Info("Application initialized successfully")
 
@@ -227,6 +236,7 @@ func NewApp(dbPath string) (*App, error) {
 		ClassService:       classService,
 		EncumbranceService: encumbranceService,
 		SpellService:       spellService,
+		ACService:          acService,
 
 		UserController:         userController,
 		CharacterController:    characterController,
@@ -245,6 +255,7 @@ func NewApp(dbPath string) (*App, error) {
 		TreasureController:     treasureController,
 		InventoryController:    inventoryController,
 		SpellCastingController: spellCastingController,
+		ACController:           acController,
 
 		Templates:      tmpl,
 		SessionManager: sessionManager,
@@ -344,6 +355,9 @@ func (a *App) SetupRoutes() http.Handler {
 				r.Post("/modify-hp", a.CharacterController.ModifyCharacterHP)
 				r.Patch("/xp", a.CharacterController.UpdateCharacterXP)
 				r.Get("/class-data", a.CharacterController.GetCharacterClassData)
+				r.Get("/equipment-status", a.InventoryController.GetEquipmentStatus)
+				r.Get("/combat-equipment", a.InventoryController.GetCombatEquipment)
+				r.Get("/ac", a.ACController.GetCharacterAC)
 
 				// Encumbrance routes
 				r.Route("/encumbrance", func(r chi.Router) {

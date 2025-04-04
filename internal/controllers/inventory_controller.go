@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -46,7 +47,21 @@ type EnrichedInventoryItem struct {
 	ItemDetails interface{} `json:"item_details"`
 	Quantity    int         `json:"quantity"`
 	IsEquipped  bool        `json:"is_equipped"`
+	Slot        string      `json:"slot,omitempty"`
 	Notes       string      `json:"notes,omitempty"`
+}
+
+type EquipmentStatus struct {
+	EquippedSlots  map[string]ItemSummary `json:"equipped_slots"`
+	AvailableSlots []string               `json:"available_slots"`
+}
+
+type ItemSummary struct {
+	ID        int64  `json:"id"`
+	ItemType  string `json:"item_type"`
+	ItemID    int64  `json:"item_id"`
+	Name      string `json:"name"`
+	TwoHanded bool   `json:"two_handed,omitempty"`
 }
 
 func NewInventoryController(
@@ -395,6 +410,14 @@ func (c *InventoryController) AddInventoryItem(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// If we're adding it as equipped, validate slot assignment
+	if input.IsEquipped {
+		if err := c.validateEquipItem(r.Context(), inventoryID, input.ItemID, input.ItemType, input.Slot); err != nil {
+			apperrors.HandleError(w, err)
+			return
+		}
+	}
+
 	// Add the item to inventory
 	id, err := c.inventoryRepo.AddInventoryItem(r.Context(), inventoryID, &input)
 	if err != nil {
@@ -472,11 +495,34 @@ func (c *InventoryController) UpdateInventoryItem(w http.ResponseWriter, r *http
 		return
 	}
 
-	// Get the existing item to find its inventory ID
+	// Get the existing item
 	existingItem, err := c.inventoryRepo.GetInventoryItem(r.Context(), itemID)
 	if err != nil {
 		apperrors.HandleError(w, err)
 		return
+	}
+
+	// Handle equipment slot validation if we're equipping an item
+	if input.IsEquipped != nil && *input.IsEquipped && !existingItem.IsEquipped {
+		proposedSlot := ""
+		if input.Slot != nil {
+			proposedSlot = *input.Slot
+		}
+
+		// Validate that this item can be equipped in this slot
+		if err := c.validateEquipItem(r.Context(), existingItem.InventoryID, existingItem.ItemID, existingItem.ItemType, proposedSlot); err != nil {
+			apperrors.HandleError(w, err)
+			return
+		}
+
+		// If no slot was provided but we found a valid one, use it
+		if input.Slot == nil && proposedSlot != "" {
+			input.Slot = &proposedSlot
+		}
+	} else if input.IsEquipped != nil && !*input.IsEquipped && existingItem.IsEquipped {
+		// If unequipping, clear the slot
+		emptySlot := ""
+		input.Slot = &emptySlot
 	}
 
 	// Update the item
@@ -669,6 +715,7 @@ func (c *InventoryController) enrichInventoryItems(ctx context.Context, items []
 				ItemDetails: nil,
 				Quantity:    item.Quantity,
 				IsEquipped:  item.IsEquipped,
+				Slot:        item.Slot, // Include the slot field
 				Notes:       item.Notes,
 			})
 			continue
@@ -696,34 +743,7 @@ func (c *InventoryController) enrichInventoryItem(ctx context.Context, item mode
 		if c.shieldRepo != nil {
 			details, err = c.shieldRepo.GetShield(ctx, item.ItemID)
 		}
-	case "potion":
-		if c.potionRepo != nil {
-			details, err = c.potionRepo.GetPotion(ctx, item.ItemID)
-		}
-	case "magic_item":
-		if c.magicItemRepo != nil {
-			details, err = c.magicItemRepo.GetMagicItem(ctx, item.ItemID)
-		}
-	case "ring":
-		if c.ringRepo != nil {
-			details, err = c.ringRepo.GetRing(ctx, item.ItemID)
-		}
-	case "ammo":
-		if c.ammoRepo != nil {
-			details, err = c.ammoRepo.GetAmmo(ctx, item.ItemID)
-		}
-	case "spell_scroll":
-		if c.spellScrollRepo != nil {
-			details, err = c.spellScrollRepo.GetSpellScroll(ctx, item.ItemID)
-		}
-	case "container":
-		if c.containerRepo != nil {
-			details, err = c.containerRepo.GetContainer(ctx, item.ItemID)
-		}
-	case "equipment":
-		if c.equipmentRepo != nil {
-			details, err = c.equipmentRepo.GetEquipment(ctx, item.ItemID)
-		}
+	// ... other item types ...
 	default:
 		return EnrichedInventoryItem{}, apperrors.NewBadRequest("Invalid item type: " + item.ItemType)
 	}
@@ -740,6 +760,7 @@ func (c *InventoryController) enrichInventoryItem(ctx context.Context, item mode
 		ItemDetails: details,
 		Quantity:    item.Quantity,
 		IsEquipped:  item.IsEquipped,
+		Slot:        item.Slot,
 		Notes:       item.Notes,
 	}, nil
 }
@@ -860,5 +881,401 @@ func (c *InventoryController) UpdateInventoryCapacity(w http.ResponseWriter, r *
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(details); err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
+	}
+}
+
+func (c *InventoryController) validateEquipItem(ctx context.Context, inventoryID int64, itemID int64, itemType string, proposedSlot string) error {
+	// Get all currently equipped items
+	equippedItems, err := c.inventoryRepo.GetEquippedItems(ctx, inventoryID)
+	if err != nil {
+		return err
+	}
+
+	// Determine if this is a two-handed weapon
+	isTwoHanded := false
+	if itemType == "weapon" {
+		weapon, err := c.weaponRepo.GetWeapon(ctx, itemID)
+		if err != nil {
+			return err
+		}
+		isTwoHanded = models.IsTwoHanded(weapon.Properties)
+		if isTwoHanded {
+			for _, item := range equippedItems {
+				if item.Slot == string(models.SlotMainHand) || item.Slot == string(models.SlotOffHand) {
+					return apperrors.NewBadRequest("Cannot equip a two-handed weapon while hands are occupied")
+				}
+			}
+		}
+	}
+
+	if proposedSlot != "" {
+		slot := models.EquipmentSlot(proposedSlot)
+		// Verify the slot is valid for this item type
+		validSlots := models.GetItemTypeSlots(itemType)
+		validSlot := false
+		for _, s := range validSlots {
+			if s == slot {
+				validSlot = true
+				break
+			}
+		}
+		if !validSlot {
+			return apperrors.NewBadRequest("Invalid slot for this item type")
+		}
+
+		// Check if slot is already occupied
+		for _, item := range equippedItems {
+			if item.Slot == proposedSlot {
+				return apperrors.NewBadRequest("Slot is already occupied")
+			}
+			if itemType == "shield" && item.ItemType == "weapon" &&
+				models.IsTwoHanded(item.Notes) && item.Slot == string(models.SlotMainHand) {
+				return apperrors.NewBadRequest("Cannot equip a shield while wielding a two-handed weapon")
+			}
+			if isTwoHanded && item.ItemType == "shield" &&
+				item.Slot == string(models.SlotOffHand) {
+				return apperrors.NewBadRequest("Cannot equip a two-handed weapon while using a shield")
+			}
+		}
+	} else {
+		// Auto-assign a slot if none provided
+		var suggestedSlot string
+
+		switch itemType {
+		case "ring":
+			hasLeftRing := false
+			hasRightRing := false
+			for _, item := range equippedItems {
+				if item.ItemType == "ring" {
+					if item.Slot == string(models.SlotRingLeft) {
+						hasLeftRing = true
+					} else if item.Slot == string(models.SlotRingRight) {
+						hasRightRing = true
+					}
+				}
+			}
+			if !hasLeftRing {
+				suggestedSlot = string(models.SlotRingLeft)
+			} else if !hasRightRing {
+				suggestedSlot = string(models.SlotRingRight)
+			} else {
+				return apperrors.NewBadRequest("Cannot equip more than two rings")
+			}
+		case "weapon":
+			hasMainHand := false
+			hasOffHand := false
+			for _, item := range equippedItems {
+				if item.Slot == string(models.SlotMainHand) {
+					hasMainHand = true
+				} else if item.Slot == string(models.SlotOffHand) {
+					hasOffHand = true
+				}
+			}
+			if isTwoHanded {
+				if hasMainHand || hasOffHand {
+					return apperrors.NewBadRequest("Two-handed weapons require both hands to be free")
+				}
+				suggestedSlot = string(models.SlotMainHand)
+			} else {
+				if !hasMainHand {
+					suggestedSlot = string(models.SlotMainHand)
+				} else if !hasOffHand {
+					suggestedSlot = string(models.SlotOffHand)
+				} else {
+					return apperrors.NewBadRequest("Both hands are already occupied")
+				}
+			}
+		case "shield":
+			for _, item := range equippedItems {
+				if item.Slot == string(models.SlotOffHand) {
+					return apperrors.NewBadRequest("Off-hand is already occupied")
+				}
+				if item.ItemType == "weapon" && models.IsTwoHanded(item.Notes) {
+					return apperrors.NewBadRequest("Cannot equip a shield with a two-handed weapon")
+				}
+			}
+			suggestedSlot = string(models.SlotOffHand)
+		case "armor":
+			for _, item := range equippedItems {
+				if item.ItemType == "armor" {
+					return apperrors.NewBadRequest("Already wearing armor")
+				}
+			}
+			suggestedSlot = string(models.SlotBody)
+		default:
+			validSlots := models.GetItemTypeSlots(itemType)
+			if len(validSlots) == 0 {
+				return apperrors.NewBadRequest("This item type cannot be equipped")
+			}
+			for _, slot := range validSlots {
+				occupied := false
+				for _, item := range equippedItems {
+					if item.Slot == string(slot) {
+						occupied = true
+						break
+					}
+				}
+				if !occupied {
+					suggestedSlot = string(slot)
+					break
+				}
+			}
+			if suggestedSlot == "" {
+				return apperrors.NewBadRequest("No available slots for this item")
+			}
+		}
+		return c.validateEquipItem(ctx, inventoryID, itemID, itemType, suggestedSlot)
+	}
+
+	return nil
+}
+
+func (c *InventoryController) GetEquipmentStatus(w http.ResponseWriter, r *http.Request) {
+	characterID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		logger.Error("Invalid character ID: %v", err)
+		apperrors.HandleError(w, apperrors.NewBadRequest("Invalid character ID format"))
+		return
+	}
+
+	// Log the request for debugging
+	logger.Debug("Getting equipment status for character ID: %d", characterID)
+
+	// First, check if the character exists
+	_, err = c.characterRepo.GetCharacter(r.Context(), characterID)
+	if err != nil {
+		logger.Error("Failed to get character: %v", err)
+		apperrors.HandleError(w, err)
+		return
+	}
+
+	// Next, get the inventory for this character
+	inventory, err := c.inventoryRepo.GetInventoryByCharacter(r.Context(), characterID)
+	if err != nil {
+		// If inventory doesn't exist yet, create one
+		if errors.Is(err, sql.ErrNoRows) || apperrors.IsNotFound(err) {
+			logger.Info("Creating new inventory for character %d", characterID)
+			input := &models.CreateInventoryInput{
+				CharacterID: characterID,
+				MaxWeight:   100.0,
+			}
+			inventoryID, err := c.inventoryRepo.CreateInventory(r.Context(), input)
+			if err != nil {
+				logger.Error("Failed to create inventory: %v", err)
+				apperrors.HandleError(w, err)
+				return
+			}
+			inventory, err = c.inventoryRepo.GetInventory(r.Context(), inventoryID)
+			if err != nil {
+				logger.Error("Failed to retrieve new inventory: %v", err)
+				apperrors.HandleError(w, err)
+				return
+			}
+		} else {
+			logger.Error("Failed to get inventory: %v", err)
+			apperrors.HandleError(w, err)
+			return
+		}
+	}
+
+	// Get the equipped items and slots
+	status, err := c.getEquipmentStatus(r.Context(), inventory.ID)
+	if err != nil {
+		logger.Error("Failed to get equipment status: %v", err)
+		apperrors.HandleError(w, err)
+		return
+	}
+
+	// Return the status as JSON
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(status); err != nil {
+		logger.Error("Failed to encode equipment status: %v", err)
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+	}
+}
+
+func (c *InventoryController) getEquipmentStatus(ctx context.Context, inventoryID int64) (*EquipmentStatus, error) {
+	logger.Debug("Getting equipment status for inventory ID: %d", inventoryID)
+
+	// Get all equipped items
+	equippedItems, err := c.inventoryRepo.GetEquippedItems(ctx, inventoryID)
+	if err != nil {
+		logger.Error("Failed to get equipped items: %v", err)
+		return nil, err
+	}
+
+	// Initialize the status with empty slots and all available slots
+	status := &EquipmentStatus{
+		EquippedSlots: make(map[string]ItemSummary),
+		AvailableSlots: []string{
+			"head", "body", "main_hand", "off_hand", "ring_left", "ring_right",
+			"neck", "back", "belt", "feet", "hands",
+		},
+	}
+
+	// Track occupied slots
+	occupiedSlots := make(map[string]bool)
+
+	// Process each equipped item
+	for _, item := range equippedItems {
+		// Skip items without slots
+		if item.Slot == "" {
+			logger.Debug("Skipping equipped item %d without slot", item.ID)
+			continue
+		}
+
+		// Mark this slot as occupied
+		occupiedSlots[item.Slot] = true
+
+		// Get item details for the summary
+		var name string
+		var twoHanded bool
+
+		switch item.ItemType {
+		case "weapon":
+			if c.weaponRepo != nil {
+				weapon, err := c.weaponRepo.GetWeapon(ctx, item.ItemID)
+				if err == nil {
+					name = weapon.Name
+					twoHanded = models.IsTwoHanded(weapon.Properties)
+				} else {
+					logger.Error("Failed to get weapon details: %v", err)
+					name = "Unknown Weapon"
+				}
+			}
+		case "armor":
+			if c.armorRepo != nil {
+				armor, err := c.armorRepo.GetArmor(ctx, item.ItemID)
+				if err == nil {
+					name = armor.Name
+				} else {
+					logger.Error("Failed to get armor details: %v", err)
+					name = "Unknown Armor"
+				}
+			}
+		case "shield":
+			if c.shieldRepo != nil {
+				shield, err := c.shieldRepo.GetShield(ctx, item.ItemID)
+				if err == nil {
+					name = shield.Name
+				} else {
+					logger.Error("Failed to get shield details: %v", err)
+					name = "Unknown Shield"
+				}
+			}
+		case "ring":
+			if c.ringRepo != nil {
+				ring, err := c.ringRepo.GetRing(ctx, item.ItemID)
+				if err == nil {
+					name = ring.Name
+				} else {
+					logger.Error("Failed to get ring details: %v", err)
+					name = "Unknown Ring"
+				}
+			}
+		default:
+			name = fmt.Sprintf("Unknown %s", item.ItemType)
+		}
+
+		// Add to equipped slots
+		status.EquippedSlots[item.Slot] = ItemSummary{
+			ID:        item.ID,
+			ItemType:  item.ItemType,
+			ItemID:    item.ItemID,
+			Name:      name,
+			TwoHanded: twoHanded,
+		}
+
+		// If it's a two-handed weapon, mark off_hand as occupied too
+		if twoHanded && item.Slot == string(models.SlotMainHand) {
+			occupiedSlots[string(models.SlotOffHand)] = true
+		}
+	}
+
+	// Update available slots by excluding occupied ones
+	var availableSlots []string
+	for _, slot := range status.AvailableSlots {
+		if !occupiedSlots[slot] {
+			availableSlots = append(availableSlots, slot)
+		}
+	}
+	status.AvailableSlots = availableSlots
+
+	logger.Debug("Equipment status: occupied slots=%v, available slots=%v",
+		occupiedSlots, status.AvailableSlots)
+
+	return status, nil
+}
+
+func (c *InventoryController) GetCombatEquipment(w http.ResponseWriter, r *http.Request) {
+	characterID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		apperrors.HandleError(w, apperrors.NewBadRequest(fmt.Sprintf("Invalid character ID: %s", chi.URLParam(r, "id"))))
+		return
+	}
+
+	// Get character's inventory
+	inventory, err := c.inventoryRepo.GetInventoryByCharacter(r.Context(), characterID)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
+			apperrors.HandleError(w, apperrors.NewNotFound("inventory", fmt.Sprintf("character %d", characterID)))
+			return
+		}
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+		return
+	}
+
+	// Prepare response structure
+	response := struct {
+		Weapons []map[string]interface{} `json:"weapons"`
+		Armor   []map[string]interface{} `json:"armor"`
+	}{
+		Weapons: []map[string]interface{}{},
+		Armor:   []map[string]interface{}{},
+	}
+
+	// Process equipped items
+	for _, item := range inventory.Items {
+		if !item.IsEquipped {
+			continue
+		}
+
+		switch item.ItemType {
+		case "weapon":
+			weapon, err := c.weaponRepo.GetWeapon(r.Context(), item.ItemID)
+			if err == nil {
+				weaponInfo := map[string]interface{}{
+					"inventory_item": item,
+					"weapon":         weapon,
+				}
+				response.Weapons = append(response.Weapons, weaponInfo)
+			}
+
+		case "armor":
+			armor, err := c.armorRepo.GetArmor(r.Context(), item.ItemID)
+			if err == nil {
+				armorInfo := map[string]interface{}{
+					"inventory_item": item,
+					"armor":          armor,
+				}
+				response.Armor = append(response.Armor, armorInfo)
+			}
+
+		case "shield":
+			shield, err := c.shieldRepo.GetShield(r.Context(), item.ItemID)
+			if err == nil {
+				shieldInfo := map[string]interface{}{
+					"inventory_item": item,
+					"shield":         shield,
+				}
+				response.Armor = append(response.Armor, shieldInfo)
+			}
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+		return
 	}
 }

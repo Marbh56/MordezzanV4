@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	apperrors "mordezzanV4/internal/errors"
+	"mordezzanV4/internal/logger"
 	"mordezzanV4/internal/models"
 	sqlcdb "mordezzanV4/internal/repositories/db/sqlc"
 )
@@ -27,6 +28,9 @@ type InventoryRepository interface {
 	RemoveInventoryItem(ctx context.Context, id int64) error
 	RemoveAllInventoryItems(ctx context.Context, inventoryID int64) error
 
+	GetEquippedItems(ctx context.Context, inventoryID int64) ([]models.InventoryItem, error)
+	GetItemsBySlot(ctx context.Context, inventoryID int64, slot string) ([]models.InventoryItem, error)
+
 	UpdateInventoryWeight(ctx context.Context, id int64, weight float64) error
 	RecalculateInventoryWeight(ctx context.Context, id int64) error
 }
@@ -34,6 +38,19 @@ type InventoryRepository interface {
 type SQLCInventoryRepository struct {
 	db *sql.DB
 	q  *sqlcdb.Queries
+}
+
+type ItemSummary struct {
+	ID        int64  `json:"id"`
+	ItemType  string `json:"item_type"`
+	ItemID    int64  `json:"item_id"`
+	Name      string `json:"name"`
+	TwoHanded bool   `json:"two_handed,omitempty"`
+}
+
+type EquipmentStatus struct {
+	EquippedSlots  map[string]ItemSummary `json:"equipped_slots"`
+	AvailableSlots []string               `json:"available_slots"`
 }
 
 func NewSQLCInventoryRepository(db *sql.DB) *SQLCInventoryRepository {
@@ -338,63 +355,29 @@ func (r *SQLCInventoryRepository) GetInventoryItemByTypeAndItemID(ctx context.Co
 }
 
 func (r *SQLCInventoryRepository) AddInventoryItem(ctx context.Context, inventoryID int64, input *models.AddItemInput) (int64, error) {
-	// Check if item already exists in inventory
-	existingItem, err := r.q.GetInventoryItemByTypeAndItemID(ctx, sqlcdb.GetInventoryItemByTypeAndItemIDParams{
-		InventoryID: inventoryID,
-		ItemType:    input.ItemType,
-		ItemID:      input.ItemID,
-	})
-
-	// If item exists, update quantity instead of adding new
-	if err == nil {
-		// Begin transaction
-		tx, err := r.db.BeginTx(ctx, nil)
-		if err != nil {
-			return 0, apperrors.NewDatabaseError(err)
-		}
-		defer tx.Rollback()
-
-		newQuantity := existingItem.Quantity + int64(input.Quantity)
-
-		// Update with manual timestamp handling
-		_, err = tx.ExecContext(ctx, `
-			UPDATE inventory_items 
-			SET quantity = ?,
-				is_equipped = ?,
-				notes = CASE WHEN ? != '' THEN ? ELSE notes END,
-				updated_at = CURRENT_TIMESTAMP
-			WHERE id = ?
-		`,
-			newQuantity,
-			input.IsEquipped,
-			input.Notes, input.Notes,
-			existingItem.ID)
-
-		if err != nil {
-			return 0, apperrors.NewDatabaseError(err)
-		}
-
-		if err := tx.Commit(); err != nil {
-			return 0, apperrors.NewDatabaseError(err)
-		}
-
-		return existingItem.ID, nil
-	} else if !errors.Is(err, sql.ErrNoRows) {
-		return 0, apperrors.NewDatabaseError(err)
+	// Create a nullable string for notes
+	notesParam := sql.NullString{
+		String: input.Notes,
+		Valid:  input.Notes != "",
 	}
 
-	// Otherwise add new item
-	result, err := r.q.AddInventoryItem(ctx, sqlcdb.AddInventoryItemParams{
+	// Create a nullable string for slot
+	slotParam := sql.NullString{
+		String: input.Slot,
+		Valid:  input.Slot != "",
+	}
+
+	params := sqlcdb.AddInventoryItemParams{
 		InventoryID: inventoryID,
 		ItemType:    input.ItemType,
 		ItemID:      input.ItemID,
 		Quantity:    int64(input.Quantity),
 		IsEquipped:  input.IsEquipped,
-		Notes: sql.NullString{
-			String: input.Notes,
-			Valid:  input.Notes != "",
-		},
-	})
+		Slot:        slotParam, // Add the slot parameter here
+		Notes:       notesParam,
+	}
+
+	result, err := r.q.AddInventoryItem(ctx, params)
 	if err != nil {
 		return 0, apperrors.NewDatabaseError(err)
 	}
@@ -408,23 +391,11 @@ func (r *SQLCInventoryRepository) AddInventoryItem(ctx context.Context, inventor
 }
 
 func (r *SQLCInventoryRepository) UpdateInventoryItem(ctx context.Context, id int64, input *models.UpdateItemInput) error {
-	// First verify the item exists
-	_, err := r.GetInventoryItem(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	// Begin transaction
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return apperrors.NewDatabaseError(err)
-	}
-	defer tx.Rollback()
-
-	// Prepare update parameters
+	// Initialize parameters
 	var quantity sql.NullInt64
 	var isEquipped sql.NullBool
 	var notes sql.NullString
+	var slot sql.NullString
 
 	if input.Quantity != nil {
 		quantity.Int64 = int64(*input.Quantity)
@@ -438,27 +409,40 @@ func (r *SQLCInventoryRepository) UpdateInventoryItem(ctx context.Context, id in
 		notes.String = *input.Notes
 		notes.Valid = true
 	}
+	if input.Slot != nil {
+		slot.String = *input.Slot
+		slot.Valid = true
+	}
 
-	// Update item with timestamp
-	_, err = tx.ExecContext(ctx, `
-		UPDATE inventory_items 
-		SET quantity = COALESCE(?, quantity),
-			is_equipped = COALESCE(?, is_equipped),
-			notes = COALESCE(?, notes),
+	logger.Debug("Updating inventory item %d with: quantity=%v (valid=%v), isEquipped=%v (valid=%v), slot=%q (valid=%v), notes=%q (valid=%v)",
+		id,
+		quantity.Int64, quantity.Valid,
+		isEquipped.Bool, isEquipped.Valid,
+		slot.String, slot.Valid,
+		notes.String, notes.Valid)
+
+	// Use direct SQL instead of SQLC's function to avoid parameter issues
+	query := `
+		UPDATE inventory_items
+		SET 
+			quantity = CASE WHEN ? THEN ? ELSE quantity END,
+			is_equipped = CASE WHEN ? THEN ? ELSE is_equipped END,
+			slot = CASE WHEN ? THEN ? ELSE slot END,
+			notes = CASE WHEN ? THEN ? ELSE notes END,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?
-	`,
-		quantity,
-		isEquipped,
-		notes,
+	`
+
+	// Execute the query with all parameters
+	_, err := r.db.ExecContext(ctx, query,
+		quantity.Valid, quantity.Int64,
+		isEquipped.Valid, isEquipped.Bool,
+		slot.Valid, slot.String,
+		notes.Valid, notes.String,
 		id)
 
 	if err != nil {
-		return apperrors.NewDatabaseError(err)
-	}
-
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
+		logger.Error("Failed to update inventory item: %v", err)
 		return apperrors.NewDatabaseError(err)
 	}
 
@@ -486,6 +470,64 @@ func (r *SQLCInventoryRepository) RemoveAllInventoryItems(ctx context.Context, i
 	}
 
 	return nil
+}
+
+func (r *SQLCInventoryRepository) GetEquippedItems(ctx context.Context, inventoryID int64) ([]models.InventoryItem, error) {
+	items, err := r.q.GetEquippedItems(ctx, inventoryID)
+	if err != nil {
+		return nil, apperrors.NewDatabaseError(err)
+	}
+
+	result := make([]models.InventoryItem, len(items))
+	for i, item := range items {
+		result[i] = models.InventoryItem{
+			ID:          item.ID,
+			InventoryID: item.InventoryID,
+			ItemType:    item.ItemType,
+			ItemID:      item.ItemID,
+			Quantity:    int(item.Quantity),
+			IsEquipped:  item.IsEquipped,
+			Slot:        item.Slot.String,
+			Notes:       item.Notes.String,
+			CreatedAt:   item.CreatedAt,
+			UpdatedAt:   item.UpdatedAt,
+		}
+	}
+
+	return result, nil
+}
+
+func (r *SQLCInventoryRepository) GetItemsBySlot(ctx context.Context, inventoryID int64, slot string) ([]models.InventoryItem, error) {
+	params := sqlcdb.GetItemsBySlotParams{
+		InventoryID: inventoryID,
+		Slot: sql.NullString{
+			String: slot,
+			Valid:  slot != "",
+		},
+	}
+
+	items, err := r.q.GetItemsBySlot(ctx, params)
+	if err != nil {
+		return nil, apperrors.NewDatabaseError(err)
+	}
+
+	result := make([]models.InventoryItem, len(items))
+	for i, item := range items {
+		result[i] = models.InventoryItem{
+			ID:          item.ID,
+			InventoryID: item.InventoryID,
+			ItemType:    item.ItemType,
+			ItemID:      item.ItemID,
+			Quantity:    int(item.Quantity),
+			IsEquipped:  item.IsEquipped,
+			Slot:        item.Slot.String,
+			Notes:       item.Notes.String,
+			CreatedAt:   item.CreatedAt,
+			UpdatedAt:   item.UpdatedAt,
+		}
+	}
+
+	return result, nil
 }
 
 func (r *SQLCInventoryRepository) UpdateInventoryWeight(ctx context.Context, id int64, weight float64) error {

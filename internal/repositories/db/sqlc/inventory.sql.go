@@ -17,8 +17,10 @@ INSERT INTO inventory_items (
     item_id,
     quantity,
     is_equipped,
+    slot,
     notes
 ) VALUES (
+    ?,
     ?,
     ?,
     ?,
@@ -34,6 +36,7 @@ type AddInventoryItemParams struct {
 	ItemID      int64
 	Quantity    int64
 	IsEquipped  bool
+	Slot        sql.NullString
 	Notes       sql.NullString
 }
 
@@ -44,6 +47,7 @@ func (q *Queries) AddInventoryItem(ctx context.Context, arg AddInventoryItemPara
 		arg.ItemID,
 		arg.Quantity,
 		arg.IsEquipped,
+		arg.Slot,
 		arg.Notes,
 	)
 }
@@ -77,6 +81,46 @@ WHERE id = ?
 func (q *Queries) DeleteInventory(ctx context.Context, id int64) error {
 	_, err := q.exec(ctx, q.deleteInventoryStmt, deleteInventory, id)
 	return err
+}
+
+const getEquippedItems = `-- name: GetEquippedItems :many
+SELECT id, inventory_id, item_type, item_id, quantity, is_equipped, slot, notes, created_at, updated_at FROM inventory_items
+WHERE inventory_id = ? AND is_equipped = 1
+ORDER BY id
+`
+
+func (q *Queries) GetEquippedItems(ctx context.Context, inventoryID int64) ([]InventoryItem, error) {
+	rows, err := q.query(ctx, q.getEquippedItemsStmt, getEquippedItems, inventoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []InventoryItem{}
+	for rows.Next() {
+		var i InventoryItem
+		if err := rows.Scan(
+			&i.ID,
+			&i.InventoryID,
+			&i.ItemType,
+			&i.ItemID,
+			&i.Quantity,
+			&i.IsEquipped,
+			&i.Slot,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getInventory = `-- name: GetInventory :one
@@ -130,7 +174,7 @@ func (q *Queries) GetInventoryByCharacter(ctx context.Context, characterID int64
 }
 
 const getInventoryItem = `-- name: GetInventoryItem :one
-SELECT id, inventory_id, item_type, item_id, quantity, is_equipped, notes, created_at, updated_at FROM inventory_items
+SELECT id, inventory_id, item_type, item_id, quantity, is_equipped, slot, notes, created_at, updated_at FROM inventory_items
 WHERE id = ? LIMIT 1
 `
 
@@ -144,6 +188,7 @@ func (q *Queries) GetInventoryItem(ctx context.Context, id int64) (InventoryItem
 		&i.ItemID,
 		&i.Quantity,
 		&i.IsEquipped,
+		&i.Slot,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -152,7 +197,7 @@ func (q *Queries) GetInventoryItem(ctx context.Context, id int64) (InventoryItem
 }
 
 const getInventoryItemByTypeAndItemID = `-- name: GetInventoryItemByTypeAndItemID :one
-SELECT id, inventory_id, item_type, item_id, quantity, is_equipped, notes, created_at, updated_at FROM inventory_items
+SELECT id, inventory_id, item_type, item_id, quantity, is_equipped, slot, notes, created_at, updated_at FROM inventory_items
 WHERE inventory_id = ? AND item_type = ? AND item_id = ?
 LIMIT 1
 `
@@ -173,6 +218,7 @@ func (q *Queries) GetInventoryItemByTypeAndItemID(ctx context.Context, arg GetIn
 		&i.ItemID,
 		&i.Quantity,
 		&i.IsEquipped,
+		&i.Slot,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -181,7 +227,7 @@ func (q *Queries) GetInventoryItemByTypeAndItemID(ctx context.Context, arg GetIn
 }
 
 const getInventoryItems = `-- name: GetInventoryItems :many
-SELECT id, inventory_id, item_type, item_id, quantity, is_equipped, notes, created_at, updated_at FROM inventory_items
+SELECT id, inventory_id, item_type, item_id, quantity, is_equipped, slot, notes, created_at, updated_at FROM inventory_items
 WHERE inventory_id = ?
 ORDER BY id
 `
@@ -202,6 +248,7 @@ func (q *Queries) GetInventoryItems(ctx context.Context, inventoryID int64) ([]I
 			&i.ItemID,
 			&i.Quantity,
 			&i.IsEquipped,
+			&i.Slot,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -220,7 +267,7 @@ func (q *Queries) GetInventoryItems(ctx context.Context, inventoryID int64) ([]I
 }
 
 const getInventoryItemsByType = `-- name: GetInventoryItemsByType :many
-SELECT id, inventory_id, item_type, item_id, quantity, is_equipped, notes, created_at, updated_at FROM inventory_items
+SELECT id, inventory_id, item_type, item_id, quantity, is_equipped, slot, notes, created_at, updated_at FROM inventory_items
 WHERE inventory_id = ? AND item_type = ?
 ORDER BY id
 `
@@ -246,6 +293,52 @@ func (q *Queries) GetInventoryItemsByType(ctx context.Context, arg GetInventoryI
 			&i.ItemID,
 			&i.Quantity,
 			&i.IsEquipped,
+			&i.Slot,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getItemsBySlot = `-- name: GetItemsBySlot :many
+SELECT id, inventory_id, item_type, item_id, quantity, is_equipped, slot, notes, created_at, updated_at FROM inventory_items
+WHERE inventory_id = ? AND slot = ? AND is_equipped = 1
+ORDER BY id
+`
+
+type GetItemsBySlotParams struct {
+	InventoryID int64
+	Slot        sql.NullString
+}
+
+func (q *Queries) GetItemsBySlot(ctx context.Context, arg GetItemsBySlotParams) ([]InventoryItem, error) {
+	rows, err := q.query(ctx, q.getItemsBySlotStmt, getItemsBySlot, arg.InventoryID, arg.Slot)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []InventoryItem{}
+	for rows.Next() {
+		var i InventoryItem
+		if err := rows.Scan(
+			&i.ID,
+			&i.InventoryID,
+			&i.ItemType,
+			&i.ItemID,
+			&i.Quantity,
+			&i.IsEquipped,
+			&i.Slot,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -371,15 +464,18 @@ func (q *Queries) UpdateInventory(ctx context.Context, arg UpdateInventoryParams
 const updateInventoryItem = `-- name: UpdateInventoryItem :execresult
 UPDATE inventory_items
 SET 
-    quantity = COALESCE(?2, quantity),
-    is_equipped = COALESCE(?3, is_equipped),
-    notes = COALESCE(?4, notes)
-WHERE id = ?
+    quantity = COALESCE(?1, quantity),
+    is_equipped = COALESCE(?2, is_equipped),
+    slot = COALESCE(?3, slot),
+    notes = COALESCE(?4, notes),
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?5
 `
 
 type UpdateInventoryItemParams struct {
 	Quantity   sql.NullInt64
 	IsEquipped sql.NullBool
+	Slot       sql.NullString
 	Notes      sql.NullString
 	ID         int64
 }
@@ -388,6 +484,7 @@ func (q *Queries) UpdateInventoryItem(ctx context.Context, arg UpdateInventoryIt
 	return q.exec(ctx, q.updateInventoryItemStmt, updateInventoryItem,
 		arg.Quantity,
 		arg.IsEquipped,
+		arg.Slot,
 		arg.Notes,
 		arg.ID,
 	)

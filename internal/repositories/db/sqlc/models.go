@@ -160,6 +160,7 @@ type InventoryItem struct {
 	ItemID      int64
 	Quantity    int64
 	IsEquipped  bool
+	Slot        sql.NullString
 	Notes       sql.NullString
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -279,6 +280,12 @@ type RunesPerDay struct {
 	Level6    sql.NullInt64
 }
 
+type Session struct {
+	Token  string
+	Data   []byte
+	Expiry float64
+}
+
 type ShamanArcaneSpell struct {
 	Level            int64
 	SpellSlotsLevel1 int64
@@ -355,14 +362,6 @@ type Spellbook struct {
 	Weight      float64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-}
-
-type SpellbookSpell struct {
-	ID             int64
-	SpellbookID    int64
-	SpellID        int64
-	CharacterClass string
-	PagesUsed      int64
 }
 
 type ThiefSkill struct {
