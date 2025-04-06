@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Invalid character ID:", characterId);
         return;
     }
-    
     let inventoryId = null;
     let equipmentStatus = null;
     
@@ -27,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    
     async function fetchInventory() {
         const inventoryTab = document.getElementById('inventory');
         inventoryTab.innerHTML = `
@@ -35,12 +35,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p>Loading inventory...</p>
             </div>
         `;
-        
         try {
             console.log(`Fetching inventory data from /api/inventories/character/${characterId}`);
             const response = await fetch(`/api/inventories/character/${characterId}`);
             console.log(`Response status: ${response.status}`);
-            
             if (!response.ok) {
                 let errorMessage = 'Failed to fetch inventory';
                 try {
@@ -52,9 +50,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 throw new Error(errorMessage);
             }
-            
             const responseData = await response.json();
             console.log("API Response Structure:", responseData);
+            debugInventoryData(responseData);
             
             const inventory = responseData.inventory || {};
             const enrichedItems = responseData.items || [];
@@ -77,13 +75,10 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             
             inventoryId = inventory.id;
-            
-            // Fetch equipment status only if we have a valid inventory
             if (inventoryId) {
                 try {
                     console.log(`Fetching equipment status from /api/characters/${characterId}/equipment-status`);
                     const statusResponse = await fetch(`/api/characters/${characterId}/equipment-status`);
-                    
                     if (statusResponse.ok) {
                         equipmentStatus = await statusResponse.json();
                         console.log("Equipment status:", equipmentStatus);
@@ -115,9 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             
             for (const item of enrichedItems) {
-                const details = item.item_details;
-                if (!details) continue;
-                
+                const details = item.item_details || {};
                 const typeMap = {
                     'weapon': 'weapons',
                     'armor': 'armor',
@@ -132,25 +125,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 const category = typeMap[item.item_type] || 'equipment';
+                
+                // Use fallback values if details are missing
+                const displayName = details.name || `Unknown ${item.item_type} (ID: ${item.item_id})`;
+                
                 processedInventory[category].push({
                     id: item.id,
                     item_id: item.item_id,
-                    name: details.name,
-                    description: details.description,
-                    weight: details.weight,
-                    cost: details.cost,
+                    name: displayName,
+                    description: details.description || '',
+                    weight: details.weight || 0,
+                    cost: details.cost || 0,
                     quantity: item.quantity,
                     is_equipped: item.is_equipped,
                     slot: item.slot,
                     notes: item.notes,
-                    damage: details.damage,
-                    properties: details.properties,
-                    ac: details.ac,
-                    defense_modifier: details.defense_modifier,
-                    capacity: details.capacity,
-                    value: details.value
+                    damage: details.damage || '',
+                    properties: details.properties || '',
+                    ac: details.ac || 0,
+                    defense_modifier: details.defense_modifier || 0,
+                    capacity: details.capacity || 0,
+                    value: details.value || 0
                 });
             }
+            
+            console.log("Inventory passed to renderInventory:", processedInventory);
+            console.log("Equipment items to render:", processedInventory.equipment || []);
+            console.log("Number of equipment items:", (processedInventory.equipment || []).length);
             
             renderInventory(processedInventory, encumbrance);
         } catch (error) {
@@ -166,7 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderInventory(inventory, encumbrance) {
         const inventoryTab = document.getElementById('inventory');
         const percentFull = Math.min(100, (encumbrance.status.current_weight / encumbrance.thresholds.maximum_capacity) * 100);
-        
         const encumbranceHTML = `
             <div class="encumbrance-summary">
                 <div class="encumbrance-bar">
@@ -195,7 +195,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 'feet': 'Feet',
                 'hands': 'Hands'
             };
-            
             equipmentDisplayHTML = `
                 <div class="equipment-display">
                     <h3>Equipped Items</h3>
@@ -226,6 +225,11 @@ document.addEventListener('DOMContentLoaded', function() {
             { title: "Equipment", items: inventory.equipment || [] },
             { title: "Treasure", items: inventory.treasure || [] }
         ];
+        
+        console.log("Sections to be rendered:", sections.map(s => ({
+            title: s.title,
+            count: s.items.length
+        })));
         
         for (const section of sections) {
             if (section.items.length > 0) {
@@ -316,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Type-specific properties
             switch (type) {
                 case 'weapons':
-                    itemDetails += `<span class="item-damage">Damage: ${item.damage}</span>`;
+                    itemDetails += `<span class="item-damage">Damage: ${item.damage || 'N/A'}</span>`;
                     if (item.properties) {
                         itemDetails += `<span class="item-properties">${item.properties}</span>`;
                     }
@@ -339,15 +343,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     itemDetails += `<span class="item-quantity">Qty: ${item.quantity}</span>`;
                     break;
                 case 'containers':
-                    itemDetails += `<span class="item-capacity">Capacity: ${item.capacity} lb</span>`;
+                    itemDetails += `<span class="item-capacity">Capacity: ${item.capacity || 'N/A'} lb</span>`;
+                    break;
+                case 'equipment':
+                    // Add specific handling for equipment items
+                    if (item.description) {
+                        itemDetails += `<span class="item-description">${item.description}</span>`;
+                    }
                     break;
                 case 'treasure':
                     itemDetails += `<span class="item-value">Value: ${item.value} gp</span>`;
                     break;
             }
+            
+            // If quantity is greater than 1, display it (for all item types)
+            if (item.quantity > 1 && type !== 'ammunition') {
+                itemDetails += `<span class="item-quantity">Qty: ${item.quantity}</span>`;
+            }
+            
             // Determine if this item type can be equipped
-            const equippableTypes = ['weapons', 'armor', 'shields', 'rings'];
+            const equippableTypes = ['weapons', 'armor', 'shields', 'rings', 'equipment'];
             const canEquip = equippableTypes.includes(type);
+            
             // Create equipped toggle if appropriate
             const equippedToggle = canEquip ? `
                 <label class="equip-toggle">
@@ -355,6 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="toggle-label">${item.is_equipped ? 'Equipped' : 'Equip'}</span>
                 </label>
             ` : '';
+            
             itemsHTML += `
                 <div class="inventory-item ${item.is_equipped ? 'item-equipped' : ''}" data-id="${item.id}" data-type="${type}" data-item-id="${item.item_id}">
                     <div class="item-header">
@@ -369,6 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${itemDetails}
                     </div>
                     ${item.slot ? `<div class="item-slot">Slot: ${item.slot}</div>` : ''}
+                    ${item.notes ? `<div class="item-notes">Notes: ${item.notes}</div>` : ''}
                 </div>
             `;
         }
@@ -385,7 +404,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 editItem(itemId, itemType);
             });
         });
-        
         document.querySelectorAll('.remove-item').forEach(button => {
             button.addEventListener('click', (e) => {
                 const itemElement = e.target.closest('.inventory-item');
@@ -394,7 +412,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 removeItem(itemId, itemType);
             });
         });
-        
         document.querySelectorAll('.toggle-equipped').forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {
                 const itemElement = e.target.closest('.inventory-item');
@@ -408,94 +425,71 @@ document.addEventListener('DOMContentLoaded', function() {
         const itemId = itemElement.dataset.id;
         const itemType = itemElement.dataset.type;
         const isCurrentlyEquipped = itemElement.classList.contains('item-equipped');
-        
         console.log(`Toggling equip for item ${itemId} (${itemType}): currently ${isCurrentlyEquipped ? 'equipped' : 'unequipped'}`);
-        
         if (!isCurrentlyEquipped) {
-            // Trying to equip the item
             let availableSlots = [];
-            
             if (equipmentStatus) {
-                // Determine appropriate slots based on item type
                 switch (itemType) {
                     case 'weapons':
                         const isTwoHanded = itemElement.querySelector('.item-properties')?.textContent.toLowerCase().includes('two-handed');
-                        
                         if (isTwoHanded) {
-                            // Two-handed weapons need both hands free
-                            if (equipmentStatus.available_slots.includes('main_hand') && 
+                            if (equipmentStatus.available_slots.includes('main_hand') &&
                                 equipmentStatus.available_slots.includes('off_hand')) {
                                 availableSlots = ['main_hand'];
                             }
                         } else {
-                            // One-handed weapons
                             availableSlots = equipmentStatus.available_slots.filter(
                                 slot => slot === 'main_hand' || slot === 'off_hand'
                             );
                         }
                         break;
-                        
                     case 'shields':
-                        // Shields go in off hand
                         if (equipmentStatus.available_slots.includes('off_hand')) {
                             availableSlots = ['off_hand'];
                         }
                         break;
-                        
                     case 'armor':
-                        // Armor goes on body
                         if (equipmentStatus.available_slots.includes('body')) {
                             availableSlots = ['body'];
                         }
                         break;
-                        
                     case 'rings':
-                        // Rings go on either finger
                         availableSlots = equipmentStatus.available_slots.filter(
                             slot => slot === 'ring_left' || slot === 'ring_right'
                         );
                         break;
-                        
+                    case 'equipment':
+                        // Allow equipment to be equipped in various slots based on what's available
+                        availableSlots = equipmentStatus.available_slots;
+                        break;
                     default:
-                        // For other item types, let the server decide
                         console.log(`No client-side slot mapping for ${itemType}, letting server decide`);
                 }
             }
-            
             if (availableSlots.length === 0) {
-                // Let the server determine the slot
                 updateEquipStatus(itemId, true);
             } else if (availableSlots.length === 1) {
-                // Only one possible slot, use it
                 updateEquipStatus(itemId, true, availableSlots[0]);
             } else {
-                // Multiple possible slots, let user choose
                 showSlotSelector(availableSlots, (selectedSlot) => {
                     updateEquipStatus(itemId, true, selectedSlot);
                 });
             }
         } else {
-            // Unequipping the item
             updateEquipStatus(itemId, false);
         }
     }
     
     function updateEquipStatus(itemId, equip, slot = null) {
-        // Build the payload
         const payload = {
             is_equipped: equip
         };
-        
-        // Only include slot if it's provided for equipping
         if (equip && slot) {
             payload.slot = slot;
         } else if (!equip) {
-            // If unequipping, explicitly set slot to empty
             payload.slot = "";
         }
-        
         console.log(`Updating item ${itemId}: equip=${equip}, slot=${payload.slot || 'none'}`);
-        
         // Call the API to update the item
         fetch(`/api/inventories/${inventoryId}/items/${itemId}`, {
             method: 'PUT',
@@ -506,7 +500,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             console.log(`API response status: ${response.status}`);
-            
             if (!response.ok) {
                 // If error, try to parse error details
                 return response.json().then(data => {
@@ -520,7 +513,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw err;
                 });
             }
-            
             return response.json();
         })
         .then(data => {
@@ -548,7 +540,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'feet': 'Feet',
             'hands': 'Hands'
         };
-        
         const modal = document.createElement('div');
         modal.classList.add('modal');
         modal.style.display = 'flex';
@@ -567,9 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-        
         document.body.appendChild(modal);
-        
         const slotButtons = modal.querySelectorAll('.slot-btn');
         slotButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -578,11 +567,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 callback(selectedSlot);
             });
         });
-        
         document.getElementById('cancelSlotBtn').addEventListener('click', () => {
             document.body.removeChild(modal);
         });
-        
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 document.body.removeChild(modal);
@@ -593,13 +580,10 @@ document.addEventListener('DOMContentLoaded', function() {
     async function populateItemTypes() {
         const itemTypeSelect = document.getElementById('itemType');
         const itemIdSelect = document.getElementById('itemId');
-        
         itemIdSelect.innerHTML = '<option value="" disabled selected>Select Item Type First</option>';
-        
         itemTypeSelect.addEventListener('change', async () => {
             const itemType = itemTypeSelect.value;
             itemIdSelect.innerHTML = '<option value="" disabled selected>Loading items...</option>';
-            
             try {
                 const endpointMap = {
                     'weapon': '/api/weapons',
@@ -613,20 +597,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     'container': '/api/containers',
                     'equipment': '/api/equipment'
                 };
-                
                 const endpoint = endpointMap[itemType];
                 if (!endpoint) {
                     throw new Error('Invalid item type');
                 }
-                
                 const response = await fetch(endpoint);
                 if (!response.ok) {
                     throw new Error('Failed to fetch items');
                 }
-                
                 const items = await response.json();
                 itemIdSelect.innerHTML = '<option value="" disabled selected>Select an Item</option>';
-                
                 items.forEach(item => {
                     const option = document.createElement('option');
                     option.value = item.id;
@@ -646,12 +626,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) {
                 throw new Error('Failed to fetch item details');
             }
-            
             const item = await response.json();
             const newQuantity = prompt('Enter new quantity:', item.quantity || 1);
-            
             if (newQuantity === null) return;
-            
             const updateResponse = await fetch(`/api/inventories/${inventoryId}/items/${itemId}`, {
                 method: 'PUT',
                 headers: {
@@ -661,11 +638,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     quantity: parseInt(newQuantity)
                 })
             });
-            
             if (!updateResponse.ok) {
                 throw new Error('Failed to update item');
             }
-            
             fetchInventory();
         } catch (error) {
             console.error('Error:', error);
@@ -676,16 +651,13 @@ document.addEventListener('DOMContentLoaded', function() {
     async function removeItem(itemId, itemType) {
         const confirmDelete = confirm('Are you sure you want to remove this item from your inventory?');
         if (!confirmDelete) return;
-        
         try {
             const response = await fetch(`/api/inventories/${inventoryId}/items/${itemId}`, {
                 method: 'DELETE'
             });
-            
             if (!response.ok) {
                 throw new Error('Failed to remove item');
             }
-            
             fetchInventory();
         } catch (error) {
             console.error('Error:', error);
@@ -697,16 +669,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (inventoryForm) {
         inventoryForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const itemType = document.getElementById('itemType').value;
             const itemId = document.getElementById('itemId').value;
             const quantity = document.getElementById('quantity').value;
-            
             if (!itemType || !itemId || !quantity) {
                 alert('Please fill in all fields');
                 return;
             }
-            
             try {
                 const response = await fetch(`/api/inventories/${inventoryId}/items`, {
                     method: 'POST',
@@ -719,11 +688,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         quantity: parseInt(quantity)
                     })
                 });
-                
                 if (!response.ok) {
                     throw new Error('Failed to add item to inventory');
                 }
-                
                 document.getElementById('inventoryModal').style.display = 'none';
                 fetchInventory();
             } catch (error) {
@@ -779,6 +746,12 @@ document.head.insertAdjacentHTML('beforeend', `
     font-size: 0.8rem;
     color: #74b9ff;
     margin-top: 0.5rem;
+}
+.item-notes {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 0.5rem;
+    font-style: italic;
 }
 .slot-options {
     display: flex;

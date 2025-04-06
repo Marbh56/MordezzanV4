@@ -368,7 +368,25 @@ func (c *CharacterController) RenderDashboard(w http.ResponseWriter, r *http.Req
 }
 
 func (c *CharacterController) RenderCreateForm(w http.ResponseWriter, r *http.Request) {
-	err := c.Templates.ExecuteTemplate(w, "character_create", nil)
+	// Get current user from session
+	userID := c.sessionManager.GetInt64(r.Context(), "userID")
+	if userID == 0 {
+		http.Redirect(w, r, "/auth/login-page", http.StatusSeeOther)
+		return
+	}
+
+	user, err := c.userRepo.GetUser(r.Context(), userID)
+	if err != nil {
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+		return
+	}
+
+	// Pass user data to the template
+	data := map[string]interface{}{
+		"User": user,
+	}
+
+	err = c.Templates.ExecuteTemplate(w, "character_create", data)
 	if err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 		return
@@ -376,13 +394,26 @@ func (c *CharacterController) RenderCreateForm(w http.ResponseWriter, r *http.Re
 }
 
 func (c *CharacterController) RenderEditForm(w http.ResponseWriter, r *http.Request) {
+	// Get current user from session
+	userID := c.sessionManager.GetInt64(r.Context(), "userID")
+	if userID == 0 {
+		http.Redirect(w, r, "/auth/login-page", http.StatusSeeOther)
+		return
+	}
+
+	user, err := c.userRepo.GetUser(r.Context(), userID)
+	if err != nil {
+		apperrors.HandleError(w, apperrors.NewInternalError(err))
+		return
+	}
+
 	idParam := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
 		apperrors.HandleError(w, apperrors.NewBadRequest(fmt.Sprintf("Invalid character ID: %s", idParam)))
 		return
 	}
-	
+
 	character, err := c.characterRepo.GetCharacter(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
@@ -392,13 +423,19 @@ func (c *CharacterController) RenderEditForm(w http.ResponseWriter, r *http.Requ
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 		return
 	}
-	
-	// Add user data to the template context
+
+	// Check if the character belongs to the current user
+	if character.UserID != userID {
+		http.Error(w, "Unauthorized access to this character", http.StatusForbidden)
+		return
+	}
+
 	data := map[string]interface{}{
 		"Character": character,
 		"IsEdit":    true,
+		"User":      user,
 	}
-	
+
 	err = c.Templates.ExecuteTemplate(w, "character_create", data)
 	if err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))

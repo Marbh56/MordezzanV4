@@ -729,7 +729,6 @@ func (c *InventoryController) enrichInventoryItems(ctx context.Context, items []
 func (c *InventoryController) enrichInventoryItem(ctx context.Context, item models.InventoryItem) (EnrichedInventoryItem, error) {
 	var details interface{}
 	var err error
-
 	switch item.ItemType {
 	case "weapon":
 		if c.weaponRepo != nil {
@@ -743,13 +742,52 @@ func (c *InventoryController) enrichInventoryItem(ctx context.Context, item mode
 		if c.shieldRepo != nil {
 			details, err = c.shieldRepo.GetShield(ctx, item.ItemID)
 		}
-	// ... other item types ...
+	case "potion":
+		if c.potionRepo != nil {
+			details, err = c.potionRepo.GetPotion(ctx, item.ItemID)
+		}
+	case "magic_item":
+		if c.magicItemRepo != nil {
+			details, err = c.magicItemRepo.GetMagicItem(ctx, item.ItemID)
+		}
+	case "ring":
+		if c.ringRepo != nil {
+			details, err = c.ringRepo.GetRing(ctx, item.ItemID)
+		}
+	case "ammo":
+		if c.ammoRepo != nil {
+			details, err = c.ammoRepo.GetAmmo(ctx, item.ItemID)
+		}
+	case "spell_scroll":
+		if c.spellScrollRepo != nil {
+			details, err = c.spellScrollRepo.GetSpellScroll(ctx, item.ItemID)
+		}
+	case "container":
+		if c.containerRepo != nil {
+			details, err = c.containerRepo.GetContainer(ctx, item.ItemID)
+		}
+	case "equipment":
+		if c.equipmentRepo != nil {
+			details, err = c.equipmentRepo.GetEquipment(ctx, item.ItemID)
+		}
 	default:
-		return EnrichedInventoryItem{}, apperrors.NewBadRequest("Invalid item type: " + item.ItemType)
+		logger.Warning("Unknown item type: %s for item ID %d", item.ItemType, item.ItemID)
+		// Instead of returning an error, we'll return a basic info object
+		details = map[string]interface{}{
+			"name":        "Unknown Item",
+			"description": "Item details could not be loaded",
+			"weight":      0,
+		}
 	}
 
 	if err != nil {
-		return EnrichedInventoryItem{}, err
+		logger.Error("Failed to fetch details for item type %s, ID %d: %v", item.ItemType, item.ItemID, err)
+		// Instead of propagating the error, provide a fallback
+		details = map[string]interface{}{
+			"name":        fmt.Sprintf("%s (ID: %d)", item.ItemType, item.ItemID),
+			"description": "Failed to load item details",
+			"weight":      0,
+		}
 	}
 
 	return EnrichedInventoryItem{

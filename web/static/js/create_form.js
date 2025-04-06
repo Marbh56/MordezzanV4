@@ -3,12 +3,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const characterIdInput = document.getElementById('characterId');
     const isEditMode = characterIdInput !== null;
     
+    // Get user ID from meta tag instead of body attribute
+    function getUserId() {
+        const userIdMeta = document.querySelector('meta[name="user-id"]');
+        if (userIdMeta) {
+            return userIdMeta.getAttribute('content');
+        }
+        console.error('User ID meta tag not found!');
+        return null;
+    }
+    
     if (form) {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const userId = getUserId();
+            if (!userId) {
+                showError('User ID not found. Please try logging out and back in.');
+                return;
+            }
+            
             const formData = {
-                user_id: document.body.getAttribute('data-user-id') || 1,
+                user_id: parseInt(userId, 10),
                 name: document.getElementById('name').value,
                 class: document.getElementById('class').value,
                 level: parseInt(document.getElementById('level').value, 10),
@@ -29,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 let characterId;
                 
                 if (isEditMode) {
-                    // Edit existing character
                     characterId = characterIdInput.value;
                     response = await fetch(`/api/characters/${characterId}`, {
                         method: 'PUT',
@@ -39,7 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         body: JSON.stringify(formData)
                     });
                 } else {
-                    // Create new character
                     response = await fetch('/api/characters', {
                         method: 'POST',
                         headers: {
@@ -59,8 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (!response.ok) {
                     console.error('Server error details:', data);
-                    
-                    // Check if we have validation errors
                     if (data.fields) {
                         const errorMessages = Object.entries(data.fields)
                             .map(([field, message]) => `${field}: ${message}`)
@@ -71,9 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
                 
-                // Redirect to character view page
                 window.location.href = `/characters/view/${isEditMode ? characterId : data.id}`;
-                
             } catch (error) {
                 console.error('Error saving character:', error);
                 showError(error.message);

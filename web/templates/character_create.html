@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{if .IsEdit}}Edit{{else}}Create{{end}} Character - Hyperborea</title>
+    <!-- Add the user ID meta tag here -->
+    <meta name="user-id" content="{{.User.ID}}">
     <link rel="stylesheet" href="/static/css/styles.css">
     <style>
         .attributes-grid {
