@@ -8,6 +8,7 @@
     <title>{{.Name}} - Hyperborea</title>
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="stylesheet" href="/static/css/inventory_tab.css">
+    <link rel="stylesheet" href="/static/css/weapon_mastery.css">
     <style>
         .character-sheet {
             background-color: var(--card-background);
@@ -317,6 +318,35 @@
             color: #4caf50;
             margin-top: 0.25rem;
         }
+
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+            color: #999;
+        }
+
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -376,6 +406,7 @@
                         <button class="tab-button" data-tab="combat">Combat</button>
                         <button class="tab-button" data-tab="inventory">Inventory</button>
                         <button class="tab-button" data-tab="abilities">Abilities</button>
+                        <button class="tab-button" data-tab="weapon-mastery">Weapon Mastery</button>
                     </div>
                     <div id="attributes" class="tab-content active">
                         <div class="attributes-grid">
@@ -452,7 +483,6 @@
                     </div>
                     {{template "combat_tab" .}}
                     <div id="inventory" class="tab-content">
-                        <!-- Inventory tab content will be populated by JavaScript -->
                     </div>
                     <div id="abilities" class="tab-content">
                         <div class="loading-container">
@@ -460,11 +490,16 @@
                             <p>Loading class abilities...</p>
                         </div>
                     </div>
+                    <div id="weapon-mastery" class="tab-content">
+                        <div class="loading-container">
+                            <div class="loading-spinner"></div>
+                            <p>Loading weapon masteries...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
     <div id="hpModal" class="modal">
         <div class="modal-content">
             <h2 class="modal-title" id="hpModalTitle">Modify Hit Points</h2>
@@ -486,7 +521,6 @@
             </form>
         </div>
     </div>
-
     <div id="xpModal" class="modal">
         <div class="modal-content">
             <h2 class="modal-title">Add Experience Points</h2>
@@ -502,8 +536,6 @@
             </form>
         </div>
     </div>
-
-    <!-- Inventory Modal -->
     <div id="inventoryModal" class="modal">
         <div class="modal-content">
             <h2 class="modal-title">Add Item</h2>
@@ -541,10 +573,10 @@
             </form>
         </div>
     </div>
-
     <script src="/static/js/character_detail.js"></script>
     <script src="/static/js/inventory_tab.js"></script>
     <script src="/static/js/combat_tab.js"></script>
+    <script src="/static/js/weapon_mastery.js"></script>
 </body>
 
 </html>

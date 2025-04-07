@@ -419,3 +419,12 @@ type Weapon struct {
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }
+
+type WeaponMastery struct {
+	ID             int64
+	CharacterID    int64
+	WeaponBaseName string
+	MasteryLevel   string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}

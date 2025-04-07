@@ -36,6 +36,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.addThiefSkillProgressionStmt, err = db.PrepareContext(ctx, addThiefSkillProgression); err != nil {
 		return nil, fmt.Errorf("error preparing query AddThiefSkillProgression: %w", err)
 	}
+	if q.addWeaponMasteryStmt, err = db.PrepareContext(ctx, addWeaponMastery); err != nil {
+		return nil, fmt.Errorf("error preparing query AddWeaponMastery: %w", err)
+	}
 	if q.assignSkillToClassStmt, err = db.PrepareContext(ctx, assignSkillToClass); err != nil {
 		return nil, fmt.Errorf("error preparing query AssignSkillToClass: %w", err)
 	}
@@ -44,6 +47,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.countPreparedSpellsByLevelAndClassStmt, err = db.PrepareContext(ctx, countPreparedSpellsByLevelAndClass); err != nil {
 		return nil, fmt.Errorf("error preparing query CountPreparedSpellsByLevelAndClass: %w", err)
+	}
+	if q.countWeaponMasteriesStmt, err = db.PrepareContext(ctx, countWeaponMasteries); err != nil {
+		return nil, fmt.Errorf("error preparing query CountWeaponMasteries: %w", err)
 	}
 	if q.createAmmoStmt, err = db.PrepareContext(ctx, createAmmo); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateAmmo: %w", err)
@@ -134,6 +140,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.deleteWeaponStmt, err = db.PrepareContext(ctx, deleteWeapon); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteWeapon: %w", err)
+	}
+	if q.deleteWeaponMasteryStmt, err = db.PrepareContext(ctx, deleteWeaponMastery); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteWeaponMastery: %w", err)
 	}
 	if q.getAllClassDataStmt, err = db.PrepareContext(ctx, getAllClassData); err != nil {
 		return nil, fmt.Errorf("error preparing query GetAllClassData: %w", err)
@@ -342,6 +351,15 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getWeaponByNameStmt, err = db.PrepareContext(ctx, getWeaponByName); err != nil {
 		return nil, fmt.Errorf("error preparing query GetWeaponByName: %w", err)
 	}
+	if q.getWeaponMasteriesByCharacterStmt, err = db.PrepareContext(ctx, getWeaponMasteriesByCharacter); err != nil {
+		return nil, fmt.Errorf("error preparing query GetWeaponMasteriesByCharacter: %w", err)
+	}
+	if q.getWeaponMasteryByBaseNameStmt, err = db.PrepareContext(ctx, getWeaponMasteryByBaseName); err != nil {
+		return nil, fmt.Errorf("error preparing query GetWeaponMasteryByBaseName: %w", err)
+	}
+	if q.getWeaponMasteryByIDStmt, err = db.PrepareContext(ctx, getWeaponMasteryByID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetWeaponMasteryByID: %w", err)
+	}
 	if q.listAmmoStmt, err = db.PrepareContext(ctx, listAmmo); err != nil {
 		return nil, fmt.Errorf("error preparing query ListAmmo: %w", err)
 	}
@@ -474,6 +492,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.updateWeaponStmt, err = db.PrepareContext(ctx, updateWeapon); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateWeapon: %w", err)
 	}
+	if q.updateWeaponMasteryLevelStmt, err = db.PrepareContext(ctx, updateWeaponMasteryLevel); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateWeaponMasteryLevel: %w", err)
+	}
 	return &q, nil
 }
 
@@ -499,6 +520,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing addThiefSkillProgressionStmt: %w", cerr)
 		}
 	}
+	if q.addWeaponMasteryStmt != nil {
+		if cerr := q.addWeaponMasteryStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing addWeaponMasteryStmt: %w", cerr)
+		}
+	}
 	if q.assignSkillToClassStmt != nil {
 		if cerr := q.assignSkillToClassStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing assignSkillToClassStmt: %w", cerr)
@@ -512,6 +538,11 @@ func (q *Queries) Close() error {
 	if q.countPreparedSpellsByLevelAndClassStmt != nil {
 		if cerr := q.countPreparedSpellsByLevelAndClassStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing countPreparedSpellsByLevelAndClassStmt: %w", cerr)
+		}
+	}
+	if q.countWeaponMasteriesStmt != nil {
+		if cerr := q.countWeaponMasteriesStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countWeaponMasteriesStmt: %w", cerr)
 		}
 	}
 	if q.createAmmoStmt != nil {
@@ -662,6 +693,11 @@ func (q *Queries) Close() error {
 	if q.deleteWeaponStmt != nil {
 		if cerr := q.deleteWeaponStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteWeaponStmt: %w", cerr)
+		}
+	}
+	if q.deleteWeaponMasteryStmt != nil {
+		if cerr := q.deleteWeaponMasteryStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteWeaponMasteryStmt: %w", cerr)
 		}
 	}
 	if q.getAllClassDataStmt != nil {
@@ -1009,6 +1045,21 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getWeaponByNameStmt: %w", cerr)
 		}
 	}
+	if q.getWeaponMasteriesByCharacterStmt != nil {
+		if cerr := q.getWeaponMasteriesByCharacterStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getWeaponMasteriesByCharacterStmt: %w", cerr)
+		}
+	}
+	if q.getWeaponMasteryByBaseNameStmt != nil {
+		if cerr := q.getWeaponMasteryByBaseNameStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getWeaponMasteryByBaseNameStmt: %w", cerr)
+		}
+	}
+	if q.getWeaponMasteryByIDStmt != nil {
+		if cerr := q.getWeaponMasteryByIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getWeaponMasteryByIDStmt: %w", cerr)
+		}
+	}
 	if q.listAmmoStmt != nil {
 		if cerr := q.listAmmoStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listAmmoStmt: %w", cerr)
@@ -1229,6 +1280,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing updateWeaponStmt: %w", cerr)
 		}
 	}
+	if q.updateWeaponMasteryLevelStmt != nil {
+		if cerr := q.updateWeaponMasteryLevelStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateWeaponMasteryLevelStmt: %w", cerr)
+		}
+	}
 	return err
 }
 
@@ -1272,9 +1328,11 @@ type Queries struct {
 	addKnownSpellStmt                       *sql.Stmt
 	addThiefSkillStmt                       *sql.Stmt
 	addThiefSkillProgressionStmt            *sql.Stmt
+	addWeaponMasteryStmt                    *sql.Stmt
 	assignSkillToClassStmt                  *sql.Stmt
 	clearPreparedSpellsStmt                 *sql.Stmt
 	countPreparedSpellsByLevelAndClassStmt  *sql.Stmt
+	countWeaponMasteriesStmt                *sql.Stmt
 	createAmmoStmt                          *sql.Stmt
 	createArmorStmt                         *sql.Stmt
 	createCharacterStmt                     *sql.Stmt
@@ -1305,6 +1363,7 @@ type Queries struct {
 	deleteTreasureStmt                      *sql.Stmt
 	deleteUserStmt                          *sql.Stmt
 	deleteWeaponStmt                        *sql.Stmt
+	deleteWeaponMasteryStmt                 *sql.Stmt
 	getAllClassDataStmt                     *sql.Stmt
 	getAmmoStmt                             *sql.Stmt
 	getAmmoByNameStmt                       *sql.Stmt
@@ -1374,6 +1433,9 @@ type Queries struct {
 	getUserStmt                             *sql.Stmt
 	getWeaponStmt                           *sql.Stmt
 	getWeaponByNameStmt                     *sql.Stmt
+	getWeaponMasteriesByCharacterStmt       *sql.Stmt
+	getWeaponMasteryByBaseNameStmt          *sql.Stmt
+	getWeaponMasteryByIDStmt                *sql.Stmt
 	listAmmoStmt                            *sql.Stmt
 	listArmorsStmt                          *sql.Stmt
 	listCharactersStmt                      *sql.Stmt
@@ -1418,6 +1480,7 @@ type Queries struct {
 	updateUserStmt                          *sql.Stmt
 	updateUserPasswordStmt                  *sql.Stmt
 	updateWeaponStmt                        *sql.Stmt
+	updateWeaponMasteryLevelStmt            *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
@@ -1428,9 +1491,11 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		addKnownSpellStmt:                       q.addKnownSpellStmt,
 		addThiefSkillStmt:                       q.addThiefSkillStmt,
 		addThiefSkillProgressionStmt:            q.addThiefSkillProgressionStmt,
+		addWeaponMasteryStmt:                    q.addWeaponMasteryStmt,
 		assignSkillToClassStmt:                  q.assignSkillToClassStmt,
 		clearPreparedSpellsStmt:                 q.clearPreparedSpellsStmt,
 		countPreparedSpellsByLevelAndClassStmt:  q.countPreparedSpellsByLevelAndClassStmt,
+		countWeaponMasteriesStmt:                q.countWeaponMasteriesStmt,
 		createAmmoStmt:                          q.createAmmoStmt,
 		createArmorStmt:                         q.createArmorStmt,
 		createCharacterStmt:                     q.createCharacterStmt,
@@ -1461,6 +1526,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		deleteTreasureStmt:                      q.deleteTreasureStmt,
 		deleteUserStmt:                          q.deleteUserStmt,
 		deleteWeaponStmt:                        q.deleteWeaponStmt,
+		deleteWeaponMasteryStmt:                 q.deleteWeaponMasteryStmt,
 		getAllClassDataStmt:                     q.getAllClassDataStmt,
 		getAmmoStmt:                             q.getAmmoStmt,
 		getAmmoByNameStmt:                       q.getAmmoByNameStmt,
@@ -1530,6 +1596,9 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getUserStmt:                             q.getUserStmt,
 		getWeaponStmt:                           q.getWeaponStmt,
 		getWeaponByNameStmt:                     q.getWeaponByNameStmt,
+		getWeaponMasteriesByCharacterStmt:       q.getWeaponMasteriesByCharacterStmt,
+		getWeaponMasteryByBaseNameStmt:          q.getWeaponMasteryByBaseNameStmt,
+		getWeaponMasteryByIDStmt:                q.getWeaponMasteryByIDStmt,
 		listAmmoStmt:                            q.listAmmoStmt,
 		listArmorsStmt:                          q.listArmorsStmt,
 		listCharactersStmt:                      q.listCharactersStmt,
@@ -1574,5 +1643,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		updateUserStmt:                          q.updateUserStmt,
 		updateUserPasswordStmt:                  q.updateUserPasswordStmt,
 		updateWeaponStmt:                        q.updateWeaponStmt,
+		updateWeaponMasteryLevelStmt:            q.updateWeaponMasteryLevelStmt,
 	}
 }

@@ -21,48 +21,50 @@ import (
 )
 
 type App struct {
-	DB                     *sql.DB
-	UserRepository         repositories.UserRepository
-	CharacterRepository    repositories.CharacterRepository
-	SpellRepository        repositories.SpellRepository
-	ArmorRepository        repositories.ArmorRepository
-	WeaponRepository       repositories.WeaponRepository
-	EquipmentRepository    repositories.EquipmentRepository
-	ShieldRepository       repositories.ShieldRepository
-	PotionRepository       repositories.PotionRepository
-	MagicItemRepository    repositories.MagicItemRepository
-	RingRepository         repositories.RingRepository
-	AmmoRepository         repositories.AmmoRepository
-	SpellScrollRepository  repositories.SpellScrollRepository
-	ContainerRepository    repositories.ContainerRepository
-	TreasureRepository     repositories.TreasureRepository
-	InventoryRepository    repositories.InventoryRepository
-	ClassRepository        repositories.ClassRepository
-	SpellCastingRepository repositories.SpellCastingRepository
+	DB                      *sql.DB
+	UserRepository          repositories.UserRepository
+	CharacterRepository     repositories.CharacterRepository
+	SpellRepository         repositories.SpellRepository
+	ArmorRepository         repositories.ArmorRepository
+	WeaponRepository        repositories.WeaponRepository
+	EquipmentRepository     repositories.EquipmentRepository
+	ShieldRepository        repositories.ShieldRepository
+	PotionRepository        repositories.PotionRepository
+	MagicItemRepository     repositories.MagicItemRepository
+	RingRepository          repositories.RingRepository
+	AmmoRepository          repositories.AmmoRepository
+	SpellScrollRepository   repositories.SpellScrollRepository
+	ContainerRepository     repositories.ContainerRepository
+	TreasureRepository      repositories.TreasureRepository
+	InventoryRepository     repositories.InventoryRepository
+	ClassRepository         repositories.ClassRepository
+	SpellCastingRepository  repositories.SpellCastingRepository
+	WeaponMasteryRepository repositories.WeaponMasteryRepository
 
 	ClassService       *services.ClassService
 	EncumbranceService *services.EncumbranceService
 	SpellService       *services.SpellService
 	ACService          *services.ACService
 
-	UserController         *controllers.UserController
-	CharacterController    *controllers.CharacterController
-	SpellController        *controllers.SpellController
-	ArmorController        *controllers.ArmorController
-	WeaponController       *controllers.WeaponController
-	EquipmentController    *controllers.EquipmentController
-	ShieldController       *controllers.ShieldController
-	PotionController       *controllers.PotionController
-	MagicItemController    *controllers.MagicItemController
-	RingController         *controllers.RingController
-	AmmoController         *controllers.AmmoController
-	SpellScrollController  *controllers.SpellScrollController
-	ContainerController    *controllers.ContainerController
-	AuthController         *controllers.AuthController
-	TreasureController     *controllers.TreasureController
-	InventoryController    *controllers.InventoryController
-	SpellCastingController *controllers.SpellCastingController
-	ACController           *controllers.ACController
+	UserController          *controllers.UserController
+	CharacterController     *controllers.CharacterController
+	SpellController         *controllers.SpellController
+	ArmorController         *controllers.ArmorController
+	WeaponController        *controllers.WeaponController
+	EquipmentController     *controllers.EquipmentController
+	ShieldController        *controllers.ShieldController
+	PotionController        *controllers.PotionController
+	MagicItemController     *controllers.MagicItemController
+	RingController          *controllers.RingController
+	AmmoController          *controllers.AmmoController
+	SpellScrollController   *controllers.SpellScrollController
+	ContainerController     *controllers.ContainerController
+	AuthController          *controllers.AuthController
+	TreasureController      *controllers.TreasureController
+	InventoryController     *controllers.InventoryController
+	SpellCastingController  *controllers.SpellCastingController
+	ACController            *controllers.ACController
+	WeaponMasteryController *controllers.WeaponMasteryController
 
 	Templates      *template.Template
 	SessionManager *scs.SessionManager
@@ -134,6 +136,7 @@ func NewApp(dbPath string) (*App, error) {
 	inventoryRepo := repositories.NewSQLCInventoryRepository(db)
 	classRepo := repositories.NewSQLCClassRepository(db)
 	spellCastingRepo := repositories.NewSQLCSpellCastingRepository(db)
+	weaponMasteryRepo := repositories.NewSQLCWeaponMasteryRepository(db)
 
 	// Initialize services
 	classService := services.NewClassService(
@@ -171,6 +174,11 @@ func NewApp(dbPath string) (*App, error) {
 		characterRepo,
 		armorRepo,
 		shieldRepo,
+	)
+	weaponMasteryController := controllers.NewWeaponMasteryController(
+		weaponMasteryRepo,
+		characterRepo,
+		weaponRepo,
 	)
 
 	classService.SetEncumbranceService(encumbranceService)
@@ -214,48 +222,50 @@ func NewApp(dbPath string) (*App, error) {
 	logger.Info("Application initialized successfully")
 
 	return &App{
-		DB:                     db,
-		UserRepository:         userRepo,
-		CharacterRepository:    characterRepo,
-		SpellRepository:        spellRepo,
-		ArmorRepository:        armorRepo,
-		WeaponRepository:       weaponRepo,
-		EquipmentRepository:    equipmentRepo,
-		ShieldRepository:       shieldRepo,
-		PotionRepository:       potionRepo,
-		MagicItemRepository:    magicItemRepo,
-		RingRepository:         ringRepo,
-		AmmoRepository:         ammoRepo,
-		SpellScrollRepository:  spellScrollRepo,
-		ContainerRepository:    containerRepo,
-		TreasureRepository:     treasureRepo,
-		InventoryRepository:    inventoryRepo,
-		ClassRepository:        classRepo,
-		SpellCastingRepository: spellCastingRepo,
+		DB:                      db,
+		UserRepository:          userRepo,
+		CharacterRepository:     characterRepo,
+		SpellRepository:         spellRepo,
+		ArmorRepository:         armorRepo,
+		WeaponRepository:        weaponRepo,
+		EquipmentRepository:     equipmentRepo,
+		ShieldRepository:        shieldRepo,
+		PotionRepository:        potionRepo,
+		MagicItemRepository:     magicItemRepo,
+		RingRepository:          ringRepo,
+		AmmoRepository:          ammoRepo,
+		SpellScrollRepository:   spellScrollRepo,
+		ContainerRepository:     containerRepo,
+		TreasureRepository:      treasureRepo,
+		InventoryRepository:     inventoryRepo,
+		ClassRepository:         classRepo,
+		SpellCastingRepository:  spellCastingRepo,
+		WeaponMasteryRepository: weaponMasteryRepo,
 
 		ClassService:       classService,
 		EncumbranceService: encumbranceService,
 		SpellService:       spellService,
 		ACService:          acService,
 
-		UserController:         userController,
-		CharacterController:    characterController,
-		SpellController:        spellController,
-		ArmorController:        armorController,
-		WeaponController:       weaponController,
-		EquipmentController:    equipmentController,
-		ShieldController:       shieldController,
-		PotionController:       potionController,
-		MagicItemController:    magicItemController,
-		RingController:         ringController,
-		AmmoController:         ammoController,
-		SpellScrollController:  spellScrollController,
-		ContainerController:    containerController,
-		AuthController:         authController,
-		TreasureController:     treasureController,
-		InventoryController:    inventoryController,
-		SpellCastingController: spellCastingController,
-		ACController:           acController,
+		UserController:          userController,
+		CharacterController:     characterController,
+		SpellController:         spellController,
+		ArmorController:         armorController,
+		WeaponController:        weaponController,
+		EquipmentController:     equipmentController,
+		ShieldController:        shieldController,
+		PotionController:        potionController,
+		MagicItemController:     magicItemController,
+		RingController:          ringController,
+		AmmoController:          ammoController,
+		SpellScrollController:   spellScrollController,
+		ContainerController:     containerController,
+		AuthController:          authController,
+		TreasureController:      treasureController,
+		InventoryController:     inventoryController,
+		SpellCastingController:  spellCastingController,
+		ACController:            acController,
+		WeaponMasteryController: weaponMasteryController,
 
 		Templates:      tmpl,
 		SessionManager: sessionManager,
@@ -358,6 +368,14 @@ func (a *App) SetupRoutes() http.Handler {
 				r.Get("/equipment-status", a.InventoryController.GetEquipmentStatus)
 				r.Get("/combat-equipment", a.InventoryController.GetCombatEquipment)
 				r.Get("/ac", a.ACController.GetCharacterAC)
+
+				r.Route("/weapon-masteries", func(r chi.Router) {
+					r.Get("/", a.WeaponMasteryController.GetWeaponMasteriesByCharacter)
+					r.Post("/", a.WeaponMasteryController.AddWeaponMastery)
+					r.Put("/{weaponBaseName}", a.WeaponMasteryController.UpdateWeaponMastery)
+					r.Delete("/{weaponBaseName}", a.WeaponMasteryController.DeleteWeaponMastery)
+					r.Get("/available", a.WeaponMasteryController.GetAvailableWeaponsForMastery)
+				})
 
 				// Encumbrance routes
 				r.Route("/encumbrance", func(r chi.Router) {

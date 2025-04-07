@@ -14,9 +14,11 @@ type Querier interface {
 	AddKnownSpell(ctx context.Context, arg AddKnownSpellParams) (sql.Result, error)
 	AddThiefSkill(ctx context.Context, arg AddThiefSkillParams) (sql.Result, error)
 	AddThiefSkillProgression(ctx context.Context, arg AddThiefSkillProgressionParams) error
+	AddWeaponMastery(ctx context.Context, arg AddWeaponMasteryParams) error
 	AssignSkillToClass(ctx context.Context, arg AssignSkillToClassParams) error
 	ClearPreparedSpells(ctx context.Context, characterID int64) error
 	CountPreparedSpellsByLevelAndClass(ctx context.Context, arg CountPreparedSpellsByLevelAndClassParams) (int64, error)
+	CountWeaponMasteries(ctx context.Context, arg CountWeaponMasteriesParams) (int64, error)
 	CreateAmmo(ctx context.Context, arg CreateAmmoParams) (sql.Result, error)
 	CreateArmor(ctx context.Context, arg CreateArmorParams) (sql.Result, error)
 	CreateCharacter(ctx context.Context, arg CreateCharacterParams) (sql.Result, error)
@@ -47,6 +49,7 @@ type Querier interface {
 	DeleteTreasure(ctx context.Context, id int64) (sql.Result, error)
 	DeleteUser(ctx context.Context, id int64) (sql.Result, error)
 	DeleteWeapon(ctx context.Context, id int64) (sql.Result, error)
+	DeleteWeaponMastery(ctx context.Context, arg DeleteWeaponMasteryParams) error
 	GetAllClassData(ctx context.Context, className string) ([]ClassDatum, error)
 	GetAmmo(ctx context.Context, id int64) (Ammo, error)
 	GetAmmoByName(ctx context.Context, name string) (Ammo, error)
@@ -116,6 +119,9 @@ type Querier interface {
 	GetUser(ctx context.Context, id int64) (GetUserRow, error)
 	GetWeapon(ctx context.Context, id int64) (Weapon, error)
 	GetWeaponByName(ctx context.Context, name string) (Weapon, error)
+	GetWeaponMasteriesByCharacter(ctx context.Context, characterID int64) ([]WeaponMastery, error)
+	GetWeaponMasteryByBaseName(ctx context.Context, arg GetWeaponMasteryByBaseNameParams) (WeaponMastery, error)
+	GetWeaponMasteryByID(ctx context.Context, id int64) (WeaponMastery, error)
 	ListAmmo(ctx context.Context) ([]Ammo, error)
 	ListArmors(ctx context.Context) ([]Armor, error)
 	ListCharacters(ctx context.Context) ([]ListCharactersRow, error)
@@ -160,6 +166,7 @@ type Querier interface {
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateWeapon(ctx context.Context, arg UpdateWeaponParams) (sql.Result, error)
+	UpdateWeaponMasteryLevel(ctx context.Context, arg UpdateWeaponMasteryLevelParams) error
 }
 
 var _ Querier = (*Queries)(nil)
