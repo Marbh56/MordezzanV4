@@ -1,0 +1,36 @@
+
+📦 Repomix v0.2.34
+
+No custom config found at repomix.config.json or global config at /Users/nsanders/.config/repomix/repomix.config.json.
+You can add a config file for additional settings. Please check https://github.com/yamadashy/repomix for more information.
+⠙ Collect file... (5/123) internal/controllers/armor_class_controller.go
+[2K[1A[2K[G⠹ Processing files...
+[2K[1A[2K[G⠸ Calculating metrics...
+[2K[1A[2K[G⠼ Calculating metrics...
+[2K[1A[2K[G⠴ Calculating metrics... (122/123) sqlc.yaml
+[2K[1A[2K[G✔ Packing completed successfully!
+
+📈 Top 5 Files by Character Count and Token Count:
+──────────────────────────────────────────────────
+1.  internal/repositories/db/sqlc/db.go (74,000 chars, 19,365 tokens)
+2.  web/templates/combat_tab.html (21,803 chars, 5,381 tokens)
+3.  web/templates/character_detail.html (20,839 chars, 4,401 tokens)
+4.  internal/controllers/character_controller.go (20,396 chars, 5,441 tokens)
+5.  Makefile (20,338 chars, 5,379 tokens)
+
+🔎 Security Check:
+──────────────────
+✔ No suspicious files detected.
+
+📊 Pack Summary:
+────────────────
+  Total Files: 123 files
+  Total Chars: 605,729 chars
+ Total Tokens: 167,925 tokens
+       Output: repomix-output.txt
+     Security: ✔ No suspicious files detected
+
+🎉 All Done!
+Your repository has been successfully packed.
+
+💡 Repomix is now available in your browser! Try it at https://repomix.com

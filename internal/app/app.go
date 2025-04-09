@@ -45,6 +45,7 @@ type App struct {
 	EncumbranceService *services.EncumbranceService
 	SpellService       *services.SpellService
 	ACService          *services.ACService
+	WeaponStatsService *services.WeaponStatsService
 
 	UserController          *controllers.UserController
 	CharacterController     *controllers.CharacterController
@@ -65,6 +66,7 @@ type App struct {
 	SpellCastingController  *controllers.SpellCastingController
 	ACController            *controllers.ACController
 	WeaponMasteryController *controllers.WeaponMasteryController
+	WeaponStatsController   *controllers.WeaponStatsController
 
 	Templates      *template.Template
 	SessionManager *scs.SessionManager
@@ -181,6 +183,13 @@ func NewApp(dbPath string) (*App, error) {
 		weaponRepo,
 	)
 
+	weaponStatsService := services.NewWeaponStatsService(
+		inventoryRepo,
+		characterRepo,
+		weaponRepo,
+		weaponMasteryRepo,
+	)
+
 	classService.SetEncumbranceService(encumbranceService)
 
 	// Initialize controllers with session manager
@@ -218,6 +227,7 @@ func NewApp(dbPath string) (*App, error) {
 	)
 	spellCastingController := controllers.NewSpellCastingController(spellService)
 	acController := controllers.NewACController(acService)
+	weaponStatsController := controllers.NewWeaponStatsController(weaponStatsService)
 
 	logger.Info("Application initialized successfully")
 
@@ -246,6 +256,7 @@ func NewApp(dbPath string) (*App, error) {
 		EncumbranceService: encumbranceService,
 		SpellService:       spellService,
 		ACService:          acService,
+		WeaponStatsService: weaponStatsService,
 
 		UserController:          userController,
 		CharacterController:     characterController,
@@ -266,6 +277,7 @@ func NewApp(dbPath string) (*App, error) {
 		SpellCastingController:  spellCastingController,
 		ACController:            acController,
 		WeaponMasteryController: weaponMasteryController,
+		WeaponStatsController:   weaponStatsController,
 
 		Templates:      tmpl,
 		SessionManager: sessionManager,
@@ -368,6 +380,7 @@ func (a *App) SetupRoutes() http.Handler {
 				r.Get("/equipment-status", a.InventoryController.GetEquipmentStatus)
 				r.Get("/combat-equipment", a.InventoryController.GetCombatEquipment)
 				r.Get("/ac", a.ACController.GetCharacterAC)
+				r.Get("/weapon-stats", a.WeaponStatsController.GetCharacterWeaponStats)
 
 				r.Route("/weapon-masteries", func(r chi.Router) {
 					r.Get("/", a.WeaponMasteryController.GetWeaponMasteriesByCharacter)

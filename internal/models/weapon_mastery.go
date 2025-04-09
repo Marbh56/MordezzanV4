@@ -195,24 +195,21 @@ type WeaponMasteryEffect struct {
 	Description string `json:"description"`
 }
 
-// CalculateAttackRateWithMastery determines the modified attack rate for a weapon with mastery applied
 func CalculateAttackRateWithMastery(baseRate string, masteryLevel string) string {
-	// No improvement for regular mastery
-	if masteryLevel != "grand_mastery" {
-		return baseRate
+	// These rates are for standard melee weapons
+	switch baseRate {
+	case "1/2":
+		return "1/1" // 1/2 → 1/1
+	case "1/1":
+		return "3/2" // 1/1 → 3/2
+	case "3/2":
+		return "2/1" // 3/2 → 2/1
+	case "2/1":
+		return "5/2" // 2/1 → 5/2
+	case "5/2":
+		return "3/1" // 5/2 → 3/1
 	}
 
-	// Logic to improve attack rate for grand mastery
-	// This is a simplified example - you may need more complex logic based on your game rules
-	switch baseRate {
-	case "1/1":
-		return "3/2" // One attack becomes 3 attacks every 2 rounds
-	case "1/2":
-		return "1/1" // One attack every 2 rounds becomes 1 attack per round
-	case "2/1":
-		return "5/2" // Two attacks becomes 5 attacks every 2 rounds
-	default:
-		// If we can't determine a specific improvement, just return the original
-		return baseRate
-	}
+	// If we didn't match any expected pattern, return the base rate
+	return baseRate
 }

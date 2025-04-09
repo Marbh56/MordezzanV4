@@ -1,31 +1,36 @@
 {{define "combat_tab"}}
 <div id="combat" class="tab-content">
     <div class="combat-grid">
-        <div class="combat-stats-card">
-            <h3>Armor Class</h3>
-            <div id="armor-class-container">
-                <div class="loading-container">
-                    <div class="loading-spinner"></div>
-                    <p>Loading armor class details...</p>
+        <!-- First row: Two columns with AC and Combat Stats -->
+        <div class="combat-stats-row">
+            <!-- AC Card - Simplified and reduced in size -->
+            <div class="combat-stats-card">
+                <h3>Armor Class</h3>
+                <div id="armor-class-container">
+                    <div class="loading-container">
+                        <div class="loading-spinner"></div>
+                        <p>Loading armor class details...</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="combat-stats-card">
-            <h3>Combat Stats</h3>
-            <div class="combat-stats-row">
-                <div class="combat-stat">
-                    <div class="stat-label">Fighting Ability</div>
-                    <div class="stat-value">{{.FightingAbility}}</div>
-                </div>
-                <div class="combat-stat">
-                    <div class="stat-label">Movement</div>
-                    <div class="stat-value">{{.MovementRate}}</div>
-                    <div class="stat-subtitle">feet per round</div>
-                </div>
-                <div class="combat-stat">
-                    <div class="stat-label">Initiative Modifier</div>
-                    <div class="stat-value">{{if gt .RangedModifier 0}}+{{end}}{{.RangedModifier}}</div>
+            <!-- Combat Stats Card - Fixed to show relevant stats -->
+            <div class="combat-stats-card">
+                <h3>Combat Stats</h3>
+                <div class="combat-stats-row">
+                    <div class="combat-stat">
+                        <div class="stat-label">Fighting Ability</div>
+                        <div class="stat-value">{{.FightingAbility}}</div>
+                    </div>
+                    <div class="combat-stat">
+                        <div class="stat-label">Movement</div>
+                        <div class="stat-value" id="movement-rate">{{.MovementRate}}</div>
+                        <div class="stat-subtitle">feet per round</div>
+                    </div>
+                    <div class="combat-stat">
+                        <div class="stat-label">Surprise Chance</div>
+                        <div class="stat-value">{{.SurpriseChance}}-in-6</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -369,9 +374,10 @@
                 </tbody>
             </table>
         </div>
-        <div class="matrix-note">
+        <div class="matrix-note combat-matrix-note">
             <p>Note: A natural roll of 20 always hits, and a natural roll of 1 always misses, regardless of modifiers.
             </p>
+            <div class="highlighted-note"></div>
         </div>
     </div>
 </div>
@@ -384,11 +390,18 @@
         margin-bottom: 2rem;
     }
 
+    .combat-stats-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1.5rem;
+    }
+
     .combat-stats-card {
         background-color: rgba(255, 255, 255, 0.05);
         border-radius: 8px;
         padding: 1.5rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        flex: 1;
     }
 
     .combat-stats-card h3 {
@@ -397,16 +410,6 @@
         font-size: 1.25rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         padding-bottom: 0.5rem;
-    }
-
-    .combat-stats-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-    }
-
-    .combat-stats-row:last-child {
-        margin-bottom: 0;
     }
 
     .combat-stat {
@@ -524,6 +527,78 @@
         color: var(--text-color);
     }
 
+    /* Reduce the size of the AC breakdown */
+    .ac-breakdown {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        width: 100%;
+    }
+
+    .ac-total {
+        text-align: center;
+        flex: 0 0 auto;
+    }
+
+    .ac-total h3 {
+        font-size: 1rem;
+        color: #999;
+        margin-bottom: 0.5rem;
+        border: none;
+        padding: 0;
+    }
+
+    .ac-total .stat-value {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+    }
+
+    .ac-components {
+        background-color: rgba(255, 255, 255, 0.03);
+        border-radius: 6px;
+        padding: 0.75rem;
+        flex: 1;
+        font-size: 0.9rem;
+    }
+
+    .ac-component-title {
+        font-size: 0.85rem;
+        color: #999;
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.25rem;
+    }
+
+    .ac-component {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.25rem;
+        padding: 0.15rem 0;
+    }
+
+    .component-label {
+        font-size: 0.85rem;
+        color: #999;
+    }
+
+    .component-value {
+        font-size: 0.85rem;
+        font-weight: bold;
+        color: var(--text-color);
+    }
+
+    .ac-final {
+        margin-top: 0.25rem;
+        padding-top: 0.25rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .ac-final .component-label,
+    .ac-final .component-value {
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
     .combat-matrix-container {
         margin-top: 2rem;
         margin-bottom: 3rem;
@@ -584,76 +659,6 @@
         background-color: rgba(255, 255, 255, 0.05);
     }
 
-    /* AC Breakdown Styles */
-    .ac-breakdown {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .ac-total {
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-
-    .ac-total h3 {
-        font-size: 1rem;
-        color: #999;
-        margin-bottom: 0.5rem;
-        border: none;
-        padding: 0;
-    }
-
-    .ac-total .stat-value {
-        font-size: 2.5rem;
-        color: var(--primary-color);
-    }
-
-    .ac-components {
-        background-color: rgba(255, 255, 255, 0.03);
-        border-radius: 6px;
-        padding: 1rem;
-    }
-
-    .ac-component-title {
-        text-align: center;
-        font-size: 0.9rem;
-        color: #999;
-        margin-bottom: 1rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding-bottom: 0.5rem;
-    }
-
-    .ac-component {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-        padding: 0.25rem 0;
-    }
-
-    .component-label {
-        font-size: 0.9rem;
-        color: #999;
-    }
-
-    .component-value {
-        font-size: 0.9rem;
-        font-weight: bold;
-        color: var(--text-color);
-    }
-
-    .ac-final {
-        margin-top: 0.5rem;
-        padding-top: 0.5rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .ac-final .component-label,
-    .ac-final .component-value {
-        font-weight: bold;
-        color: var(--primary-color);
-    }
-
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -712,6 +717,56 @@
         color: #ff6b6b;
         font-size: 1rem;
         margin-bottom: 0.5rem;
+    }
+
+    /* Styles for highlighting the combat matrix row */
+    .combat-matrix tbody tr.highlighted-row {
+        background-color: rgba(233, 185, 63, 0.15);
+        animation: highlight-pulse 2s infinite alternate;
+    }
+
+    .combat-matrix tbody tr.highlighted-row th {
+        color: var(--primary-color);
+        font-weight: bold;
+        position: relative;
+    }
+
+    .combat-matrix tbody tr.highlighted-row th::after {
+        content: " ←";
+        color: var(--primary-color);
+        font-weight: bold;
+        animation: arrow-pulse 1s infinite alternate;
+    }
+
+    @keyframes highlight-pulse {
+        from {
+            background-color: rgba(233, 185, 63, 0.15);
+        }
+
+        to {
+            background-color: rgba(233, 185, 63, 0.3);
+        }
+    }
+
+    @keyframes arrow-pulse {
+        from {
+            opacity: 0.7;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .highlighted-note {
+        display: none;
+        color: var(--primary-color);
+        font-weight: bold;
+        margin-top: 0.5rem;
+    }
+
+    .highlighted-row-exists .highlighted-note {
+        display: block;
     }
 </style>
 {{end}}

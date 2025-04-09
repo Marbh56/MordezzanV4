@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const responseData = await response.json();
             console.log("API Response Structure:", responseData);
-            debugInventoryData(responseData);
             
             const inventory = responseData.inventory || {};
             const enrichedItems = responseData.items || [];
