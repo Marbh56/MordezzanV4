@@ -739,16 +739,22 @@ func (c *CharacterController) GetCharacterClassData(w http.ResponseWriter, r *ht
 		return
 	}
 
-	// Enrich character with class-specific data
+	// Enrich character with class-specific data (including abilities)
 	if err := c.classService.EnrichCharacterWithClassData(r.Context(), character); err != nil {
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 		return
 	}
 
-	// Get class abilities
-	abilities, err := c.classService.GetClassAbilitiesByLevel(r.Context(), character.Class, character.Level)
-	if err != nil {
-		abilities = []*models.ClassAbility{} // Set to empty array if error
+	// Extract abilities from the character object
+	var abilities []*models.ClassAbility
+	if character.Abilities != nil {
+		if abilitiesMap, ok := character.Abilities.(map[string]interface{}); ok {
+			if classAbilities, ok := abilitiesMap["class_abilities"]; ok {
+				if cas, ok := classAbilities.([]*models.ClassAbility); ok {
+					abilities = cas
+				}
+			}
+		}
 	}
 
 	// Create a response with both the full level progression and current abilities

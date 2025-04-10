@@ -156,6 +156,72 @@ func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, charact
 	character.SorcerySaveBonus = 0
 	character.AvoidanceSaveBonus = 0
 
+	// Get class abilities using the class-specific method
+	var classAbilities []*models.ClassAbility
+
+	// Use a direct call to the appropriate class-specific ability method based on character's class
+	switch character.Class {
+	case "Barbarian":
+		classAbilities, err = s.classRepo.GetBarbarianAbilities(ctx, character.Level)
+	case "Berserker":
+		classAbilities, err = s.classRepo.GetBerserkerAbilities(ctx, character.Level)
+	case "Bard":
+		classAbilities, err = s.classRepo.GetBardAbilities(ctx, character.Level)
+	case "Cataphract":
+		classAbilities, err = s.classRepo.GetCataphractAbilities(ctx, character.Level)
+	case "Cleric":
+		classAbilities, err = s.classRepo.GetClericAbilities(ctx, character.Level)
+	case "Cryomancer":
+		classAbilities, err = s.classRepo.GetCryomancerAbilities(ctx, character.Level)
+	case "Druid":
+		classAbilities, err = s.classRepo.GetDruidAbilities(ctx, character.Level)
+	case "Fighter":
+		classAbilities, err = s.classRepo.GetFighterAbilities(ctx, character.Level)
+	case "Huntsman":
+		classAbilities, err = s.classRepo.GetHuntsmanAbilities(ctx, character.Level)
+	case "Illusionist":
+		classAbilities, err = s.classRepo.GetIllusionistAbilities(ctx, character.Level)
+	case "Legerdemainist":
+		classAbilities, err = s.classRepo.GetLegerdemainistAbilities(ctx, character.Level)
+	case "Magician":
+		classAbilities, err = s.classRepo.GetMagicianAbilities(ctx, character.Level)
+	case "Monk":
+		classAbilities, err = s.classRepo.GetMonkAbilities(ctx, character.Level)
+	case "Necromancer":
+		classAbilities, err = s.classRepo.GetNecromancerAbilities(ctx, character.Level)
+	case "Paladin":
+		classAbilities, err = s.classRepo.GetPaladinAbilities(ctx, character.Level)
+	case "Priest":
+		classAbilities, err = s.classRepo.GetPriestAbilities(ctx, character.Level)
+	case "Purloiner":
+		classAbilities, err = s.classRepo.GetPurloinerAbilities(ctx, character.Level)
+	case "Pyromancer":
+		classAbilities, err = s.classRepo.GetPyromancerAbilities(ctx, character.Level)
+	case "Ranger":
+		classAbilities, err = s.classRepo.GetRangerAbilities(ctx, character.Level)
+	case "Runegraver":
+		classAbilities, err = s.classRepo.GetRunegraverAbilities(ctx, character.Level)
+	case "Scout":
+		classAbilities, err = s.classRepo.GetScoutAbilities(ctx, character.Level)
+	case "Shaman":
+		classAbilities, err = s.classRepo.GetShamanAbilities(ctx, character.Level)
+	case "Thief":
+		classAbilities, err = s.classRepo.GetThiefAbilities(ctx, character.Level)
+	case "Warlock":
+		classAbilities, err = s.classRepo.GetWarlockAbilities(ctx, character.Level)
+	case "Witch":
+		classAbilities, err = s.classRepo.GetWitchAbilities(ctx, character.Level)
+	default:
+		// Fallback for any classes not specifically handled
+		classAbilities, err = s.classRepo.GetClassAbilitiesByLevel(ctx, character.Class, character.Level)
+	}
+
+	// Check for errors in ability retrieval, but don't fail the entire function
+	if err != nil {
+		// Log the error but continue with the rest of the function
+		fmt.Printf("failed to fetch %s abilities: %v\n", character.Class, err)
+	}
+
 	// Apply class-specific data based on class type
 	switch character.Class {
 	// Warrior types
@@ -367,16 +433,23 @@ func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, charact
 		character.AvoidanceSaveBonus = 2
 	}
 
-	// Get class abilities for this level
-	abilities, err := s.classRepo.GetClassAbilitiesByLevel(ctx, character.Class, character.Level)
-	if err == nil && len(abilities) > 0 {
-		// Store class abilities in character object
-		// If character.Abilities is already a map, add to it, otherwise replace
+	// Add class abilities to character.Abilities if we successfully retrieved them
+	if classAbilities != nil && len(classAbilities) > 0 {
+		// If character.Abilities is nil, initialize it
 		if character.Abilities == nil {
-			character.Abilities = abilities
+			character.Abilities = map[string]interface{}{
+				"class_abilities": classAbilities,
+			}
 		} else if abilitiesMap, ok := character.Abilities.(map[string]interface{}); ok {
-			abilitiesMap["class_abilities"] = abilities
+			// If it's already a map, add the class abilities to it
+			abilitiesMap["class_abilities"] = classAbilities
 			character.Abilities = abilitiesMap
+		} else {
+			// If it's already set but not a map, create a new map with both existing abilities and class abilities
+			character.Abilities = map[string]interface{}{
+				"class_abilities":    classAbilities,
+				"original_abilities": character.Abilities,
+			}
 		}
 	}
 

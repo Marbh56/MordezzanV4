@@ -38,6 +38,27 @@ type Armor struct {
 	UpdatedAt       time.Time
 }
 
+type AssassinAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
+type BarbarianAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
+type BardAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type BardDruidSpell struct {
 	Level            int64
 	SpellSlotsLevel1 int64
@@ -54,11 +75,25 @@ type BardIllusionistSpell struct {
 	SpellSlotsLevel4 int64
 }
 
+type BerserkerAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type BerserkerNaturalAc struct {
 	ID        int64
 	ClassName string
 	Level     int64
 	NaturalAc int64
+}
+
+type CataphractAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
 }
 
 type Character struct {
@@ -110,6 +145,13 @@ type ClassThiefSkillMapping struct {
 	SkillID   int64
 }
 
+type ClericAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type ClericTurningAbility struct {
 	ID             int64
 	ClassName      string
@@ -128,6 +170,20 @@ type Container struct {
 	UpdatedAt    time.Time
 }
 
+type CryomancerAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
+type DruidAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type Equipment struct {
 	ID          int64
 	Name        string
@@ -136,6 +192,27 @@ type Equipment struct {
 	Weight      int64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type FighterAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
+type HuntsmanAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
+type IllusionistAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
 }
 
 type Inventory struct {
@@ -179,6 +256,13 @@ type KnownSpell struct {
 	UpdatedAt   time.Time
 }
 
+type LegerdemainistAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type MagicItem struct {
 	ID          int64
 	Name        string
@@ -191,6 +275,20 @@ type MagicItem struct {
 	UpdatedAt   time.Time
 }
 
+type MagicianAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
+type MonkAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type MonkAcBonu struct {
 	Level   int64
 	AcBonus int64
@@ -201,10 +299,24 @@ type MonkEmptyHandDamage struct {
 	Damage string
 }
 
+type NecromancerAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type NecromancerTurningAbility struct {
 	ClassName      string
 	Level          int64
 	TurningAbility int64
+}
+
+type PaladinAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
 }
 
 type PaladinTurningAbility struct {
@@ -236,14 +348,42 @@ type PreparedSpell struct {
 	UpdatedAt   time.Time
 }
 
+type PriestAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type PriestTurningAbility struct {
 	Level          int64
 	TurningAbility int64
 }
 
+type PurloinerAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type PurloinerTurningAbility struct {
 	Level          int64
 	TurningAbility int64
+}
+
+type PyromancerAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
+type RangerAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
 }
 
 type RangerDruidSpellSlot struct {
@@ -268,6 +408,13 @@ type Ring struct {
 	UpdatedAt   time.Time
 }
 
+type RunegraverAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type RunesPerDay struct {
 	ID        int64
 	ClassName string
@@ -280,10 +427,24 @@ type RunesPerDay struct {
 	Level6    sql.NullInt64
 }
 
+type ScoutAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type Session struct {
 	Token  string
 	Data   []byte
 	Expiry float64
+}
+
+type ShamanAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
 }
 
 type ShamanArcaneSpell struct {
@@ -364,6 +525,13 @@ type Spellbook struct {
 	UpdatedAt   time.Time
 }
 
+type ThiefAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type ThiefSkill struct {
 	ID        int64
 	SkillName string
@@ -402,6 +570,13 @@ type User struct {
 	UpdatedAt    time.Time
 }
 
+type WarlockAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
+}
+
 type Weapon struct {
 	ID              int64
 	Name            string
@@ -427,4 +602,11 @@ type WeaponMastery struct {
 	MasteryLevel   string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+}
+
+type WitchAbility struct {
+	ID          int64
+	Name        string
+	Description string
+	MinLevel    int64
 }

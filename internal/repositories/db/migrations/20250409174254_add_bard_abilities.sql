@@ -1,0 +1,37 @@
+-- +goose Up
+-- Create class-specific table for bard abilities
+CREATE TABLE bard_abilities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    min_level INTEGER NOT NULL DEFAULT 1,
+    UNIQUE(name)
+);
+
+-- Insert all bard abilities directly into the class-specific table
+INSERT INTO bard_abilities (name, description, min_level) VALUES
+-- Level 1 abilities
+('Countersong', 'To cognize songs of enchantment (from other bards, gorgons, harpies, etc.) and instantly (no initiative required) react with opposing melodies, poetics, and/or instrumentation that channels the horrible vibrations of the Black Gulf, at once muting or disrupting auditory sorceries. The base chance of success is 9-in-12 for opponents of equal or lesser level/HD. For every level/HD greater than the bard''s, the chance-in-twelve is reduced by one, with 1-in-12 being the minimum chance of success.', 1),
+('Extraordinary', '+8% chance to perform extraordinary feats of dexterity (see Chapter 3: Statistics, dexterity).', 1),
+('Folklore', 'To identify or recall a random fact or sliver of knowledge regarding ancient artefacts, legends, myths, folklore, and other oddities. Whether anything exists to be gleaned—as well as the extent and veracity of the information—is ultimately the purview of the referee, who should provide a chance-in-six for success, or possibly automatic success, if appropriate.', 1),
+('Inspirit Allies', 'In the midst of battle, recite poems or sing verses that inspirit allies to fight with enhanced ferocity: Allies gain +1 bonus "to hit" and damage in melee (not missile) combat. Boon takes effect 2 rounds after the singing begins (i.e., on round 3 if the singing begins on round 1). Boon lasts as long as the bard continues performing, to a maximum of 1 turn (10 minutes). This ability can be used whilst engaged in battle, so long as the bard can continue to sing or recite; however, casting other spells or perform other like actions is not possible. This ability can be used once per day for every three levels of experience: 1st to 3rd levels = ×1, 4th to 6th levels = ×2, 7th to 9th levels = ×3, 10th to 12th levels = ×4.', 1),
+('Magic Item Use', 'Can utilize magic items normally restricted to magicians and clerics.', 1),
+('Mesmerize', 'Once per day recite a song or poem laced with weird vibrations that permeate the universe; alternatively, the bard might play a flute, panpipes or other wind instrument. Requirements, limitations, and effects are as follows: Can take no other action besides walking. Targets must be within 40 feet and of animal intelligence or greater; slimes, oozes, mindless automata, and some undead are immune. Allies and travelling companions are unaffected unless they have become hostile to the bard. Each target is allowed a sorcery saving throw, modified by willpower adjustment, if applicable (see Chapter 3: Statistics, wisdom). Those who fail are mesmerized for as long as the bard continues to perform for up to 1 turn (10 minutes). Mesmerized victims are considered stunned; however, mesmerize effects are broken once a subject is attacked. At 3rd level, a single victim''s mind can be imprinted with a suggestion (as the spell); however, a sorcery saving throw negates the suggestion and ends mesmerization for that one. At 9th level, a single victim''s mind can be infected with madness (as the inflict madness spell); however, the applicable sorcery saving throw negates madness and ends mesmerization.', 1),
+('Read Magic', 'The ability to decipher unintelligible magical inscriptions or symbols placed on weapons, armour, items, doors, walls, and other media by means of the sorcerer mark spell or other like methods.', 1),
+('Scroll Use', 'Decipher and invoke both thaumaturgical and ecclesiastical scroll spells as long they are included in the Illusionist- and Druid Spell Lists (see Chapter 7: Sorcery, Tables 95 and 100).', 1),
+('Scroll Writing', 'To scribe a known spell onto a scroll, creating a single-use magical device at a cost of 500 gp + 100 gp per spell level. Materials may include the finest vellum, paper, or papyrus; a fresh quill; and sorcerer''s ink, such as sepia. This involved process requires one week per spell level.', 1),
+('Sorcery', 'Bards memorize and cast spells by channeling animistic and elemental spirits and by studying arcane tomes. The number and levels of spells cast per day are charted above (see Table 58), though bards of high intelligence and/or wisdom gain bonus spells cast per day (see Chapter 3: Statistics, intelligence and wisdom). For example, a 4th-level bard with 13 intelligence and 10 wisdom can cast one level 1 druid spell, one level 2 druid spell, two level 1 illusionist spells, and one level 2 illusionist spell per day. The bard''s druid spells are developed through the recital of sorcerous songs or kennings, or by the piping of a flute or like instrument. These spells are drawn from the Druid Spell List (see Chapter 7: Sorcery, Table 100). The bard also begins with a spell book. At 2nd level, the bard develops a level 1 spell drawn from the Illusionist Spell List (see Chapter 7: Sorcery, Table 95). Through mystical connexions (druid) and arcane studies (illusionist), the bard develops one or more new spells at each level gain. The schedule is as follows: 1st level: ×1 druid spell, 2nd level: ×1 illusionist spell, 3rd level: ×1 druid spell, 4th level: ×1 illusionist spell, 5th level: ×1 druid spell, 6th level: ×1 illusionist spell, 7th level: ×1 druid spell, 8th level: ×1 illusionist spell, 9th–12th levels: ×1 druid spell; ×1 illusionist spell. These spells are learnt automatically, with no need of qualification rolls, but they must be of castable levels (see Table 58 above). Additional spells may be learnt outside of level training, but the process is more arduous (see Chapter 7: Sorcery, acquiring new spells).', 1),
+('Decipher Script', 'To translate texts otherwise not understood. Maps can be interpreted, instructions decoded, and so forth. Ancient or alien languages, however, may remain unintelligible, lacking any basis for comparison.', 1),
+('Discern Noise', 'To hearken at a door and detect the faintest of noises on the other side, perceive the distant footfalls of a wandering monster, or distinguish a single voice in a crowd. Six rounds (one minute) of concentrated listening are required.', 1),
+('Hide', 'To vanish into shadows, camouflage oneself, or flatten one''s body to a seemingly impossible degree—all whilst remaining still as a statue. Only the slightest movement is permissible (e.g., unsheathing a blade, opening a pouch). Hiding is impossible in direct sunlight, or if the bard is observed.', 1),
+('Move Silently', 'To move with preternatural quiet, even across squeaky floorboards, dry leaves, loose debris, and the like. This skill is executed at half the bard''s normal movement rate.', 1),
+
+-- Level 6 abilities
+('Enlist Henchmen', 'At 6th level, a bard may seek or be sought out by one or more henchmen, classed individuals (typically of similar class, race, and/or culture) who become loyal followers. For more information, see Chapter 8: Adventure, hirelings and henchmen.', 6),
+
+-- Level 9 abilities
+('Lordship', 'At 9th level, a bard who builds or assumes control of a college becomes a lord and is eligible to attract a band of bards. More information is presented in Appendix B.', 9);
+
+-- +goose Down
+-- Clean up bard abilities table if reverting
+DROP TABLE bard_abilities;

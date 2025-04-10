@@ -55,9 +55,17 @@ type Querier interface {
 	GetAmmoByName(ctx context.Context, name string) (Ammo, error)
 	GetArmor(ctx context.Context, id int64) (Armor, error)
 	GetArmorByName(ctx context.Context, name string) (Armor, error)
+	// Gets all barbarian abilities available to a character based on their level
+	GetBarbarianAbilities(ctx context.Context, characterLevel int64) ([]BarbarianAbility, error)
+	// Gets all bard abilities available to a character based on their level
+	GetBardAbilities(ctx context.Context, characterLevel int64) ([]BardAbility, error)
 	GetBardDruidSpells(ctx context.Context, level int64) (BardDruidSpell, error)
 	GetBardIllusionistSpells(ctx context.Context, level int64) (BardIllusionistSpell, error)
+	// Gets all berserker abilities available to a character based on their level
+	GetBerserkerAbilities(ctx context.Context, characterLevel int64) ([]BerserkerAbility, error)
 	GetBerserkerNaturalAC(ctx context.Context, arg GetBerserkerNaturalACParams) (int64, error)
+	// Gets all cataphract abilities available to a character based on their level
+	GetCataphractAbilities(ctx context.Context, characterLevel int64) ([]CataphractAbility, error)
 	GetCharacter(ctx context.Context, id int64) (GetCharacterRow, error)
 	GetCharacterForSpellcasting(ctx context.Context, id int64) (Character, error)
 	GetCharactersByUser(ctx context.Context, userID int64) ([]GetCharactersByUserRow, error)
@@ -65,13 +73,25 @@ type Querier interface {
 	GetClassAbilitiesByLevel(ctx context.Context, arg GetClassAbilitiesByLevelParams) ([]GetClassAbilitiesByLevelRow, error)
 	GetClassData(ctx context.Context, arg GetClassDataParams) (ClassDatum, error)
 	GetClassDataForSpellcasting(ctx context.Context, arg GetClassDataForSpellcastingParams) (ClassDatum, error)
+	// Gets all cleric abilities available to a character based on their level
+	GetClericAbilities(ctx context.Context, characterLevel int64) ([]ClericAbility, error)
 	GetClericTurningAbility(ctx context.Context, level int64) (int64, error)
 	GetContainer(ctx context.Context, id int64) (Container, error)
 	GetContainerByName(ctx context.Context, name string) (Container, error)
+	// Gets all cryomancer abilities available to a character based on their level
+	GetCryomancerAbilities(ctx context.Context, characterLevel int64) ([]CryomancerAbility, error)
+	// Gets all druid abilities available to a character based on their level
+	GetDruidAbilities(ctx context.Context, characterLevel int64) ([]DruidAbility, error)
 	GetEquipment(ctx context.Context, id int64) (Equipment, error)
 	GetEquipmentByName(ctx context.Context, name string) (Equipment, error)
 	GetEquippedItems(ctx context.Context, inventoryID int64) ([]InventoryItem, error)
+	// Gets all fighter abilities available to a character based on their level
+	GetFighterAbilities(ctx context.Context, characterLevel int64) ([]FighterAbility, error)
 	GetFullUserByEmail(ctx context.Context, email string) (User, error)
+	// Gets all huntsman abilities available to a character based on their level
+	GetHuntsmanAbilities(ctx context.Context, characterLevel int64) ([]HuntsmanAbility, error)
+	// Gets all illusionist abilities available to a character based on their level
+	GetIllusionistAbilities(ctx context.Context, characterLevel int64) ([]IllusionistAbility, error)
 	GetInventory(ctx context.Context, id int64) (Inventory, error)
 	GetInventoryByCharacter(ctx context.Context, characterID int64) (Inventory, error)
 	GetInventoryItem(ctx context.Context, id int64) (InventoryItem, error)
@@ -82,24 +102,48 @@ type Querier interface {
 	GetKnownSpellByCharacterAndSpell(ctx context.Context, arg GetKnownSpellByCharacterAndSpellParams) (KnownSpell, error)
 	GetKnownSpells(ctx context.Context, characterID int64) ([]KnownSpell, error)
 	GetKnownSpellsByClass(ctx context.Context, arg GetKnownSpellsByClassParams) ([]KnownSpell, error)
+	// Gets all legerdemainist abilities available to a character based on their level
+	GetLegerdemainistAbilities(ctx context.Context, characterLevel int64) ([]LegerdemainistAbility, error)
 	GetMagicItem(ctx context.Context, id int64) (MagicItem, error)
 	GetMagicItemByName(ctx context.Context, name string) (MagicItem, error)
+	// Gets all magician abilities available to a character based on their level
+	GetMagicianAbilities(ctx context.Context, characterLevel int64) ([]MagicianAbility, error)
 	GetMonkACBonus(ctx context.Context, level int64) (int64, error)
+	// Gets all monk abilities available to a character based on their level
+	GetMonkAbilities(ctx context.Context, characterLevel int64) ([]MonkAbility, error)
 	GetMonkEmptyHandDamage(ctx context.Context, level int64) (string, error)
+	// Gets all necromancer abilities available to a character based on their level
+	GetNecromancerAbilities(ctx context.Context, characterLevel int64) ([]NecromancerAbility, error)
 	GetNecromancerTurningAbility(ctx context.Context, level int64) (int64, error)
 	GetNextAvailableSlotIndex(ctx context.Context, arg GetNextAvailableSlotIndexParams) (int64, error)
 	GetNextLevelData(ctx context.Context, arg GetNextLevelDataParams) (ClassDatum, error)
+	// Gets all paladin abilities available to a character based on their level
+	GetPaladinAbilities(ctx context.Context, characterLevel int64) ([]PaladinAbility, error)
 	GetPaladinTurningAbility(ctx context.Context, level int64) (int64, error)
 	GetPotion(ctx context.Context, id int64) (Potion, error)
 	GetPotionByName(ctx context.Context, name string) (Potion, error)
 	GetPreparedSpellByCharacterAndSpell(ctx context.Context, arg GetPreparedSpellByCharacterAndSpellParams) (PreparedSpell, error)
 	GetPreparedSpells(ctx context.Context, characterID int64) ([]PreparedSpell, error)
 	GetPreparedSpellsByClass(ctx context.Context, arg GetPreparedSpellsByClassParams) ([]PreparedSpell, error)
+	// Gets all priest abilities available to a character based on their level
+	GetPriestAbilities(ctx context.Context, characterLevel int64) ([]PriestAbility, error)
+	// Gets all purloiner abilities available to a character based on their level
+	GetPurloinerAbilities(ctx context.Context, characterLevel int64) ([]PurloinerAbility, error)
+	// Gets all pyromancer abilities available to a character based on their level
+	GetPyromancerAbilities(ctx context.Context, characterLevel int64) ([]PyromancerAbility, error)
+	// Gets all ranger abilities available to a character based on their level
+	GetRangerAbilities(ctx context.Context, characterLevel int64) ([]RangerAbility, error)
 	GetRangerDruidSpellSlots(ctx context.Context, classLevel int64) ([]GetRangerDruidSpellSlotsRow, error)
 	GetRangerMagicianSpellSlots(ctx context.Context, classLevel int64) ([]GetRangerMagicianSpellSlotsRow, error)
 	GetRing(ctx context.Context, id int64) (Ring, error)
 	GetRingByName(ctx context.Context, name string) (Ring, error)
+	// Gets all runegraver abilities available to a character based on their level
+	GetRunegraverAbilities(ctx context.Context, characterLevel int64) ([]RunegraverAbility, error)
 	GetRunesPerDay(ctx context.Context, level int64) (GetRunesPerDayRow, error)
+	// Gets all scout abilities available to a character based on their level
+	GetScoutAbilities(ctx context.Context, characterLevel int64) ([]ScoutAbility, error)
+	// Gets all shaman abilities available to a character based on their level
+	GetShamanAbilities(ctx context.Context, characterLevel int64) ([]ShamanAbility, error)
 	GetShamanArcaneSpells(ctx context.Context, level int64) (ShamanArcaneSpell, error)
 	GetShamanDivineSpells(ctx context.Context, level int64) (ShamanDivineSpell, error)
 	GetShield(ctx context.Context, id int64) (Shield, error)
@@ -109,6 +153,8 @@ type Querier interface {
 	GetSpellScroll(ctx context.Context, id int64) (GetSpellScrollRow, error)
 	GetSpellScrollsBySpell(ctx context.Context, spellID int64) ([]GetSpellScrollsBySpellRow, error)
 	GetSpellsByClassLevel(ctx context.Context, arg GetSpellsByClassLevelParams) ([]Spell, error)
+	// Gets all thief abilities available to a character based on their level
+	GetThiefAbilities(ctx context.Context, characterLevel int64) ([]ThiefAbility, error)
 	GetThiefSkillByName(ctx context.Context, skillName string) (ThiefSkill, error)
 	GetThiefSkillChance(ctx context.Context, arg GetThiefSkillChanceParams) (string, error)
 	GetThiefSkillsByClassName(ctx context.Context, className string) ([]ThiefSkill, error)
@@ -117,11 +163,15 @@ type Querier interface {
 	GetTreasure(ctx context.Context, id int64) (Treasure, error)
 	GetTreasureByCharacter(ctx context.Context, characterID sql.NullInt64) (Treasure, error)
 	GetUser(ctx context.Context, id int64) (GetUserRow, error)
+	// Gets all warlock abilities available to a character based on their level
+	GetWarlockAbilities(ctx context.Context, characterLevel int64) ([]WarlockAbility, error)
 	GetWeapon(ctx context.Context, id int64) (Weapon, error)
 	GetWeaponByName(ctx context.Context, name string) (Weapon, error)
 	GetWeaponMasteriesByCharacter(ctx context.Context, characterID int64) ([]WeaponMastery, error)
 	GetWeaponMasteryByBaseName(ctx context.Context, arg GetWeaponMasteryByBaseNameParams) (WeaponMastery, error)
 	GetWeaponMasteryByID(ctx context.Context, id int64) (WeaponMastery, error)
+	// Gets all witch abilities available to a character based on their level
+	GetWitchAbilities(ctx context.Context, characterLevel int64) ([]WitchAbility, error)
 	ListAmmo(ctx context.Context) ([]Ammo, error)
 	ListArmors(ctx context.Context) ([]Armor, error)
 	ListCharacters(ctx context.Context) ([]ListCharactersRow, error)

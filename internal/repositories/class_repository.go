@@ -11,42 +11,52 @@ import (
 )
 
 type ClassRepository interface {
-	// Class Data Methods
 	GetClassData(ctx context.Context, className string, level int) (*models.ClassData, error)
 	GetAllClassData(ctx context.Context, className string) ([]*models.ClassData, error)
 	GetNextLevelData(ctx context.Context, className string, currentLevel int) (*models.ClassData, error)
-
-	// Character Class Info
 	GetCharacterClassInfo(ctx context.Context, characterID int64) (*models.Character, error)
-
-	// Class Abilities
 	GetClassAbilities(ctx context.Context, className string) ([]*models.ClassAbility, error)
 	GetClassAbilitiesByLevel(ctx context.Context, className string, level int) ([]*models.ClassAbility, error)
-
-	// Thief Skills
 	GetThiefSkillsForClass(ctx context.Context, className string) ([]*models.ThiefSkill, error)
 	GetThiefSkillsForCharacter(ctx context.Context, className string, level int) (map[string]string, error)
 	GetThiefSkillsByClass(ctx context.Context, className string) ([]models.ThiefSkill, error)
 	GetThiefSkillByName(ctx context.Context, skillName string) (*models.ThiefSkill, error)
 	GetThiefSkillChance(ctx context.Context, skillID int64, level int) (string, error)
-
-	// Class-specific turning abilities
 	GetClericTurningAbility(ctx context.Context, level int) (int, error)
 	GetPaladinTurningAbility(ctx context.Context, level int) (int, error)
 	GetNecromancerTurningAbility(ctx context.Context, level int) (int, error)
-
-	// Monk abilities
 	GetMonkACBonus(ctx context.Context, level int) (int, error)
 	GetMonkEmptyHandDamage(ctx context.Context, level int) (string, error)
-
-	// Berserker abilities
 	GetBerserkerNaturalAC(ctx context.Context, level int) (int, error)
-
-	// Special spell slot handling
 	GetSpecialClassSpellSlots(ctx context.Context, className string, level int) (map[string]int, error)
-
-	// Runegraver abilities
 	GetRunegraverRunesPerDay(ctx context.Context, level int) (map[string]int, error)
+
+	// New methods for each class's abilities
+	GetBarbarianAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetBerserkerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetBardAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetCataphractAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetClericAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetCryomancerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetDruidAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetFighterAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetHuntsmanAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetIllusionistAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetLegerdemainistAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetMagicianAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetMonkAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetNecromancerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetPaladinAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetPriestAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetPurloinerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetPyromancerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetRangerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetRunegraverAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetScoutAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetShamanAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetThiefAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetWarlockAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
+	GetWitchAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error)
 }
 
 // SQLCClassRepository implements ClassRepository using SQLC
@@ -280,45 +290,87 @@ func (r *SQLCClassRepository) GetNextLevelData(ctx context.Context, className st
 	return mapDbClassDataToModel(data), nil
 }
 
+// GetClassAbilities method using the class-specific methods
 func (r *SQLCClassRepository) GetClassAbilities(ctx context.Context, className string) ([]*models.ClassAbility, error) {
-	abilities, err := r.q.GetClassAbilities(ctx, className)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*models.ClassAbility, len(abilities))
-	for i, a := range abilities {
-		result[i] = &models.ClassAbility{
-			ID:          a.ID,
-			Name:        a.Name,
-			Description: a.Description,
-			MinLevel:    int(a.MinLevel),
-		}
-	}
-
-	return result, nil
+	// Just call the ByLevel version with a very high level to get all abilities
+	// This assumes that no class has abilities with an extremely high level
+	return r.GetClassAbilitiesByLevel(ctx, className, 99) // Using 99 as a high level to get all abilities
 }
 
+// Updated GetClassAbilitiesByLevel method to use the class-specific methods
 func (r *SQLCClassRepository) GetClassAbilitiesByLevel(ctx context.Context, className string, level int) ([]*models.ClassAbility, error) {
-	abilities, err := r.q.GetClassAbilitiesByLevel(ctx, sqlcdb.GetClassAbilitiesByLevelParams{
-		ClassName: className,
-		MinLevel:  int64(level),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*models.ClassAbility, len(abilities))
-	for i, a := range abilities {
-		result[i] = &models.ClassAbility{
-			ID:          a.ID,
-			Name:        a.Name,
-			Description: a.Description,
-			MinLevel:    int(a.MinLevel),
+	// Use the class-specific abilities methods instead of the generic one
+	switch className {
+	case "Barbarian":
+		return r.GetBarbarianAbilities(ctx, level)
+	case "Berserker":
+		return r.GetBerserkerAbilities(ctx, level)
+	case "Bard":
+		return r.GetBardAbilities(ctx, level)
+	case "Cataphract":
+		return r.GetCataphractAbilities(ctx, level)
+	case "Cleric":
+		return r.GetClericAbilities(ctx, level)
+	case "Cryomancer":
+		return r.GetCryomancerAbilities(ctx, level)
+	case "Druid":
+		return r.GetDruidAbilities(ctx, level)
+	case "Fighter":
+		return r.GetFighterAbilities(ctx, level)
+	case "Huntsman":
+		return r.GetHuntsmanAbilities(ctx, level)
+	case "Illusionist":
+		return r.GetIllusionistAbilities(ctx, level)
+	case "Legerdemainist":
+		return r.GetLegerdemainistAbilities(ctx, level)
+	case "Magician":
+		return r.GetMagicianAbilities(ctx, level)
+	case "Monk":
+		return r.GetMonkAbilities(ctx, level)
+	case "Necromancer":
+		return r.GetNecromancerAbilities(ctx, level)
+	case "Paladin":
+		return r.GetPaladinAbilities(ctx, level)
+	case "Priest":
+		return r.GetPriestAbilities(ctx, level)
+	case "Purloiner":
+		return r.GetPurloinerAbilities(ctx, level)
+	case "Pyromancer":
+		return r.GetPyromancerAbilities(ctx, level)
+	case "Ranger":
+		return r.GetRangerAbilities(ctx, level)
+	case "Runegraver":
+		return r.GetRunegraverAbilities(ctx, level)
+	case "Scout":
+		return r.GetScoutAbilities(ctx, level)
+	case "Shaman":
+		return r.GetShamanAbilities(ctx, level)
+	case "Thief":
+		return r.GetThiefAbilities(ctx, level)
+	case "Warlock":
+		return r.GetWarlockAbilities(ctx, level)
+	case "Witch":
+		return r.GetWitchAbilities(ctx, level)
+	default:
+		// Fallback to the old method (keeping it for backward compatibility)
+		abilities, err := r.q.GetClassAbilitiesByLevel(ctx, sqlcdb.GetClassAbilitiesByLevelParams{
+			ClassName: className,
+			MinLevel:  int64(level),
+		})
+		if err != nil {
+			return nil, err
 		}
+		result := make([]*models.ClassAbility, len(abilities))
+		for i, a := range abilities {
+			result[i] = &models.ClassAbility{
+				ID:          a.ID,
+				Name:        a.Name,
+				Description: a.Description,
+				MinLevel:    int(a.MinLevel),
+			}
+		}
+		return result, nil
 	}
-
-	return result, nil
 }
 
 func (r *SQLCClassRepository) GetClericTurningAbility(ctx context.Context, level int) (int, error) {
@@ -507,4 +559,454 @@ func getLevelRangeForLevel(level int) string {
 		return "9-12"
 	}
 	return "1-12" // Fallback
+}
+
+// GetBarbarianAbilities gets all barbarian abilities for the specified level
+func (r *SQLCClassRepository) GetBarbarianAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetBarbarianAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetBerserkerAbilities gets all berserker abilities for the specified level
+func (r *SQLCClassRepository) GetBerserkerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetBerserkerAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetBardAbilities gets all bard abilities for the specified level
+func (r *SQLCClassRepository) GetBardAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetBardAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetCataphractAbilities gets all cataphract abilities for the specified level
+func (r *SQLCClassRepository) GetCataphractAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetCataphractAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetClericAbilities gets all cleric abilities for the specified level
+func (r *SQLCClassRepository) GetClericAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetClericAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetCryomancerAbilities gets all cryomancer abilities for the specified level
+func (r *SQLCClassRepository) GetCryomancerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetCryomancerAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetDruidAbilities gets all druid abilities for the specified level
+func (r *SQLCClassRepository) GetDruidAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetDruidAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetFighterAbilities gets all fighter abilities for the specified level
+func (r *SQLCClassRepository) GetFighterAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetFighterAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetHuntsmanAbilities gets all huntsman abilities for the specified level
+func (r *SQLCClassRepository) GetHuntsmanAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetHuntsmanAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetIllusionistAbilities gets all illusionist abilities for the specified level
+func (r *SQLCClassRepository) GetIllusionistAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetIllusionistAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetLegerdemainistAbilities gets all legerdemainist abilities for the specified level
+func (r *SQLCClassRepository) GetLegerdemainistAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetLegerdemainistAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetMagicianAbilities gets all magician abilities for the specified level
+func (r *SQLCClassRepository) GetMagicianAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetMagicianAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetMonkAbilities gets all monk abilities for the specified level
+func (r *SQLCClassRepository) GetMonkAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetMonkAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetNecromancerAbilities gets all necromancer abilities for the specified level
+func (r *SQLCClassRepository) GetNecromancerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetNecromancerAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetPaladinAbilities gets all paladin abilities for the specified level
+func (r *SQLCClassRepository) GetPaladinAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetPaladinAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetPriestAbilities gets all priest abilities for the specified level
+func (r *SQLCClassRepository) GetPriestAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetPriestAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetPurloinerAbilities gets all purloiner abilities for the specified level
+func (r *SQLCClassRepository) GetPurloinerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetPurloinerAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetPyromancerAbilities gets all pyromancer abilities for the specified level
+func (r *SQLCClassRepository) GetPyromancerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetPyromancerAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetRangerAbilities gets all ranger abilities for the specified level
+func (r *SQLCClassRepository) GetRangerAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetRangerAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetRunegraverAbilities gets all runegraver abilities for the specified level
+func (r *SQLCClassRepository) GetRunegraverAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetRunegraverAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetScoutAbilities gets all scout abilities for the specified level
+func (r *SQLCClassRepository) GetScoutAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetScoutAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetShamanAbilities gets all shaman abilities for the specified level
+func (r *SQLCClassRepository) GetShamanAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetShamanAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetThiefAbilities gets all thief abilities for the specified level
+func (r *SQLCClassRepository) GetThiefAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetThiefAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetWarlockAbilities gets all warlock abilities for the specified level
+func (r *SQLCClassRepository) GetWarlockAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetWarlockAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
+}
+
+// GetWitchAbilities gets all witch abilities for the specified level
+func (r *SQLCClassRepository) GetWitchAbilities(ctx context.Context, level int) ([]*models.ClassAbility, error) {
+	abilities, err := r.q.GetWitchAbilities(ctx, int64(level))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*models.ClassAbility, len(abilities))
+	for i, a := range abilities {
+		result[i] = &models.ClassAbility{
+			ID:          a.ID,
+			Name:        a.Name,
+			Description: a.Description,
+			MinLevel:    int(a.MinLevel),
+		}
+	}
+	return result, nil
 }
