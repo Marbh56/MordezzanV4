@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"mordezzanV4/internal/app"
 	"mordezzanV4/internal/logger"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,23 +14,6 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
-
-// getLocalIP returns the non-loopback local IP of the host
-func getLocalIP() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return "0.0.0.0" // fallback to all interfaces if we can't determine
-	}
-	for _, address := range addrs {
-		// check the address type and if it is not a loopback
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
-		}
-	}
-	return "0.0.0.0" // fallback to all interfaces if no IPv4 found
-}
 
 func main() {
 	err := godotenv.Load()
@@ -60,11 +42,8 @@ func main() {
 		port = "8080"
 	}
 
-	// Get the local IP address
-	host := getLocalIP()
-
-	// Build the full address (IP:port)
-	addr := host + ":" + port
+	// Use localhost instead of local IP address
+	addr := "localhost:" + port
 
 	server := &http.Server{
 		Addr:         addr,

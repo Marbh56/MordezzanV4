@@ -17,11 +17,6 @@ type ClassRepository interface {
 	GetCharacterClassInfo(ctx context.Context, characterID int64) (*models.Character, error)
 	GetClassAbilities(ctx context.Context, className string) ([]*models.ClassAbility, error)
 	GetClassAbilitiesByLevel(ctx context.Context, className string, level int) ([]*models.ClassAbility, error)
-	GetThiefSkillsForClass(ctx context.Context, className string) ([]*models.ThiefSkill, error)
-	GetThiefSkillsForCharacter(ctx context.Context, className string, level int) (map[string]string, error)
-	GetThiefSkillsByClass(ctx context.Context, className string) ([]models.ThiefSkill, error)
-	GetThiefSkillByName(ctx context.Context, skillName string) (*models.ThiefSkill, error)
-	GetThiefSkillChance(ctx context.Context, skillID int64, level int) (string, error)
 	GetClericTurningAbility(ctx context.Context, level int) (int, error)
 	GetPaladinTurningAbility(ctx context.Context, level int) (int, error)
 	GetNecromancerTurningAbility(ctx context.Context, level int) (int, error)
@@ -177,88 +172,6 @@ func (r *SQLCClassRepository) GetThiefSkillChance(ctx context.Context, skillID i
 	}
 
 	return successChance, nil
-}
-
-func (r *SQLCClassRepository) GetThiefSkillsForClass(ctx context.Context, className string) ([]*models.ThiefSkill, error) {
-	// Query to get thief skills for a specific class
-	query := `
-		SELECT ts.id, ts.skill_name, ts.attribute
-		FROM thief_skills ts
-		JOIN class_thief_skill_mapping ctsm ON ts.id = ctsm.skill_id
-		WHERE ctsm.class_name = ?
-	`
-
-	rows, err := r.db.QueryContext(ctx, query, className)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching thief skills: %w", err)
-	}
-	defer rows.Close()
-
-	var skills []*models.ThiefSkill
-	for rows.Next() {
-		skill := &models.ThiefSkill{}
-		if err := rows.Scan(&skill.ID, &skill.Name, &skill.Attribute); err != nil {
-			return nil, fmt.Errorf("error scanning thief skill row: %w", err)
-		}
-		skills = append(skills, skill)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating thief skill rows: %w", err)
-	}
-
-	return skills, nil
-}
-
-func (r *SQLCClassRepository) GetThiefSkillsForCharacter(ctx context.Context, className string, level int) (map[string]string, error) {
-	// Use a direct SQL query instead of the missing sqlc method
-	rows, err := r.db.QueryContext(ctx, `
-        SELECT 
-            ts.skill_name, 
-            tsp.success_chance
-        FROM thief_skills ts
-        JOIN class_thief_skill_mapping ctsm ON ts.id = ctsm.skill_id
-        JOIN thief_skill_progression tsp ON ts.id = tsp.skill_id
-        WHERE ctsm.class_name = ?
-        AND ? BETWEEN 
-            CAST(SUBSTR(tsp.level_range, 1, INSTR(tsp.level_range, '-') - 1) AS INTEGER) 
-            AND 
-            CAST(SUBSTR(tsp.level_range, INSTR(tsp.level_range, '-') + 1) AS INTEGER)
-    `, className, level)
-
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	result := make(map[string]string)
-	for rows.Next() {
-		var skillName, successChance string
-		if err := rows.Scan(&skillName, &successChance); err != nil {
-			return nil, err
-		}
-		result[skillName] = successChance
-	}
-
-	return result, nil
-}
-
-func (r *SQLCClassRepository) GetThiefSkillsByClass(ctx context.Context, className string) ([]models.ThiefSkill, error) {
-	skills, err := r.q.GetThiefSkillsByClassName(ctx, className)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]models.ThiefSkill, len(skills))
-	for i, skill := range skills {
-		result[i] = models.ThiefSkill{
-			ID:        skill.ID,
-			Name:      skill.SkillName,
-			Attribute: skill.Attribute,
-		}
-	}
-
-	return result, nil
 }
 
 func (r *SQLCClassRepository) GetAllClassData(ctx context.Context, className string) ([]*models.ClassData, error) {

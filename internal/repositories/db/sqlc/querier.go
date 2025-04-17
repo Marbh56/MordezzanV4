@@ -12,10 +12,7 @@ import (
 type Querier interface {
 	AddInventoryItem(ctx context.Context, arg AddInventoryItemParams) (sql.Result, error)
 	AddKnownSpell(ctx context.Context, arg AddKnownSpellParams) (sql.Result, error)
-	AddThiefSkill(ctx context.Context, arg AddThiefSkillParams) (sql.Result, error)
-	AddThiefSkillProgression(ctx context.Context, arg AddThiefSkillProgressionParams) error
 	AddWeaponMastery(ctx context.Context, arg AddWeaponMasteryParams) error
-	AssignSkillToClass(ctx context.Context, arg AssignSkillToClassParams) error
 	ClearPreparedSpells(ctx context.Context, characterID int64) error
 	CountPreparedSpellsByLevelAndClass(ctx context.Context, arg CountPreparedSpellsByLevelAndClassParams) (int64, error)
 	CountWeaponMasteries(ctx context.Context, arg CountWeaponMasteriesParams) (int64, error)
@@ -155,11 +152,7 @@ type Querier interface {
 	GetSpellsByClassLevel(ctx context.Context, arg GetSpellsByClassLevelParams) ([]Spell, error)
 	// Gets all thief abilities available to a character based on their level
 	GetThiefAbilities(ctx context.Context, characterLevel int64) ([]ThiefAbility, error)
-	GetThiefSkillByName(ctx context.Context, skillName string) (ThiefSkill, error)
-	GetThiefSkillChance(ctx context.Context, arg GetThiefSkillChanceParams) (string, error)
-	GetThiefSkillsByClassName(ctx context.Context, className string) ([]ThiefSkill, error)
-	GetThiefSkillsForCharacter(ctx context.Context, className string) ([]GetThiefSkillsForCharacterRow, error)
-	GetThiefSkillsForClass(ctx context.Context, className string) ([]ThiefSkill, error)
+	GetThiefSkillsByLevel(ctx context.Context, level int64) ([]ThiefSkill, error)
 	GetTreasure(ctx context.Context, id int64) (Treasure, error)
 	GetTreasureByCharacter(ctx context.Context, characterID sql.NullInt64) (Treasure, error)
 	GetUser(ctx context.Context, id int64) (GetUserRow, error)
@@ -195,7 +188,6 @@ type Querier interface {
 	RemoveAllInventoryItems(ctx context.Context, inventoryID int64) error
 	RemoveInventoryItem(ctx context.Context, id int64) error
 	RemoveKnownSpell(ctx context.Context, id int64) error
-	RemoveSkillFromClass(ctx context.Context, arg RemoveSkillFromClassParams) error
 	ResetAllMemorizedSpells(ctx context.Context, characterID int64) error
 	UnprepareSpell(ctx context.Context, id int64) error
 	UpdateAmmo(ctx context.Context, arg UpdateAmmoParams) (sql.Result, error)

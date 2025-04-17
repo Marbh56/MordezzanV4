@@ -228,7 +228,6 @@ func NewApp(dbPath string) (*App, error) {
 	spellCastingController := controllers.NewSpellCastingController(spellService)
 	acController := controllers.NewACController(acService)
 	weaponStatsController := controllers.NewWeaponStatsController(weaponStatsService)
-
 	logger.Info("Application initialized successfully")
 
 	return &App{

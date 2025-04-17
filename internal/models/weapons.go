@@ -52,6 +52,11 @@ type UpdateWeaponInput struct {
 	Properties      string  `json:"properties,omitempty"`
 }
 
+type WeaponBase struct {
+	Name     string `json:"name"`
+	Category string `json:"category"`
+}
+
 func (i *CreateWeaponInput) Validate() error {
 	if i.Name == "" {
 		return NewValidationError("name", "Name cannot be empty")

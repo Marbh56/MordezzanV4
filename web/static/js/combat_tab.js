@@ -256,7 +256,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function renderArmorClass(acData, container) {
-        // Create a more compact AC display
+        // Log the incoming data to help with debugging
+        console.log("AC Data:", acData);
+        
         let acHTML = `
             <div class="ac-breakdown">
                 <div class="ac-total">
@@ -283,11 +285,26 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
         
-        if (acData.dexterity_mod !== 0) {
+        // Handle dexterity modifier - in Hyperborea, positive Dex modifier lowers AC (improves it)
+        // and negative Dex modifier increases AC (worsens it)
+        const dexMod = parseFloat(acData.dexterity_mod);
+        if (!isNaN(dexMod)) {
+            let dexDisplay;
+            if (dexMod > 0) {
+                // Positive dex mod improves AC (lowers it) so show with minus sign
+                dexDisplay = `-${dexMod}`;
+            } else if (dexMod < 0) {
+                // Negative dex mod worsens AC (raises it) so show with plus sign
+                dexDisplay = `+${Math.abs(dexMod)}`;
+            } else {
+                // Zero modifier has no effect
+                dexDisplay = "+0";
+            }
+            
             acHTML += `
                 <div class="ac-component">
                     <span class="component-label">Dexterity:</span>
-                    <span class="component-value">${acData.dexterity_mod > 0 ? '-' + acData.dexterity_mod : '+' + Math.abs(acData.dexterity_mod)}</span>
+                    <span class="component-value">${dexDisplay}</span>
                 </div>
             `;
         }

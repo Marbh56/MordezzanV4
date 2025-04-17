@@ -139,12 +139,6 @@ type ClassDatum struct {
 	SpellSlotsLevel6 sql.NullInt64
 }
 
-type ClassThiefSkillMapping struct {
-	ID        int64
-	ClassName string
-	SkillID   int64
-}
-
 type ClericAbility struct {
 	ID          int64
 	Name        string
@@ -533,15 +527,10 @@ type ThiefAbility struct {
 }
 
 type ThiefSkill struct {
-	ID        int64
-	SkillName string
-	Attribute string
-}
-
-type ThiefSkillProgression struct {
 	ID            int64
-	SkillID       int64
-	LevelRange    string
+	SkillName     string
+	Attribute     string
+	Level         int64
 	SuccessChance string
 }
 
