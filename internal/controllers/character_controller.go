@@ -76,16 +76,23 @@ func (c *CharacterController) GetCharacter(w http.ResponseWriter, r *http.Reques
 }
 
 func (c *CharacterController) RenderCharacterDetail(w http.ResponseWriter, r *http.Request) {
+	logger.Info("Starting RenderCharacterDetail function")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	idParam := chi.URLParam(r, "id")
+	logger.Debug("Character ID from URL: %s", idParam)
+
 	id, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
+		logger.Error("Failed to parse character ID: %v", err)
 		apperrors.HandleError(w, apperrors.NewBadRequest(fmt.Sprintf("Invalid character ID: %s", idParam)))
 		return
 	}
+	logger.Debug("Parsed character ID: %d", id)
 
+	logger.Debug("Fetching character from repository")
 	character, err := c.characterRepo.GetCharacter(r.Context(), id)
 	if err != nil {
+		logger.Error("Failed to get character from repository: %v", err)
 		if errors.Is(err, apperrors.ErrNotFound) {
 			http.Error(w, "Character not found", http.StatusNotFound)
 			return
@@ -93,16 +100,36 @@ func (c *CharacterController) RenderCharacterDetail(w http.ResponseWriter, r *ht
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 		return
 	}
+	logger.Debug("Successfully fetched character: %s (ID: %d)", character.Name, character.ID)
 
-	// Enrich with class data using the unified class service
+	// Log character details to identify potential nil values
+	logger.Debug("Character details - Class: %s, Level: %d", character.Class, character.Level)
+
+	logger.Debug("Enriching character with class data")
 	if err := c.classService.EnrichCharacterWithClassData(r.Context(), character); err != nil {
+		logger.Error("Failed to enrich character with class data: %v", err)
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 		return
 	}
+	logger.Debug("Successfully enriched character with class data")
 
-	// Get experience for next level if not at max level
+	logger.Debug("Getting experience for next level")
 	nextLevelExp, err := c.classService.GetExperienceForNextLevel(r.Context(), character.Class, character.Level)
-	if err == nil && nextLevelExp > character.ExperiencePoints {
+	if err != nil {
+		logger.Error("Failed to get experience for next level: %v", err)
+		// Continue without next level experience info
+		logger.Debug("Executing template without next level experience info")
+		err = c.Templates.ExecuteTemplate(w, "character_detail", character)
+		if err != nil {
+			logger.Error("Failed to execute template: %v", err)
+			apperrors.HandleError(w, apperrors.NewInternalError(err))
+		}
+		return
+	}
+	logger.Debug("Experience for next level: %d", nextLevelExp)
+
+	if nextLevelExp > character.ExperiencePoints {
+		logger.Debug("Character needs %d more XP to level up", nextLevelExp-character.ExperiencePoints)
 		data := struct {
 			*models.Character
 			NextLevelExperience int
@@ -112,17 +139,23 @@ func (c *CharacterController) RenderCharacterDetail(w http.ResponseWriter, r *ht
 			NextLevelExperience: nextLevelExp,
 			ExperienceNeeded:    nextLevelExp - character.ExperiencePoints,
 		}
+		logger.Debug("Executing template with next level experience info")
 		err = c.Templates.ExecuteTemplate(w, "character_detail", data)
 		if err != nil {
+			logger.Error("Failed to execute template with next level experience: %v", err)
 			apperrors.HandleError(w, apperrors.NewInternalError(err))
 		}
 		return
 	}
 
+	logger.Debug("Character is at max level or has enough XP to level up")
+	logger.Debug("Executing template without next level experience info")
 	err = c.Templates.ExecuteTemplate(w, "character_detail", character)
 	if err != nil {
+		logger.Error("Failed to execute template without next level experience: %v", err)
 		apperrors.HandleError(w, apperrors.NewInternalError(err))
 	}
+	logger.Info("Completed RenderCharacterDetail function")
 }
 
 func (c *CharacterController) GetCharactersByUser(w http.ResponseWriter, r *http.Request) {

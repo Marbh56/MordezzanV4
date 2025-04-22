@@ -411,10 +411,6 @@ func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, charact
 	case "Thief":
 		character.DeviceSaveBonus = 2
 		character.AvoidanceSaveBonus = 2
-		if err := s.applyAgileBonus(ctx, character); err != nil {
-			// log error but continue
-			fmt.Printf("failed to apply agile bonus: %v\n", err)
-		}
 
 	case "Assassin":
 		character.DeathSaveBonus = 2
