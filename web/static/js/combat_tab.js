@@ -318,6 +318,15 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
         
+        if (acData.agile_bonus > 0) {
+            acHTML += `
+            <div class="ac-component">
+                <span class="component-label">Agile:</span>
+                <span class="component-value">-${acData.agile_bonus}</span>
+            </div>
+            `;
+        }
+        
         if (acData.other_bonuses > 0) {
             acHTML += `
                 <div class="ac-component">

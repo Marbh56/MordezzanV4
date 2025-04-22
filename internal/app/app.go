@@ -176,6 +176,7 @@ func NewApp(dbPath string) (*App, error) {
 		characterRepo,
 		armorRepo,
 		shieldRepo,
+		encumbranceService,
 	)
 	weaponMasteryController := controllers.NewWeaponMasteryController(
 		weaponMasteryRepo,

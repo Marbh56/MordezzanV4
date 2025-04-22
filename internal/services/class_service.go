@@ -38,38 +38,47 @@ func (s *ClassService) SetEncumbranceService(encumbranceService *EncumbranceServ
 }
 
 func (s *ClassService) applyAgileBonus(ctx context.Context, character *models.Character) error {
-	// Only proceed if we have the necessary services
+	fmt.Printf("DEBUG: Applying agile bonus for %s (ID: %d)\n", character.Name, character.ID)
+
 	if s.encumbranceService == nil || s.inventoryRepo == nil {
+		fmt.Printf("DEBUG: Encumbrance service or inventory repo is nil\n")
 		return nil
 	}
 
-	// Get encumbrance details
 	encumbranceDetails, err := s.encumbranceService.GetCharacterEncumbrance(ctx, character.ID)
 	if err != nil {
+		fmt.Printf("DEBUG: Failed to get encumbrance details: %v\n", err)
 		return fmt.Errorf("failed to get encumbrance details: %v", err)
 	}
 
-	// Get inventory to check armor
+	fmt.Printf("DEBUG: Encumbrance status - HeavyEncumbered: %v\n",
+		encumbranceDetails.Status.HeavyEncumbered)
+
 	inventory, err := s.inventoryRepo.GetInventoryByCharacter(ctx, character.ID)
 	if err != nil {
+		fmt.Printf("DEBUG: Failed to get character inventory: %v\n", err)
 		return fmt.Errorf("failed to get character inventory: %v", err)
 	}
 
-	// Check if wearing armor
 	wearingArmor := false
 	for _, item := range inventory.Items {
 		if item.ItemType == "armor" && item.IsEquipped {
 			wearingArmor = true
+			fmt.Printf("DEBUG: Character is wearing armor: %s\n", item.ItemID)
 			break
 		}
 	}
 
-	// Apply Agile bonus if unarmored and not heavily encumbered
-	// Shield is allowed per the ability description
+	fmt.Printf("DEBUG: Character is wearing armor: %v\n", wearingArmor)
+
 	if !wearingArmor && !encumbranceDetails.Status.HeavyEncumbered {
+		fmt.Printf("DEBUG: Adding +1 DefenceAdjustment for agile bonus\n")
 		character.DefenceAdjustment += 1
+	} else {
+		fmt.Printf("DEBUG: Not applying agile bonus due to armor or encumbrance\n")
 	}
 
+	fmt.Printf("DEBUG: Final DefenceAdjustment: %d\n", character.DefenceAdjustment)
 	return nil
 }
 
@@ -411,6 +420,10 @@ func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, charact
 	case "Thief":
 		character.DeviceSaveBonus = 2
 		character.AvoidanceSaveBonus = 2
+
+		if err := s.applyAgileBonus(ctx, character); err != nil {
+			fmt.Printf("failed to apply agile bonus: %v\n", err)
+		}
 
 	case "Assassin":
 		character.DeathSaveBonus = 2

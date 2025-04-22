@@ -9,10 +9,11 @@ import (
 
 // ACService handles armor class calculations
 type ACService struct {
-	inventoryRepo repositories.InventoryRepository
-	characterRepo repositories.CharacterRepository
-	armorRepo     repositories.ArmorRepository
-	shieldRepo    repositories.ShieldRepository
+	inventoryRepo      repositories.InventoryRepository
+	characterRepo      repositories.CharacterRepository
+	armorRepo          repositories.ArmorRepository
+	shieldRepo         repositories.ShieldRepository
+	encumbranceService *EncumbranceService
 }
 
 // ACDetails represents the components and final AC value
@@ -22,6 +23,7 @@ type ACDetails struct {
 	ShieldBonus    int    `json:"shield_bonus,omitempty"`
 	DexterityMod   int    `json:"dexterity_mod,omitempty"`
 	NaturalAC      int    `json:"natural_ac,omitempty"`
+	AgileBonus     int    `json:"agile_bonus,omitempty"`
 	OtherBonuses   int    `json:"other_bonuses,omitempty"`
 	FinalAC        int    `json:"final_ac"`
 	ArmorEquipped  string `json:"armor_equipped,omitempty"`
@@ -34,41 +36,63 @@ func NewACService(
 	characterRepo repositories.CharacterRepository,
 	armorRepo repositories.ArmorRepository,
 	shieldRepo repositories.ShieldRepository,
+	encumbranceService *EncumbranceService,
 ) *ACService {
 	return &ACService{
-		inventoryRepo: inventoryRepo,
-		characterRepo: characterRepo,
-		armorRepo:     armorRepo,
-		shieldRepo:    shieldRepo,
+		inventoryRepo:      inventoryRepo,
+		characterRepo:      characterRepo,
+		armorRepo:          armorRepo,
+		shieldRepo:         shieldRepo,
+		encumbranceService: encumbranceService,
 	}
 }
 
-// CalculateCharacterAC computes a character's armor class details
 func (s *ACService) CalculateCharacterAC(ctx context.Context, characterID int64) (*ACDetails, error) {
-	// Get the character to check if it exists and get dexterity modifier
 	character, err := s.characterRepo.GetCharacter(ctx, characterID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get the character's inventory
 	inventory, err := s.inventoryRepo.GetInventoryByCharacter(ctx, characterID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Set up the response with default values
 	details := &ACDetails{
 		BaseAC:       9,
 		DexterityMod: character.DefenceAdjustment,
 	}
 
-	// Get equipped armor and shield (if any)
+	// Check for agile bonus (unarmored and unencumbered)
+	if character.Class == "Thief" {
+		wearingArmor := false
+		for _, item := range inventory.Items {
+			if item.ItemType == "armor" && item.IsEquipped {
+				wearingArmor = true
+				break
+			}
+		}
+
+		// Check if heavily encumbered
+		var isHeavyEncumbered bool
+		if s.encumbranceService != nil {
+			encumbranceDetails, err := s.encumbranceService.GetCharacterEncumbrance(ctx, characterID)
+			if err == nil && encumbranceDetails != nil {
+				isHeavyEncumbered = encumbranceDetails.Status.HeavyEncumbered
+			}
+		}
+
+		// Apply the agile bonus if conditions are met
+		if !wearingArmor && !isHeavyEncumbered {
+			details.AgileBonus = 1
+			logger.Info("Applied +1 agile AC bonus for unarmored Thief")
+		}
+	}
+
 	var equippedArmor models.InventoryItem
 	var equippedShield models.InventoryItem
 	var hasArmor bool
 	var hasShield bool
-
 	for _, item := range inventory.Items {
 		if item.IsEquipped {
 			if item.ItemType == "armor" {
@@ -81,11 +105,9 @@ func (s *ACService) CalculateCharacterAC(ctx context.Context, characterID int64)
 		}
 	}
 
-	// Apply armor AC if equipped
 	if hasArmor {
 		armor, err := s.armorRepo.GetArmor(ctx, equippedArmor.ItemID)
 		if err == nil {
-			// In Hyperborea, equipping armor sets the base AC
 			details.ArmorAC = armor.AC
 			details.ArmorEquipped = armor.Name
 		} else {
@@ -93,7 +115,6 @@ func (s *ACService) CalculateCharacterAC(ctx context.Context, characterID int64)
 		}
 	}
 
-	// Apply shield bonus if equipped
 	if hasShield {
 		shield, err := s.shieldRepo.GetShield(ctx, equippedShield.ItemID)
 		if err == nil {
@@ -104,18 +125,15 @@ func (s *ACService) CalculateCharacterAC(ctx context.Context, characterID int64)
 		}
 	}
 
-	// Check for natural armor bonuses (some classes might have this)
 	if character.NaturalAC > 0 {
 		details.NaturalAC = character.NaturalAC
 	} else if character.Class == "Berserker" {
-		// Special case for Berserker class which has natural armor
 		if abilities, ok := character.Abilities.(map[string]interface{}); ok {
 			if naturalAC, ok := abilities["natural_ac"].(int); ok {
 				details.NaturalAC = naturalAC
 			}
 		}
 	} else if character.Class == "Monk" {
-		// Monks also have AC bonuses
 		if abilities, ok := character.Abilities.(map[string]interface{}); ok {
 			if acBonus, ok := abilities["ac_bonus"].(int); ok {
 				details.OtherBonuses = acBonus
@@ -123,20 +141,15 @@ func (s *ACService) CalculateCharacterAC(ctx context.Context, characterID int64)
 		}
 	}
 
-	// Calculate the final AC
 	finalAC := details.BaseAC
-
-	// If armor is equipped, it replaces the base AC
 	if details.ArmorAC > 0 {
 		finalAC = details.ArmorAC
 	}
-
-	// Apply shield, dexterity and other bonuses (they reduce AC which is better)
 	finalAC -= details.ShieldBonus
 	finalAC -= details.DexterityMod
+	finalAC -= details.AgileBonus
 	finalAC -= details.NaturalAC
 	finalAC -= details.OtherBonuses
-
 	details.FinalAC = finalAC
 
 	return details, nil
