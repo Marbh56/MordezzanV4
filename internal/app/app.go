@@ -40,12 +40,14 @@ type App struct {
 	ClassRepository         repositories.ClassRepository
 	SpellCastingRepository  repositories.SpellCastingRepository
 	WeaponMasteryRepository repositories.WeaponMasteryRepository
+	ThiefSkillsRepository   repositories.ThiefSkillsRepository
 
 	ClassService       *services.ClassService
 	EncumbranceService *services.EncumbranceService
 	SpellService       *services.SpellService
 	ACService          *services.ACService
 	WeaponStatsService *services.WeaponStatsService
+	ThiefSkillsService *services.ThiefSkillsService
 
 	UserController          *controllers.UserController
 	CharacterController     *controllers.CharacterController
@@ -67,6 +69,7 @@ type App struct {
 	ACController            *controllers.ACController
 	WeaponMasteryController *controllers.WeaponMasteryController
 	WeaponStatsController   *controllers.WeaponStatsController
+	ThiefSkillsController   *controllers.ThiefSkillsController
 
 	Templates      *template.Template
 	SessionManager *scs.SessionManager
@@ -139,6 +142,7 @@ func NewApp(dbPath string) (*App, error) {
 	classRepo := repositories.NewSQLCClassRepository(db)
 	spellCastingRepo := repositories.NewSQLCSpellCastingRepository(db)
 	weaponMasteryRepo := repositories.NewSQLCWeaponMasteryRepository(db)
+	thiefSkillsRepo := repositories.NewSQLCThiefSkillsRepository(db)
 
 	// Initialize services
 	classService := services.NewClassService(
@@ -193,6 +197,8 @@ func NewApp(dbPath string) (*App, error) {
 
 	classService.SetEncumbranceService(encumbranceService)
 
+	thiefSkillsService := services.NewThiefSkillsService(thiefSkillsRepo)
+
 	// Initialize controllers with session manager
 	authController := controllers.NewAuthController(userRepo, tmpl, sessionManager)
 	userController := controllers.NewUserController(userRepo, tmpl)
@@ -226,6 +232,13 @@ func NewApp(dbPath string) (*App, error) {
 		encumbranceService,
 		tmpl,
 	)
+	thiefSkillsController := controllers.NewThiefSkillsController(
+		thiefSkillsRepo,
+		characterRepo,
+		thiefSkillsService,
+		tmpl,
+	)
+
 	spellCastingController := controllers.NewSpellCastingController(spellService)
 	acController := controllers.NewACController(acService)
 	weaponStatsController := controllers.NewWeaponStatsController(weaponStatsService)
@@ -251,12 +264,14 @@ func NewApp(dbPath string) (*App, error) {
 		ClassRepository:         classRepo,
 		SpellCastingRepository:  spellCastingRepo,
 		WeaponMasteryRepository: weaponMasteryRepo,
+		ThiefSkillsRepository:   thiefSkillsRepo,
 
 		ClassService:       classService,
 		EncumbranceService: encumbranceService,
 		SpellService:       spellService,
 		ACService:          acService,
 		WeaponStatsService: weaponStatsService,
+		ThiefSkillsService: thiefSkillsService,
 
 		UserController:          userController,
 		CharacterController:     characterController,
@@ -278,6 +293,7 @@ func NewApp(dbPath string) (*App, error) {
 		ACController:            acController,
 		WeaponMasteryController: weaponMasteryController,
 		WeaponStatsController:   weaponStatsController,
+		ThiefSkillsController:   thiefSkillsController,
 
 		Templates:      tmpl,
 		SessionManager: sessionManager,
@@ -395,6 +411,11 @@ func (a *App) SetupRoutes() http.Handler {
 					r.Get("/", a.InventoryController.GetEncumbranceStatus)
 					r.Post("/recalculate", a.InventoryController.RecalculateEncumbrance)
 					r.Put("/capacity", a.InventoryController.UpdateInventoryCapacity)
+				})
+
+				// Thief skills routes
+				r.Route("/thief-skills", func(r chi.Router) {
+					r.Get("/", a.ThiefSkillsController.GetThiefSkillsForCharacter)
 				})
 
 				// Spell routes

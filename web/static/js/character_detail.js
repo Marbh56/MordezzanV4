@@ -1,37 +1,73 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Classes that have weapon mastery abilities
     const weaponMasteryClasses = [
-        'Fighter', 'Barbarian', 'Berserker', 'Cataphract', 
+        'Fighter', 'Barbarian', 'Berserker', 'Cataphract',
         'Huntsman', 'Paladin', 'Ranger', 'Assassin'
     ];
     
-    // Get the character class from the meta info
+    const thiefSkillClasses = [
+        'Thief', 'Assassin', 'Bard', 'Legerdemainist', 'Scout'
+    ];
+    
+    // Handle visibility for class-specific tabs
     const characterClassElement = document.querySelector('.character-meta');
     if (characterClassElement) {
         const classText = characterClassElement.textContent;
         const characterClass = classText.match(/Level \d+ (.+)/)?.[1];
         
-        // Check if the class has weapon mastery
+        // Handle weapon mastery tab visibility
         const hasWeaponMastery = weaponMasteryClasses.includes(characterClass);
-        
-        // Hide the tab if the class doesn't have weapon mastery
         const masteryButton = document.querySelector('.tab-button[data-tab="weapon-mastery"]');
         if (masteryButton && !hasWeaponMastery) {
             masteryButton.style.display = 'none';
         }
+        
+        // Handle thief skills tab visibility
+        const hasThiefSkills = thiefSkillClasses.includes(characterClass);
+        const thiefSkillsButton = document.querySelector('.tab-button[data-tab="thief-skills"]');
+        if (thiefSkillsButton && !hasThiefSkills) {
+            thiefSkillsButton.style.display = 'none';
+        }
     }
-
+    
+    // Tab switching functionality
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
+    
+    // Verify all tabs have corresponding content
+    tabButtons.forEach(button => {
+        const tabId = button.getAttribute('data-tab');
+        const tabContent = document.getElementById(tabId);
+        
+        if (!tabContent) {
+            console.error(`Tab content not found for tab: ${tabId}`);
+        }
+    });
+    
+    // Add click handlers for tab switching
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const tabId = button.getAttribute('data-tab');
+            
+            // Verify the target tab content exists
+            const targetTab = document.getElementById(tabId);
+            if (!targetTab) {
+                console.error(`Cannot switch to tab: Tab content #${tabId} not found`);
+                return;
+            }
+            
+            // Remove active class from all tabs
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab
             button.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
+            targetTab.classList.add('active');
+            
+            // Console log for debugging
+            console.log(`Switched to tab: ${tabId}`);
         });
     });
+    
     const pathSegments = window.location.pathname.split('/');
     const characterId = pathSegments[pathSegments.indexOf('view') + 1];
     const hpModal = document.getElementById('hpModal');
@@ -233,5 +269,115 @@ document.addEventListener('DOMContentLoaded', function() {
         if (abilitiesButton.classList.contains('active')) {
             fetchAbilities();
         }
+    }
+
+    // Add fetch thief skills functionality
+    const fetchThiefSkills = async () => {
+        console.log('Attempting to fetch thief skills data');
+        const thiefSkillsTab = document.getElementById('thief-skills');
+        if (!thiefSkillsTab) {
+            console.error('Thief skills tab element not found in DOM');
+            return;
+        }
+        
+        try {
+            console.log(`Fetching thief skills for character ID: ${characterId}`);
+            const response = await fetch(`/api/characters/${characterId}/thief-skills`);
+            console.log('Thief skills API response:', response);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch thief skills: ${response.status} ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Thief skills data received:', data);
+            renderThiefSkills(data);
+        } catch (error) {
+            console.error('Error fetching thief skills:', error);
+            thiefSkillsTab.innerHTML = `
+                <div class="error-message">
+                    Failed to load thief skills: ${error.message}
+                </div>
+            `;
+        }
+    };
+    
+    const renderThiefSkills = (skillsData) => {
+        console.log('Rendering thief skills with data:', skillsData);
+        const thiefSkillsTab = document.getElementById('thief-skills');
+        
+        // Check if skillsData is an array or if it's an object with a skills property
+        const skills = Array.isArray(skillsData) ? skillsData : 
+                      (skillsData && skillsData.skills ? skillsData.skills : []);
+        
+        if (skills.length > 0) {
+            // Log the first skill to see its structure
+            console.log('Sample skill object structure:', skills[0]);
+        }
+        
+        if (!skills || skills.length === 0) {
+            thiefSkillsTab.innerHTML = `
+                <div class="empty-state">
+                    <h3 class="empty-title">No Thief Skills Found</h3>
+                    <p class="empty-description">This character doesn't have any thief skills at the current level.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Render the skills using the actual data structure
+        let skillsHTML = `
+            <h2>Thief Skills</h2>
+            <div class="thief-skills-container">
+        `;
+        
+        skills.forEach(skill => {
+            // Try to access success chance from various possible property names
+            const successChance = 
+                skill.success_chance || 
+                skill.successChance || 
+                skill.SuccessChance || 
+                (typeof skill.Value !== 'undefined' ? skill.Value : 
+                    (typeof skill.value !== 'undefined' ? skill.value : 'Unknown'));
+            
+            skillsHTML += `
+                <div class="skill-card">
+                    <h3 class="skill-name">${skill.Name || skill.name}</h3>
+                    <div class="skill-value">${successChance}</div>
+                    <div class="skill-description">${skill.Description || skill.description || ''}</div>
+                </div>
+            `;
+        });
+        
+        skillsHTML += `</div>`;
+        thiefSkillsTab.innerHTML = skillsHTML;
+    };
+
+    // Add event listener for thief skills tab
+    const thiefSkillsButton = document.querySelector('.tab-button[data-tab="thief-skills"]');
+    if (thiefSkillsButton) {
+        console.log('Thief skills button found in DOM');
+        thiefSkillsButton.addEventListener('click', () => {
+            console.log('Thief skills tab clicked');
+            const thiefSkillsTab = document.getElementById('thief-skills');
+            if (thiefSkillsTab) {
+                if (thiefSkillsTab.querySelector('.loading-container') || thiefSkillsTab.innerHTML.trim() === '') {
+                    console.log('Thief skills tab is empty or loading, fetching data');
+                    fetchThiefSkills();
+                } else {
+                    console.log('Thief skills data already loaded');
+                }
+            } else {
+                console.error('Thief skills tab container not found');
+            }
+        });
+        
+        // Load thief skills if this tab is active by default
+        if (thiefSkillsButton.classList.contains('active')) {
+            console.log('Thief skills tab is active by default, fetching data');
+            fetchThiefSkills();
+        }
+    } else {
+        console.warn('Thief skills button not found in DOM');
     }
 });
