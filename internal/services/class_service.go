@@ -140,6 +140,27 @@ func (s *ClassService) applyExtraStr(ctx context.Context, character *models.Char
 	return nil
 }
 
+func (s *ClassService) applyExtraDex(ctx context.Context, character *models.Character) error {
+	// Parse the current percentage value
+	var currentPercent int
+	n, err := fmt.Sscanf(character.ExtraDexterityFeat, "%d%%", &currentPercent)
+
+	// Check for scanning errors
+	if err != nil {
+		return fmt.Errorf("failed to parse dexterity feat percentage: %v", err)
+	}
+
+	// Check if we scanned the expected number of items
+	if n != 1 {
+		return fmt.Errorf("unexpected format for dexterity feat: %s", character.ExtraDexterityFeat)
+	}
+
+	// Apply the 8% bonus
+	character.ExtraDexterityFeat = fmt.Sprintf("%d%%", currentPercent+8)
+
+	return nil
+}
+
 // EnrichCharacterWithClassData applies class-specific data to a character
 func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, character *models.Character) error {
 	// Get class data for this character's class and level
@@ -423,6 +444,11 @@ func (s *ClassService) EnrichCharacterWithClassData(ctx context.Context, charact
 
 		if err := s.applyAgileBonus(ctx, character); err != nil {
 			fmt.Printf("failed to apply agile bonus: %v\n", err)
+		}
+
+		if err := s.applyExtraDex(ctx, character); err != nil {
+			// Log error but continue
+			fmt.Printf("failed to apply extra strength feat: %v\n", err)
 		}
 
 	case "Assassin":
